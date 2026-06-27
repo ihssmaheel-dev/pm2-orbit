@@ -55,7 +55,7 @@ export function Settings() {
             <div className="space-y-4">
               <InfoRow label="Port" value="9823" hint="Set via PM2_ORBIT_PORT env var" />
               <InfoRow label="Host" value="127.0.0.1" hint="Default binding" />
-              <InfoRow label="Auth" value={process.env.PM2_ORBIT_TOKEN ? 'Enabled' : 'Disabled'} hint="Set PM2_ORBIT_TOKEN to enable" />
+              <InfoRow label="Auth" value="Set via PM2_ORBIT_TOKEN" hint="Environment variable" />
             </div>
           </Section>
 

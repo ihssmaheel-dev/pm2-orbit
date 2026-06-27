@@ -36,7 +36,7 @@ export function History() {
     setSystemLoading(true);
     fetch(`/api/history/system?hours=${hours}`)
       .then((res) => res.json())
-      .then((data) => { setSystemHistory(data); setSystemLoading(false); })
+      .then((data) => { setSystemHistory(Array.isArray(data) ? data : []); setSystemLoading(false); })
       .catch(() => { setSystemHistory([]); setSystemLoading(false); });
   }, [timeRange]);
 
@@ -49,7 +49,7 @@ export function History() {
     setProcessLoading(true);
     fetch(`/api/history/${selectedProcessId}?hours=${hours}`)
       .then((res) => res.json())
-      .then((data) => { setProcessHistory(data); setProcessLoading(false); })
+      .then((data) => { setProcessHistory(Array.isArray(data) ? data : []); setProcessLoading(false); })
       .catch(() => { setProcessHistory([]); setProcessLoading(false); });
   }, [selectedProcessId, timeRange]);
 
