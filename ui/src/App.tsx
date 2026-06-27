@@ -1,12 +1,10 @@
 import { AppShell } from './components/layout/AppShell';
 import { Toaster } from 'sonner';
-import { useTheme } from './hooks/useTheme';
+import { ThemeProvider } from './hooks/useTheme';
 
 export default function App() {
-  useTheme();
-
   return (
-    <>
+    <ThemeProvider>
       <AppShell />
       <Toaster
         position="bottom-right"
@@ -20,6 +18,6 @@ export default function App() {
           },
         }}
       />
-    </>
+    </ThemeProvider>
   );
 }

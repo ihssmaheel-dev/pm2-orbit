@@ -1,15 +1,17 @@
-import { Sun, Moon, Bell } from 'lucide-react';
+import { Sun, Moon, Monitor, Bell } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
 import { ConnectionDot } from '@/components/shared/ConnectionDot';
 
 export function Header() {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolved } = useTheme();
 
   const toggleTheme = () => {
     if (theme === 'dark') setTheme('light');
     else if (theme === 'light') setTheme('system');
     else setTheme('dark');
   };
+
+  const ThemeIcon = resolved === 'dark' ? Moon : Sun;
 
   return (
     <header className="h-14 border-b border-border flex items-center px-4 gap-4 shrink-0">
@@ -34,7 +36,7 @@ export function Header() {
           className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
           title={`Theme: ${theme}`}
         >
-          {theme === 'dark' ? <Moon size={16} /> : theme === 'light' ? <Sun size={16} /> : <Sun size={16} />}
+          {theme === 'system' ? <Monitor size={16} /> : <ThemeIcon size={16} />}
         </button>
 
         <button className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors relative">
