@@ -1,9 +1,17 @@
-import nodemailer from 'nodemailer';
+let nodemailer: typeof import('nodemailer') | null = null;
 
-let transporter: nodemailer.Transporter | null = null;
+try {
+  nodemailer = require('nodemailer');
+} catch {
+  // nodemailer not installed — email disabled
+}
 
-function getTransporter(): nodemailer.Transporter | null {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let transporter: any = null;
+
+function getTransporter(): typeof transporter {
   if (transporter) return transporter;
+  if (!nodemailer) return null;
 
   const host = process.env.SMTP_HOST;
   const port = parseInt(process.env.SMTP_PORT || '587', 10);
@@ -44,5 +52,5 @@ export async function sendEmail(subject: string, body: string): Promise<boolean>
 }
 
 export function isEmailConfigured(): boolean {
-  return !!process.env.SMTP_HOST && !!process.env.SMTP_FROM && !!process.env.SMTP_TO;
+  return !!nodemailer && !!process.env.SMTP_HOST && !!process.env.SMTP_FROM && !!process.env.SMTP_TO;
 }

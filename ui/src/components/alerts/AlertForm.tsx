@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/shared/Button';
 import { Input } from '@/components/shared/Input';
@@ -17,6 +17,14 @@ export function AlertForm({ open, onClose }: AlertFormProps) {
   const [operator, setOperator] = useState<AlertRule['operator']>('>');
   const [threshold, setThreshold] = useState('');
 
+  useEffect(() => {
+    if (!open) {
+      setMetric('cpu');
+      setOperator('>');
+      setThreshold('');
+    }
+  }, [open]);
+
   const handleSubmit = () => {
     if (!threshold) return;
 
@@ -29,7 +37,6 @@ export function AlertForm({ open, onClose }: AlertFormProps) {
     };
 
     addRule(rule);
-    setThreshold('');
     onClose();
   };
 

@@ -83,7 +83,9 @@ export function createStore() {
   const processBuffer: ProcessMetricRow[] = [];
   const systemBuffer: SystemMetricRow[] = [];
   const FLUSH_INTERVAL = 5000;
+  const CLEANUP_INTERVAL = 5 * 60 * 1000; // Cleanup every 5 minutes
   const HISTORY_RETENTION_MS = 24 * 60 * 60 * 1000; // 24 hours
+  let lastCleanup = 0;
 
   function flush() {
     if (processBuffer.length > 0) {
@@ -106,10 +108,14 @@ export function createStore() {
       systemBuffer.length = 0;
     }
 
-    // Cleanup old data
-    const cutoff = Date.now() - HISTORY_RETENTION_MS;
-    db.prepare('DELETE FROM process_history WHERE ts < ?').run(cutoff);
-    db.prepare('DELETE FROM system_history WHERE ts < ?').run(cutoff);
+    // Cleanup old data every 5 minutes
+    const now = Date.now();
+    if (now - lastCleanup > CLEANUP_INTERVAL) {
+      lastCleanup = now;
+      const cutoff = now - HISTORY_RETENTION_MS;
+      db.prepare('DELETE FROM process_history WHERE ts < ?').run(cutoff);
+      db.prepare('DELETE FROM system_history WHERE ts < ?').run(cutoff);
+    }
   }
 
   const flushInterval = setInterval(flush, FLUSH_INTERVAL);
