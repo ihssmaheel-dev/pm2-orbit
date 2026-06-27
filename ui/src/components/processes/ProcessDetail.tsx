@@ -41,22 +41,25 @@ export function ProcessDetail() {
 
   const cpuData = { ts: process.history.ts, values: process.history.cpu };
   const memData = { ts: process.history.ts, values: process.history.memory };
-
   const envEntries = Object.entries(envVars);
 
   return (
-    <div className="w-[65%] h-full border-l border-border bg-background flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
-        <div className="flex items-center gap-3">
-          <h2 className="text-lg font-light tracking-wider uppercase">{process.name}</h2>
+    <div className="w-[420px] shrink-0 h-full bg-card border border-border/60 flex flex-col overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 h-[52px] border-b border-border/60 shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.1em] text-foreground truncate">
+            {process.name}
+          </h2>
           <Badge variant={statusVariant[process.status] || 'outline'}>
             {process.status}
           </Badge>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 shrink-0">
           <ActionMenu processId={process.id} processName={process.name} />
           <button
             onClick={() => select(null)}
+            aria-label="Close detail panel"
             className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
           >
             <X size={16} />
@@ -64,86 +67,107 @@ export function ProcessDetail() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-4">
+      {/* Content */}
+      <div className="flex-1 overflow-auto">
         <Tabs defaultValue="overview">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="metrics">Metrics</TabsTrigger>
-            <TabsTrigger value="environment">Environment</TabsTrigger>
-          </TabsList>
+          <div className="px-5 border-b border-border/40">
+            <TabsList>
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="metrics">Metrics</TabsTrigger>
+              <TabsTrigger value="environment">Env</TabsTrigger>
+            </TabsList>
+          </div>
 
-          <TabsContent value="overview">
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <InfoRow icon={<Hash size={14} />} label="PID" value={String(process.pid)} />
-              <InfoRow icon={<Server size={14} />} label="Mode" value={process.mode} />
-              <InfoRow icon={<Clock size={14} />} label="Uptime" value={formatDuration(process.uptime)} />
-              <InfoRow icon={<RotateCw size={14} />} label="Restarts" value={String(process.restarts)} />
-              <InfoRow label="CPU" value={`${process.cpu.toFixed(1)}%`} />
-              <InfoRow label="Memory" value={formatBytes(process.memory)} />
-              <InfoRow label="Instances" value={String(process.instances)} />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="metrics">
-            <div className="space-y-6">
-              <CpuChart data={cpuData} />
-              <MemoryChart data={memData} />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="environment">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/60">
-                  Environment Variables
-                </span>
-                <button
-                  onClick={() => setShowMasked(!showMasked)}
-                  className="flex items-center gap-1.5 text-[11px] text-muted-foreground/60 hover:text-foreground transition-colors"
-                >
-                  {showMasked ? <EyeOff size={12} /> : <Eye size={12} />}
-                  {showMasked ? 'Show sensitive' : 'Hide sensitive'}
-                </button>
+          <div className="p-5">
+            <TabsContent value="overview">
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <StatCard icon={<Hash size={13} />} label="PID" value={String(process.pid)} />
+                  <StatCard icon={<Server size={13} />} label="Mode" value={process.mode} />
+                  <StatCard icon={<Clock size={13} />} label="Uptime" value={formatDuration(process.uptime)} />
+                  <StatCard icon={<RotateCw size={13} />} label="Restarts" value={String(process.restarts)} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <StatCard label="CPU" value={`${process.cpu.toFixed(1)}%`} color={process.cpu > 80 ? 'text-destructive' : process.cpu > 50 ? 'text-warning' : 'text-foreground'} />
+                  <StatCard label="Memory" value={formatBytes(process.memory)} />
+                  <StatCard label="Instances" value={String(process.instances)} />
+                </div>
               </div>
+            </TabsContent>
 
-              {envEntries.length === 0 ? (
-                <div className="text-sm text-muted-foreground/50 py-8 text-center">
-                  No environment variables available
+            <TabsContent value="metrics">
+              <div className="space-y-5">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/60 mb-2">CPU Usage</div>
+                  <div className="bg-subtle/30 border border-border/30 p-3">
+                    <CpuChart data={cpuData} />
+                  </div>
                 </div>
-              ) : (
-                <div className="space-y-0.5">
-                  {envEntries.map(([key, value]) => {
-                    const isMasked = shouldMask(key) && showMasked;
-                    return (
-                      <div
-                        key={key}
-                        className="flex items-start gap-3 px-3 py-2 bg-subtle/20 border border-border/20 hover:bg-subtle/30 transition-colors"
-                      >
-                        <span className="text-[11px] font-mono text-primary/80 shrink-0 min-w-[180px]">
-                          {key}
-                        </span>
-                        <span className="text-[11px] font-mono text-foreground/70 break-all">
-                          {isMasked ? '••••••••••••' : value}
-                        </span>
-                      </div>
-                    );
-                  })}
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/60 mb-2">Memory Usage</div>
+                  <div className="bg-subtle/30 border border-border/30 p-3">
+                    <MemoryChart data={memData} />
+                  </div>
                 </div>
-              )}
-            </div>
-          </TabsContent>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="environment">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/60">
+                    Environment Variables
+                  </span>
+                  <button
+                    onClick={() => setShowMasked(!showMasked)}
+                    className="flex items-center gap-1.5 text-[11px] text-muted-foreground/60 hover:text-foreground transition-colors"
+                  >
+                    {showMasked ? <EyeOff size={11} /> : <Eye size={11} />}
+                    {showMasked ? 'Show' : 'Hide'}
+                  </button>
+                </div>
+
+                {envEntries.length === 0 ? (
+                  <div className="text-xs text-muted-foreground/40 py-8 text-center">
+                    No environment variables available
+                  </div>
+                ) : (
+                  <div className="space-y-0.5">
+                    {envEntries.map(([key, value]) => {
+                      const isMasked = shouldMask(key) && showMasked;
+                      return (
+                        <div
+                          key={key}
+                          className="flex items-start gap-2 px-3 py-1.5 bg-subtle/20 border border-border/20"
+                        >
+                          <span className="text-[10px] font-mono text-primary/70 shrink-0 min-w-[140px]">
+                            {key}
+                          </span>
+                          <span className="text-[10px] font-mono text-foreground/60 break-all">
+                            {isMasked ? '••••••••' : value}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </div>
         </Tabs>
       </div>
     </div>
   );
 }
 
-function InfoRow({ icon, label, value }: { icon?: React.ReactNode; label: string; value: string }) {
+function StatCard({ icon, label, value, color }: { icon?: React.ReactNode; label: string; value: string; color?: string }) {
   return (
-    <div className="flex items-center gap-2 text-sm">
-      {icon && <span className="text-muted-foreground">{icon}</span>}
-      <span className="text-muted-foreground uppercase tracking-wider text-xs w-20">{label}</span>
-      <span className="text-foreground font-mono">{value}</span>
+    <div className="bg-subtle/30 border border-border/30 p-3">
+      <div className="flex items-center gap-1.5 mb-1">
+        {icon && <span className="text-muted-foreground/50">{icon}</span>}
+        <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/50">{label}</span>
+      </div>
+      <span className={`text-sm font-mono font-medium ${color || 'text-foreground'}`}>{value}</span>
     </div>
   );
 }

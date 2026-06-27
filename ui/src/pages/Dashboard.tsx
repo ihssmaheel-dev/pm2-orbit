@@ -9,8 +9,8 @@ export function Dashboard() {
   return (
     <div className="flex flex-col h-full gap-4 p-4">
       <SystemCards />
-      <div className="flex-1 flex overflow-hidden min-h-0">
-        <div className={selectedId !== null ? 'w-[35%]' : 'w-full'}>
+      <div className="flex-1 flex overflow-hidden min-h-0 gap-4">
+        <div className="flex-1 min-w-0">
           <ProcessTable />
         </div>
         {selectedId !== null && <ProcessDetail />}
