@@ -123,10 +123,10 @@ export function ProcessTable() {
         {/* Status dot column */}
         <div className="w-10 shrink-0" />
 
-        {columns.map((col) => (
+        {columns.map((col, i) => (
           <div
             key={col.accessorKey}
-            className={`${col.width} shrink-0 px-3 cursor-pointer hover:bg-subtle/50 transition-colors select-none group`}
+            className={`${col.width} shrink-0 px-3 cursor-pointer hover:bg-subtle/50 transition-colors select-none group flex items-center`}
             onClick={() => {
               const isSorted = sorting[0]?.id === col.accessorKey;
               if (isSorted) {
@@ -136,14 +136,17 @@ export function ProcessTable() {
               }
             }}
           >
-            <div className={`flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground group-hover:text-foreground transition-colors ${
-              col.align === 'right' ? 'justify-end' : ''
+            <div className={`flex items-center justify-between w-full text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground group-hover:text-foreground transition-colors ${
+              col.align === 'right' ? 'flex-row-reverse' : ''
             }`}>
-              {col.header}
+              <span>{col.header}</span>
               <span className="opacity-40 group-hover:opacity-100 transition-opacity">
                 {getSortIcon(col.accessorKey)}
               </span>
             </div>
+            {i < columns.length - 1 && (
+              <div className="absolute right-0 w-px h-3 bg-border/60" />
+            )}
           </div>
         ))}
 
