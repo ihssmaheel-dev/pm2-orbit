@@ -57,7 +57,7 @@ export const ProcessRow = memo(function ProcessRow({ process, style }: ProcessRo
       </div>
 
       {/* CPU */}
-      <div className="w-[70px] shrink-0 px-2 text-right">
+      <div className="w-[80px] shrink-0 px-2 text-right">
         <span className={`text-xs font-mono ${
           process.cpu > 80 ? 'text-destructive' : process.cpu > 50 ? 'text-warning' : 'text-foreground'
         }`}>
@@ -66,14 +66,14 @@ export const ProcessRow = memo(function ProcessRow({ process, style }: ProcessRo
       </div>
 
       {/* Memory */}
-      <div className="w-[80px] shrink-0 px-2 text-right">
+      <div className="w-[100px] shrink-0 px-2 text-right">
         <span className="text-xs font-mono text-foreground">
           {formatBytes(process.memory)}
         </span>
       </div>
 
       {/* Restarts */}
-      <div className="w-[60px] shrink-0 px-2 text-right">
+      <div className="w-[80px] shrink-0 px-2 text-right">
         <span className={`text-xs font-mono ${
           process.restarts > 0 ? 'text-warning' : 'text-muted-foreground'
         }`}>

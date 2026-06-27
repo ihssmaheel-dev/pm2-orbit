@@ -24,9 +24,9 @@ const columns: ColumnDef[] = [
   { accessorKey: 'name', header: 'Name', width: 'w-[160px]' },
   { accessorKey: 'mode', header: 'Mode', width: 'w-[70px]' },
   { accessorKey: 'pid', header: 'PID', width: 'w-[60px]' },
-  { accessorKey: 'cpu', header: 'CPU', width: 'w-[70px]', align: 'right' },
-  { accessorKey: 'memory', header: 'Memory', width: 'w-[90px]', align: 'right' },
-  { accessorKey: 'restarts', header: 'Restarts', width: 'w-[70px]', align: 'right' },
+  { accessorKey: 'cpu', header: 'CPU', width: 'w-[80px]', align: 'right' },
+  { accessorKey: 'memory', header: 'Memory', width: 'w-[100px]', align: 'right' },
+  { accessorKey: 'restarts', header: 'Restarts', width: 'w-[80px]', align: 'right' },
 ];
 
 export function ProcessTable() {
