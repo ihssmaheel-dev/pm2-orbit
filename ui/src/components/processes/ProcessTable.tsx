@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, useCallback } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -7,7 +7,7 @@ import {
   type SortingState,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { Search, X } from 'lucide-react';
+import { Search, X, ChevronUp, ChevronDown } from 'lucide-react';
 import { useProcessStore } from '@/store/processes';
 import { useUIStore } from '@/store/ui';
 import { ProcessRow } from './ProcessRow';
@@ -85,15 +85,19 @@ export function ProcessTable() {
     overscan: 10,
   });
 
-  function toggleSort(key: string) {
+  const toggleSort = useCallback((key: string) => {
     setSorting((prev) => {
-      const current = prev[0];
-      if (current?.id === key) {
-        return current.desc ? [] : [{ id: key, desc: false }];
+      const current = prev.find((s) => s.id === key);
+      if (current) {
+        if (current.desc) return [];
+        return [{ id: key, desc: true }];
       }
       return [{ id: key, desc: false }];
     });
-  }
+    if (parentRef.current) {
+      parentRef.current.scrollTop = 0;
+    }
+  }, []);
 
   return (
     <div className="flex flex-col h-full border border-border/60 bg-card/40">
@@ -133,8 +137,8 @@ export function ProcessTable() {
         <div className="w-7 shrink-0" />
 
         {columns.map((col) => {
-          const sortState = sorting.find((s) => s.id === col.accessorKey);
-          const isSorted = !!sortState;
+          const sortEntry = sorting.find((s) => s.id === col.accessorKey);
+          const sortDir = sortEntry ? (sortEntry.desc ? 'desc' : 'asc') : null;
 
           return (
             <div
@@ -146,22 +150,26 @@ export function ProcessTable() {
                 className={`inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.1em] transition-colors duration-100 ${
                   col.align === 'right' ? 'justify-end w-full' : ''
                 } ${
-                  isSorted
+                  sortDir
                     ? 'text-primary'
                     : 'text-muted-foreground/60 group-hover:text-foreground/60'
                 }`}
               >
                 {col.header}
-                {isSorted && (
-                  <svg
-                    width="8"
-                    height="8"
-                    viewBox="0 0 8 8"
-                    className={`transition-transform duration-100 ${sortState.desc ? 'rotate-180' : ''}`}
-                  >
-                    <path d="M4 1L7 5H1L4 1Z" fill="currentColor" />
-                  </svg>
-                )}
+                <span className="inline-flex flex-col -space-y-[2px] ml-0.5">
+                  <ChevronUp
+                    size={8}
+                    className={`transition-colors duration-100 ${
+                      sortDir === 'asc' ? 'text-primary' : 'text-muted-foreground/25 group-hover:text-muted-foreground/40'
+                    }`}
+                  />
+                  <ChevronDown
+                    size={8}
+                    className={`transition-colors duration-100 ${
+                      sortDir === 'desc' ? 'text-primary' : 'text-muted-foreground/25 group-hover:text-muted-foreground/40'
+                    }`}
+                  />
+                </span>
               </span>
             </div>
           );
