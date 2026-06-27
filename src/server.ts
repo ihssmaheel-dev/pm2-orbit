@@ -155,3 +155,13 @@ export async function createServer(_opts: ServerOpts) {
 
   return app;
 }
+
+if (require.main === module) {
+  const port = parseInt(process.env.PM2_ORBIT_PORT || '9823', 10);
+  createServer({ port })
+    .then((app) => app.listen({ port, host: '127.0.0.1' }))
+    .catch((err) => {
+      console.error('Failed to start:', err.message);
+      process.exit(1);
+    });
+}
