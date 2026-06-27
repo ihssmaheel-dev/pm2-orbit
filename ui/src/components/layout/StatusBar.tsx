@@ -9,6 +9,7 @@ interface StatusBarProps {
 interface HealthData {
   version?: string;
   nodeVersion?: string;
+  pm2Version?: string;
 }
 
 export function StatusBar({ wsStatus = 'disconnected' }: StatusBarProps) {
@@ -33,16 +34,22 @@ export function StatusBar({ wsStatus = 'disconnected' }: StatusBarProps) {
       <span className="uppercase tracking-wider">
         {connected ? 'Connected' : wsStatus === 'connecting' ? 'Connecting...' : 'Disconnected'}
       </span>
-      {health.version && (
+      {health.pm2Version && health.pm2Version !== 'unknown' && (
         <>
           <span className="text-border">·</span>
-          <span className="font-mono">v{health.version}</span>
+          <span>pm2 v{health.pm2Version}</span>
         </>
       )}
       {health.nodeVersion && (
         <>
           <span className="text-border">·</span>
           <span>Node {health.nodeVersion}</span>
+        </>
+      )}
+      {health.version && (
+        <>
+          <span className="text-border">·</span>
+          <span className="font-mono">v{health.version}</span>
         </>
       )}
     </footer>
