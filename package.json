@@ -26,8 +26,10 @@
     "@fastify/helmet": "^11",
     "@fastify/rate-limit": "^9",
     "@fastify/static": "^7.0.4",
+    "@types/nodemailer": "^8.0.1",
     "fastify": "^4",
     "mri": "^1.2",
+    "nodemailer": "^9.0.1",
     "open": "^10",
     "ws": "^8"
   },

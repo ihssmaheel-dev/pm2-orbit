@@ -53,3 +53,12 @@ export async function sendDiscord(webhookUrl: string, event: { message: string }
     return false;
   }
 }
+
+export async function sendEmailNotification(subject: string, body: string): Promise<boolean> {
+  try {
+    const { sendEmail } = await import('./email');
+    return sendEmail(subject, body);
+  } catch {
+    return false;
+  }
+}

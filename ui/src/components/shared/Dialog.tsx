@@ -25,12 +25,22 @@ export function Dialog({ open, onClose, children, className }: DialogProps) {
     <dialog
       ref={dialogRef}
       onClose={onClose}
+      onClick={(e) => {
+        if (e.target === dialogRef.current) onClose();
+      }}
       className={cn(
-        'bg-card text-card-foreground border border-border p-0 backdrop:bg-black/60',
-        'rounded-none max-w-lg w-full',
-        'backdrop:backdrop-blur-sm',
+        'bg-card text-card-foreground border border-border p-0',
+        'rounded-none max-w-md w-full',
+        'shadow-glow-lg',
         className,
       )}
+      style={{
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        margin: 0,
+      }}
     >
       {children}
     </dialog>
@@ -44,7 +54,7 @@ interface DialogHeaderProps {
 
 export function DialogHeader({ children, className }: DialogHeaderProps) {
   return (
-    <div className={cn('flex items-center justify-between p-4 border-b border-border', className)}>
+    <div className={cn('flex items-center justify-between p-5 border-b border-border', className)}>
       {children}
     </div>
   );
@@ -57,7 +67,7 @@ interface DialogTitleProps {
 
 export function DialogTitle({ children, className }: DialogTitleProps) {
   return (
-    <h2 className={cn('text-lg font-light tracking-wider uppercase', className)}>
+    <h2 className={cn('text-base font-medium tracking-wide uppercase', className)}>
       {children}
     </h2>
   );
@@ -69,7 +79,7 @@ interface DialogBodyProps {
 }
 
 export function DialogBody({ children, className }: DialogBodyProps) {
-  return <div className={cn('p-4', className)}>{children}</div>;
+  return <div className={cn('p-5', className)}>{children}</div>;
 }
 
 interface DialogFooterProps {
