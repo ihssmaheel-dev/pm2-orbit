@@ -12,7 +12,7 @@ interface CardProps {
 
 function Card({ icon, label, value, subtext, color = 'text-primary' }: CardProps) {
   return (
-    <div className="flex items-center gap-3 px-4 py-3 bg-card border border-border min-w-[160px]">
+    <div className="flex items-center gap-3 px-4 py-3 bg-card border border-border min-w-[160px] shadow-glow-sm">
       <div className={`${color}`}>{icon}</div>
       <div className="flex flex-col">
         <span className="text-xs uppercase tracking-wider text-muted-foreground">{label}</span>

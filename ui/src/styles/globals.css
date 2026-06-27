@@ -51,15 +51,15 @@
   --background: #161541;
   --background-deep: #0f0e2e;
   --foreground: #ffffff;
-  --card: #000000;
+  --card: #1a1948;
   --card-foreground: #ffffff;
-  --popover: #1e1d52;
+  --popover: #1a1948;
   --popover-foreground: #ffffff;
-  --muted: #1e1d52;
+  --muted: #1a1948;
   --muted-foreground: #999999;
   --subtle: #1e1d52;
-  --input: #000000;
-  --border: #222222;
+  --input: #1a1948;
+  --border: #2a2960;
   --ring: #019cf6;
 
   --primary: #019cf6;
