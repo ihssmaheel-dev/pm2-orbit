@@ -146,11 +146,21 @@ export function createEventPipeline() {
       }
     });
 
-    tickInterval = setInterval(() => {
+    tickInterval = setInterval(async () => {
       if (clients.size === 0) return;
+
+      const now = Date.now();
+      const snapshots = await bridge.list();
+
+      for (const snap of snapshots) {
+        buffer.push(snap.id, now, snap.cpu, snap.memory);
+      }
+
       const tick: Tick = {
-        ts: Date.now(),
+        ts: now,
         events: [],
+        full: snapshots,
+        fullSeq: fullSeq,
         system: readSystem(),
       };
       broadcast(tick);

@@ -31,6 +31,12 @@ const BUS_HEARTBEAT_MS = 15_000;
 function procToSnapshot(proc: any): ProcessSnapshot {
   const env = proc.pm2_env || {};
   const monit = proc.monit || {};
+
+  let uptime = env.pm_uptime || 0;
+  if (uptime > 1e12) {
+    uptime = Date.now() - uptime;
+  }
+
   return {
     id: proc.pm_id as number,
     name: proc.name as string,
@@ -38,7 +44,7 @@ function procToSnapshot(proc: any): ProcessSnapshot {
     pid: proc.pid as number,
     cpu: monit.cpu || 0,
     memory: monit.memory || 0,
-    uptime: env.pm_uptime || 0,
+    uptime,
     restarts: env.restart_time || 0,
     mode: (env.exec_mode === 'cluster_mode' ? 'cluster' : 'fork') as ProcessMode,
     instances: env.instances || 1,
