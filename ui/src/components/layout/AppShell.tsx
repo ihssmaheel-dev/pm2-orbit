@@ -1,11 +1,14 @@
 import { Header } from './Header';
 import { StatusBar } from './StatusBar';
+import { useWebSocket } from '@/hooks/useWebSocket';
 
 interface AppShellProps {
   children?: React.ReactNode;
 }
 
 export function AppShell({ children }: AppShellProps) {
+  const { status } = useWebSocket();
+
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
       <Header />
@@ -19,7 +22,7 @@ export function AppShell({ children }: AppShellProps) {
           </div>
         )}
       </main>
-      <StatusBar />
+      <StatusBar wsStatus={status} />
     </div>
   );
 }
