@@ -7,7 +7,7 @@ import {
   type SortingState,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { Search, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useProcessStore } from '@/store/processes';
 import { useUIStore } from '@/store/ui';
 import { ProcessRow } from './ProcessRow';
@@ -82,16 +82,6 @@ export function ProcessTable() {
     overscan: 10,
   });
 
-  const getSortIcon = (columnId: string) => {
-    const sort = sorting.find((s) => s.id === columnId);
-    if (!sort) return <ArrowUpDown size={10} className="opacity-30" />;
-    return sort.desc ? (
-      <ArrowDown size={10} className="text-primary" />
-    ) : (
-      <ArrowUp size={10} className="text-primary" />
-    );
-  };
-
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -119,43 +109,45 @@ export function ProcessTable() {
       </div>
 
       {/* Column Headers */}
-      <div className="flex items-center h-10 px-0 border-b border-border bg-background shrink-0">
+      <div className="flex items-center h-11 px-0 border-b border-border bg-subtle/20 shrink-0">
         {/* Status dot column */}
         <div className="w-10 shrink-0" />
 
-        {columns.map((col, i) => (
-          <div
-            key={col.accessorKey}
-            className={`${col.width} shrink-0 px-3 cursor-pointer hover:bg-subtle/50 transition-colors select-none group flex items-center`}
-            onClick={() => {
-              const isSorted = sorting[0]?.id === col.accessorKey;
-              if (isSorted) {
-                setSorting(sorting[0]?.desc ? [] : [{ id: col.accessorKey, desc: true }]);
-              } else {
-                setSorting([{ id: col.accessorKey, desc: false }]);
-              }
-            }}
-          >
-            <div className={`flex items-center justify-between w-full text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground group-hover:text-foreground transition-colors ${
-              col.align === 'right' ? 'flex-row-reverse' : ''
-            }`}>
-              <span>{col.header}</span>
-              <span className="opacity-40 group-hover:opacity-100 transition-opacity">
-                {getSortIcon(col.accessorKey)}
-              </span>
+        {columns.map((col) => {
+          const isSorted = sorting[0]?.id === col.accessorKey;
+          return (
+            <div
+              key={col.accessorKey}
+              className={`${col.width} shrink-0 px-3 cursor-pointer hover:bg-subtle/40 transition-colors select-none group relative`}
+              onClick={() => {
+                if (isSorted) {
+                  setSorting(sorting[0]?.desc ? [] : [{ id: col.accessorKey, desc: true }]);
+                } else {
+                  setSorting([{ id: col.accessorKey, desc: false }]);
+                }
+              }}
+            >
+              <div className={`flex items-center text-[11px] font-medium uppercase tracking-wider ${
+                isSorted ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
+              } ${col.align === 'right' ? 'justify-end' : 'justify-between'}`}>
+                <span>{col.header}</span>
+                {isSorted && (
+                  <span className="text-[9px]">
+                    {sorting[0]?.desc ? '▼' : '▲'}
+                  </span>
+                )}
+              </div>
+              <div className={`absolute bottom-0 left-0 h-px ${isSorted ? 'bg-primary w-full' : 'bg-transparent'}`} />
             </div>
-            {i < columns.length - 1 && (
-              <div className="absolute right-0 w-px h-3 bg-border/60" />
-            )}
-          </div>
-        ))}
+          );
+        })}
 
         {/* Sparkline column (no header) */}
         <div className="w-[90px] shrink-0" />
 
         {/* Uptime column */}
         <div className="flex-1 px-3 text-right">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             UPTIME
           </span>
         </div>
