@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'Exo', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-sans: 'Exo', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 
   --radius: 0px;
   --radius-sm: 0px;
@@ -140,11 +140,30 @@
 
 /* Base styles */
 body {
-  font-family: var(--font-sans);
+  font-family: 'Exo', sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  font-variant: normal;
+  font-kerning: auto;
+  font-optical-sizing: auto;
+  font-stretch: 100%;
+  font-variation-settings: normal;
+  font-feature-settings: normal;
+  font-size: 16px;
+  line-height: 1.5;
+  text-transform: none;
+  text-decoration: none;
+  text-align: start;
+  text-indent: 0;
   background-color: var(--background);
   color: var(--foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Monospace numbers */
+.mono {
+  font-family: 'JetBrains Mono', monospace;
 }
 
 /* Scrollbar styling */
