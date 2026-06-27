@@ -5,6 +5,7 @@ import { Dashboard } from '@/pages/Dashboard';
 import { Logs } from '@/pages/Logs';
 import { Alerts } from '@/pages/Alerts';
 import { History } from '@/pages/History';
+import { Settings } from '@/pages/Settings';
 
 interface AppShellProps {
   wsStatus: 'connecting' | 'connected' | 'disconnected';
@@ -21,11 +22,7 @@ export function AppShell({ wsStatus }: AppShellProps) {
         {activeTab === 'logs' && <Logs />}
         {activeTab === 'alerts' && <Alerts />}
         {activeTab === 'history' && <History />}
-        {activeTab === 'settings' && (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
-            Settings — Coming soon
-          </div>
-        )}
+        {activeTab === 'settings' && <Settings />}
       </main>
       <StatusBar wsStatus={wsStatus} />
     </div>

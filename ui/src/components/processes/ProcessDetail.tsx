@@ -1,4 +1,5 @@
-import { X, Clock, RotateCw, Hash, Server } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Clock, RotateCw, Hash, Server, Eye, EyeOff } from 'lucide-react';
 import { useProcessStore } from '@/store/processes';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/shared/Tabs';
 import { Badge } from '@/components/shared/Badge';
@@ -14,15 +15,34 @@ const statusVariant: Record<string, 'success' | 'warning' | 'destructive' | 'out
   stopping: 'warning',
 };
 
+const SENSITIVE_REGEX = /KEY|SECRET|TOKEN|PASS|PASSWORD|CREDENTIAL|AUTH|API/i;
+
+function shouldMask(key: string): boolean {
+  return SENSITIVE_REGEX.test(key);
+}
+
 export function ProcessDetail() {
   const selectedId = useProcessStore((s) => s.selectedId);
   const select = useProcessStore((s) => s.select);
   const process = useProcessStore((s) => (selectedId !== null ? s.processes.get(selectedId) : undefined));
+  const [envVars, setEnvVars] = useState<Record<string, string>>({});
+  const [showMasked, setShowMasked] = useState(true);
+
+  useEffect(() => {
+    if (process) {
+      fetch(`/api/processes/${process.id}/env`)
+        .then((res) => res.json())
+        .then((data) => setEnvVars(data))
+        .catch(() => setEnvVars({}));
+    }
+  }, [process]);
 
   if (!process) return null;
 
   const cpuData = { ts: process.history.ts, values: process.history.cpu };
   const memData = { ts: process.history.ts, values: process.history.memory };
+
+  const envEntries = Object.entries(envVars);
 
   return (
     <div className="w-[65%] h-full border-l border-border bg-background flex flex-col overflow-hidden">
@@ -72,8 +92,44 @@ export function ProcessDetail() {
           </TabsContent>
 
           <TabsContent value="environment">
-            <div className="text-sm text-muted-foreground">
-              Environment variables will be displayed here.
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/60">
+                  Environment Variables
+                </span>
+                <button
+                  onClick={() => setShowMasked(!showMasked)}
+                  className="flex items-center gap-1.5 text-[11px] text-muted-foreground/60 hover:text-foreground transition-colors"
+                >
+                  {showMasked ? <EyeOff size={12} /> : <Eye size={12} />}
+                  {showMasked ? 'Show sensitive' : 'Hide sensitive'}
+                </button>
+              </div>
+
+              {envEntries.length === 0 ? (
+                <div className="text-sm text-muted-foreground/50 py-8 text-center">
+                  No environment variables available
+                </div>
+              ) : (
+                <div className="space-y-0.5">
+                  {envEntries.map(([key, value]) => {
+                    const isMasked = shouldMask(key) && showMasked;
+                    return (
+                      <div
+                        key={key}
+                        className="flex items-start gap-3 px-3 py-2 bg-subtle/20 border border-border/20 hover:bg-subtle/30 transition-colors"
+                      >
+                        <span className="text-[11px] font-mono text-primary/80 shrink-0 min-w-[180px]">
+                          {key}
+                        </span>
+                        <span className="text-[11px] font-mono text-foreground/70 break-all">
+                          {isMasked ? '••••••••••••' : value}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>
