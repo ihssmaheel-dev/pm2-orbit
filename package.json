@@ -1,0 +1,65 @@
+{
+  "name": "pm2-orbit",
+  "version": "0.1.0",
+  "description": "High-performance PM2 monitoring dashboard — event-driven, 1000+ processes, < 150KB",
+  "main": "dist/server.js",
+  "bin": {
+    "pm2-orbit": "bin/pm2-orbit.js"
+  },
+  "scripts": {
+    "dev:ui": "cd ui && vite",
+    "dev:server": "tsx watch src/server.ts",
+    "dev": "concurrently -k -n ui,server -c blue,green \"npm:dev:ui\" \"npm:dev:server\"",
+    "build": "node build.js",
+    "start": "node dist/server.js",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && cd ui && tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "vitest --config vitest.e2e.config.ts",
+    "prepare": "husky"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@fastify/helmet": "^11",
+    "@fastify/rate-limit": "^9",
+    "@fastify/static": "^9.1.3",
+    "fastify": "^4",
+    "mri": "^1.2",
+    "open": "^10",
+    "ws": "^8"
+  },
+  "optionalDependencies": {
+    "better-sqlite3": "^11",
+    "pm2": "^5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@testing-library/react": "^14",
+    "@types/node": "^26.0.1",
+    "@types/ws": "^8.18.1",
+    "@vitejs/plugin-react": "^4",
+    "autoprefixer": "^10",
+    "concurrently": "^8",
+    "esbuild": "^0.20",
+    "husky": "^9",
+    "lint-staged": "^15",
+    "postcss": "^8",
+    "tailwindcss": "^4",
+    "tsx": "^4",
+    "typescript": "^5",
+    "vite": "^5",
+    "vitest": "^1"
+  },
+  "keywords": [
+    "pm2",
+    "monitoring",
+    "dashboard",
+    "devops",
+    "nodejs",
+    "react"
+  ],
+  "license": "MIT"
+}
