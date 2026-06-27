@@ -21,13 +21,16 @@ interface ColumnDef {
 }
 
 const columns: ColumnDef[] = [
-  { accessorKey: 'name', header: 'Name', width: 'w-[160px]' },
-  { accessorKey: 'mode', header: 'Mode', width: 'w-[70px]' },
-  { accessorKey: 'pid', header: 'PID', width: 'w-[60px]' },
-  { accessorKey: 'cpu', header: 'CPU', width: 'w-[80px]', align: 'right' },
-  { accessorKey: 'memory', header: 'Memory', width: 'w-[100px]', align: 'right' },
+  { accessorKey: 'name', header: 'Name', width: 'w-[180px]' },
+  { accessorKey: 'mode', header: 'Mode', width: 'w-[72px]' },
+  { accessorKey: 'pid', header: 'PID', width: 'w-[64px]' },
+  { accessorKey: 'cpu', header: 'CPU', width: 'w-[90px]', align: 'right' },
+  { accessorKey: 'memory', header: 'Memory', width: 'w-[90px]', align: 'right' },
   { accessorKey: 'restarts', header: 'Restarts', width: 'w-[80px]', align: 'right' },
 ];
+
+const SPARKLINE_WIDTH = 'w-[90px]';
+const UPTIME_WIDTH = 'w-[80px]';
 
 export function ProcessTable() {
   const processes = useProcessStore((s) => s.processes);
@@ -84,41 +87,40 @@ export function ProcessTable() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-border shrink-0 bg-card/50">
+      {/* Top bar: title + search */}
+      <div className="flex items-center justify-between h-12 px-5 border-b border-border shrink-0">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-1 h-4 bg-primary rounded-full" />
-            <span className="text-sm text-foreground font-medium tracking-wide">
-              PROCESSES
-            </span>
-          </div>
-          <span className="text-[10px] text-primary-foreground font-mono bg-primary/20 text-primary px-2 py-0.5 min-w-[20px] text-center">
+          <div className="w-1 h-3.5 bg-primary" />
+          <span className="text-xs font-medium uppercase tracking-widest text-foreground">
+            Processes
+          </span>
+          <span className="text-[10px] font-mono text-primary bg-primary/10 px-1.5 py-0.5 leading-none">
             {filteredData.length}
           </span>
         </div>
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
-            placeholder="Search processes..."
+            placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-9 w-64 pl-9 pr-4 text-xs bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 rounded-none transition-colors"
+            className="h-8 w-56 pl-8 pr-3 text-xs bg-transparent border border-border text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/40 rounded-none"
           />
         </div>
       </div>
 
-      {/* Column Headers */}
-      <div className="flex items-center h-10 px-0 border-b border-border/80 bg-background shrink-0">
-        {/* Status dot column */}
-        <div className="w-10 shrink-0" />
+      {/* Column headers */}
+      <div className="flex items-center h-9 px-5 border-b border-border bg-background shrink-0 select-none">
+        {/* Status dot spacer */}
+        <div className="w-5 shrink-0" />
 
         {columns.map((col) => {
           const isSorted = sorting[0]?.id === col.accessorKey;
+          const nextDesc = isSorted && sorting[0]?.desc;
           return (
             <div
               key={col.accessorKey}
-              className={`${col.width} shrink-0 px-3 cursor-pointer hover:bg-subtle/30 transition-all select-none group`}
+              className={`${col.width} shrink-0 px-3 cursor-pointer group`}
               onClick={() => {
                 if (isSorted) {
                   setSorting(sorting[0]?.desc ? [] : [{ id: col.accessorKey, desc: true }]);
@@ -127,43 +129,49 @@ export function ProcessTable() {
                 }
               }}
             >
-              <div className={`flex items-center gap-1 text-[11px] font-medium uppercase tracking-wider ${
-                isSorted ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground/80'
-              } ${col.align === 'right' ? 'justify-end' : ''}`}>
-                <span>{col.header}</span>
+              <span
+                className={`inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] transition-colors ${
+                  col.align === 'right' ? 'justify-end w-full' : ''
+                } ${
+                  isSorted ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground/70'
+                }`}
+              >
+                {col.header}
                 {isSorted && (
-                  <span className="text-[8px] text-primary ml-0.5">
-                    {sorting[0]?.desc ? '▼' : '▲'}
-                  </span>
+                  <span className="text-[9px] text-primary leading-none">{nextDesc ? '▼' : '▲'}</span>
                 )}
-              </div>
+              </span>
             </div>
           );
         })}
 
-        {/* Sparkline column (no header) */}
-        <div className="w-[90px] shrink-0" />
+        {/* Sparkline */}
+        <div className={`${SPARKLINE_WIDTH} shrink-0 px-3`}>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            History
+          </span>
+        </div>
 
-        {/* Uptime column */}
-        <div className="flex-1 px-3 text-right">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            UPTIME
+        {/* Uptime */}
+        <div className={`${UPTIME_WIDTH} shrink-0 px-3 text-right`}>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            Uptime
           </span>
         </div>
       </div>
 
-      {/* Virtual Rows */}
+      {/* Virtual rows */}
       <div ref={parentRef} className="flex-1 overflow-auto">
         {rows.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center py-12">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-subtle/50 flex items-center justify-center">
-                <svg className="w-8 h-8 text-muted-foreground/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-14 h-14 mx-auto mb-3 bg-subtle/40 flex items-center justify-center">
+                <svg className="w-7 h-7 text-muted-foreground/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
               </div>
-              <div className="text-sm text-muted-foreground font-medium">No processes running</div>
-              <div className="text-xs text-muted-foreground/60 mt-1">Start PM2 to see processes here</div>
+              <div className="text-sm text-muted-foreground">No processes running</div>
+              <div className="text-xs text-muted-foreground/50 mt-1">Start PM2 to see processes here</div>
             </div>
           </div>
         ) : (
@@ -175,6 +183,9 @@ export function ProcessTable() {
                 <ProcessRow
                   key={process.id}
                   process={process}
+                  columns={columns}
+                  sparklineWidth={SPARKLINE_WIDTH}
+                  uptimeWidth={UPTIME_WIDTH}
                   style={{
                     position: 'absolute',
                     top: 0,
