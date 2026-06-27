@@ -3,17 +3,21 @@ import { BufferStore } from './buffer';
 import { readSystem } from '../system/metrics';
 import { WebSocketServer, WebSocket } from 'ws';
 import type { Tick } from '../../types';
+import { createStore } from '../persistence/store';
+import { createAlertEngine } from '../alerts/engine';
 
 const FULL_SYNC_INTERVAL = 5000;
 
 export function createEventPipeline() {
   const bridge = createPm2Bridge();
   const buffer = new BufferStore();
+  const persistence = createStore();
+  const alerts = createAlertEngine();
   const wss = new WebSocketServer({ noServer: true });
   const clients = new Set<WebSocket>();
 
   let lastFullSync = 0;
-  let lastFullHash = '';
+  let fullSeq = 0;
   let tickInterval: ReturnType<typeof setInterval> | null = null;
 
   function broadcast(tick: Tick): void {
@@ -21,6 +25,51 @@ export function createEventPipeline() {
     for (const client of clients) {
       if (client.readyState === WebSocket.OPEN) {
         client.send(data);
+      }
+    }
+  }
+
+  function persistTick(tick: Tick) {
+    if (!persistence) return;
+
+    const now = tick.ts;
+    const sys = tick.system;
+    persistence.pushSystemMetrics({
+      ts: now,
+      cpu: sys.cpu,
+      memoryUsed: sys.memory.used,
+      memoryTotal: sys.memory.total,
+      load1: sys.loadAvg[0],
+      load5: sys.loadAvg[1],
+      load15: sys.loadAvg[2],
+    });
+
+    for (const event of tick.events) {
+      if (event.type === 'remove') continue;
+      persistence.pushProcessMetrics({
+        ts: now,
+        processId: event.process.id,
+        processName: event.process.name,
+        cpu: event.process.cpu,
+        memory: event.process.memory,
+      });
+    }
+  }
+
+  function evaluateAlerts(tick: Tick) {
+    for (const event of tick.events) {
+      if (event.type === 'remove') continue;
+      const proc = event.process;
+      const metrics: Record<string, number> = {
+        cpu: proc.cpu,
+        memory: proc.memory,
+        restarts: proc.restarts,
+      };
+      const fired = alerts.evaluate(proc.id, proc.name, metrics);
+      if (fired.length > 0) {
+        for (const alertEvent of fired) {
+          console.log(`  \x1b[33m⚠\x1b[0m Alert: ${alertEvent.message}`);
+        }
       }
     }
   }
@@ -36,18 +85,18 @@ export function createEventPipeline() {
 
     if (needsFullSync) {
       lastFullSync = now;
+      fullSeq++;
       bridge.list().then((snapshots) => {
-        const hash = bridge.computeListHash(snapshots);
-        if (hash !== lastFullHash) {
-          lastFullHash = hash;
-          tick.full = snapshots;
-          tick.fullHash = hash;
-        }
+        tick.full = snapshots;
+        tick.fullSeq = fullSeq;
+        persistTick(tick);
         broadcast(tick);
       });
       return tick;
     }
 
+    persistTick(tick);
+    evaluateAlerts(tick);
     return tick;
   }
 
@@ -88,12 +137,15 @@ export function createEventPipeline() {
     }
     for (const client of clients) client.close();
     clients.clear();
+    persistence?.close();
     bridge.disconnect();
   }
 
   return {
     bridge,
     buffer,
+    persistence,
+    alerts,
     wss,
     clients,
     start,

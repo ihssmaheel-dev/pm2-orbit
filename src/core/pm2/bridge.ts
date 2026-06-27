@@ -25,6 +25,7 @@ export interface ProcessEvent {
 }
 
 const STALE_THRESHOLD_MS = 10_000;
+const BUS_HEARTBEAT_MS = 15_000;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function procToSnapshot(proc: any): ProcessSnapshot {
@@ -51,9 +52,33 @@ export function createPm2Bridge() {
   const lastUpdateMap = new Map<number, number>();
   const listeners = new Set<Listener>();
 
+  let lastEventTime = 0;
+  let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+
   function emitToListeners(events: ProcessEvent[]) {
+    lastEventTime = Date.now();
     for (const fn of listeners) {
       fn(events);
+    }
+  }
+
+  function startHeartbeat() {
+    stopHeartbeat();
+    lastEventTime = Date.now();
+    heartbeatTimer = setInterval(() => {
+      if (bus && lastEventTime > 0 && Date.now() - lastEventTime > BUS_HEARTBEAT_MS) {
+        console.log('  \x1b[33m⚠\x1b[0m PM2 bus heartbeat timeout — reconnecting...');
+        bus.close();
+        bus = null;
+        connect().catch(() => {});
+      }
+    }, BUS_HEARTBEAT_MS);
+  }
+
+  function stopHeartbeat() {
+    if (heartbeatTimer) {
+      clearInterval(heartbeatTimer);
+      heartbeatTimer = null;
     }
   }
 
@@ -103,15 +128,6 @@ export function createPm2Bridge() {
     }
   }
 
-  function computeHash(snapshots: ProcessSnapshot[]): string {
-    const data = snapshots.map((s) => `${s.id}:${s.status}:${s.cpu}:${s.memory}`).join('|');
-    let hash = 0;
-    for (let i = 0; i < data.length; i++) {
-      hash = ((hash << 5) - hash + data.charCodeAt(i)) | 0;
-    }
-    return hash.toString(36);
-  }
-
   async function connect(): Promise<void> {
     if (!pm2Module) {
       console.log('  \x1b[33m⚠\x1b[0m PM2 not installed — running in demo mode');
@@ -124,6 +140,7 @@ export function createPm2Bridge() {
         pm2Module!.launchBus((_err: Error | null, _bus: Pm2Bus) => {
           if (_err) return reject(_err);
           bus = _bus;
+          startHeartbeat();
 
           bus.on('process:event', async (event: Pm2Event) => {
             const events: ProcessEvent[] = [];
@@ -174,12 +191,10 @@ export function createPm2Bridge() {
   }
 
   function disconnect(): void {
+    stopHeartbeat();
     bus?.close();
+    bus = null;
     pm2Module?.disconnect();
-  }
-
-  function computeListHash(snapshots: ProcessSnapshot[]): string {
-    return computeHash(snapshots);
   }
 
   return {
@@ -187,7 +202,6 @@ export function createPm2Bridge() {
     list,
     subscribe,
     disconnect,
-    computeListHash,
     isConnected: () => bus !== null,
   };
 }

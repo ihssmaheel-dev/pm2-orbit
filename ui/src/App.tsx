@@ -2,12 +2,14 @@ import { AppShell } from './components/layout/AppShell';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from './hooks/useTheme';
 import { useAlertNotifications } from './hooks/useAlertNotifications';
+import { useWebSocket } from './hooks/useWebSocket';
 
 function AppInner() {
+  const { status } = useWebSocket();
   useAlertNotifications();
   return (
     <>
-      <AppShell />
+      <AppShell wsStatus={status} />
       <Toaster
         position="bottom-right"
         toastOptions={{

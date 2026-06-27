@@ -5,7 +5,7 @@ export interface Tick {
   ts: number;
   events: ProcessEvent[];
   full?: ProcessSnapshot[];
-  fullHash?: string;
+  fullSeq?: number;
   system: SystemSnapshot;
 }
 

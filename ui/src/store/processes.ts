@@ -23,7 +23,7 @@ export const useProcessStore = create<ProcessStore>((set, get) => ({
         } else {
           const existing = next.get(event.process.id);
           if (existing) {
-            Object.assign(existing, event.process);
+            next.set(event.process.id, { ...existing, ...event.process });
           } else {
             next.set(event.process.id, { ...event.process });
           }
@@ -39,7 +39,7 @@ export const useProcessStore = create<ProcessStore>((set, get) => ({
       for (const snap of snapshots) {
         const existing = next.get(snap.id);
         if (existing) {
-          Object.assign(existing, snap);
+          next.set(snap.id, { ...existing, ...snap });
         } else {
           next.set(snap.id, { ...snap });
         }

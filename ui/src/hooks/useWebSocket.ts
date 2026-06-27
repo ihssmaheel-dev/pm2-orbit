@@ -10,6 +10,7 @@ export function useWebSocket() {
   const clientRef = useRef<WSClient | null>(null);
   const [status, setStatus] = useState<WSStatus>('connecting');
   const lastTickRef = useRef<number>(0);
+  const lastFullSeqRef = useRef<number>(0);
 
   const applyDelta = useProcessStore((s) => s.applyDelta);
   const setAll = useProcessStore((s) => s.setAll);
@@ -26,12 +27,15 @@ export function useWebSocket() {
     const unsubTick = client.subscribe((tick: Tick) => {
       lastTickRef.current = tick.ts;
 
-      if (tick.events.length > 0) {
-        applyDelta(tick.events);
+      if (tick.full && tick.fullSeq !== undefined) {
+        if (tick.fullSeq !== lastFullSeqRef.current) {
+          lastFullSeqRef.current = tick.fullSeq;
+          setAll(tick.full);
+        }
       }
 
-      if (tick.full) {
-        setAll(tick.full);
+      if (tick.events.length > 0) {
+        applyDelta(tick.events);
       }
 
       updateSystem(tick.system);

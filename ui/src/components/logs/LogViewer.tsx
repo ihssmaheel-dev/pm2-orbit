@@ -53,10 +53,12 @@ export function LogViewer() {
   const paused = useLogsStore((s) => s.paused);
   const setPaused = useLogsStore((s) => s.setPaused);
   const clearLogs = useLogsStore((s) => s.clearLogs);
+  const addLog = useLogsStore((s) => s.addLog);
   const processes = useProcessStore((s) => s.processes);
   const [searchQuery, setSearchQuery] = useState('');
   const [autoScroll, setAutoScroll] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const eventSourcesRef = useRef<Map<number, EventSource>>(new Map());
 
   const processNames = useMemo(() => {
     const names = new Map<number, string>();
@@ -65,6 +67,36 @@ export function LogViewer() {
     }
     return names;
   }, [processes]);
+
+  useEffect(() => {
+    for (const proc of processes.values()) {
+      if (!eventSourcesRef.current.has(proc.id)) {
+        const es = new EventSource(`/api/logs/${proc.id}`);
+        es.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            addLog({
+              ts: data.ts,
+              processId: proc.id,
+              processName: proc.name,
+              stream: data.stream,
+              message: data.message,
+            });
+          } catch {
+            // ignore
+          }
+        };
+        eventSourcesRef.current.set(proc.id, es);
+      }
+    }
+
+    return () => {
+      for (const es of eventSourcesRef.current.values()) {
+        es.close();
+      }
+      eventSourcesRef.current.clear();
+    };
+  }, [processes, addLog]);
 
   const filteredLogs = useMemo(() => {
     if (!searchQuery) return logs;
@@ -91,7 +123,7 @@ export function LogViewer() {
   const downloadLogs = () => {
     const text = filteredLogs
       .map((log) => {
-        const name = processNames.get(0) || 'unknown';
+        const name = processNames.get(log.processId) || 'unknown';
         return `[${new Date(log.ts).toISOString()}] [${name}] ${log.message}`;
       })
       .join('\n');

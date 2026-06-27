@@ -6,6 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import { createEventPipeline } from './core';
 import { createAuthPlugin } from './plugins/auth';
+import { registerRoutes } from './routes';
 
 export interface ServerOpts {
   port: number;
@@ -15,7 +16,8 @@ export interface ServerOpts {
 export async function createServer(_opts: ServerOpts) {
   const app = Fastify({ logger: false, trustProxy: false });
 
-  const isDev = process.env.NODE_ENV === 'development';
+  const distPath = path.join(__dirname, '..', 'dist-ui');
+  const isDev = !fs.existsSync(path.join(distPath, 'index.html'));
 
   await app.register(fastifyHelmet, {
     contentSecurityPolicy: {
@@ -41,8 +43,6 @@ export async function createServer(_opts: ServerOpts) {
   }
 
   if (!isDev) {
-    const distPath = path.join(__dirname, '..', 'dist-ui');
-
     await app.register(fastifyStatic, {
       root: distPath,
       prefix: '/',
@@ -70,22 +70,7 @@ export async function createServer(_opts: ServerOpts) {
     console.log('');
   });
 
-  app.get('/api/health', async () => ({
-    status: 'ok',
-    uptime: process.uptime(),
-    version: require('../package.json').version,
-  }));
-
-  app.get('/api/ping', async () => 'pong');
-
-  app.get('/api/system', async () => {
-    const { readSystem } = await import('./core/system/metrics');
-    return readSystem();
-  });
-
-  app.get('/api/processes', async () => {
-    return pipeline.bridge.list();
-  });
+  await registerRoutes(app, pipeline);
 
   app.server.on('upgrade', (req, socket, head) => {
     if (req.url === '/ws') {
@@ -96,7 +81,7 @@ export async function createServer(_opts: ServerOpts) {
             ts: Date.now(),
             events: [],
             full: snapshots,
-            fullHash: pipeline.bridge.computeListHash(snapshots),
+            fullSeq: 1,
             system: require('./core/system/metrics').readSystem(),
           }));
         });
