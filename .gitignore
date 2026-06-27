@@ -7,3 +7,5 @@ dist-ui/
 .DS_Store
 coverage/
 .vite/
+tasks.md
+doc.md
