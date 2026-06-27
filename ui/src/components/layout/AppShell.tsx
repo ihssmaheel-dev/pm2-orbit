@@ -4,6 +4,7 @@ import { useWebSocket } from '@/hooks/useWebSocket';
 import { useUIStore } from '@/store/ui';
 import { Dashboard } from '@/pages/Dashboard';
 import { Logs } from '@/pages/Logs';
+import { Alerts } from '@/pages/Alerts';
 
 export function AppShell() {
   const { status } = useWebSocket();
@@ -15,11 +16,7 @@ export function AppShell() {
       <main className="flex-1 overflow-hidden">
         {activeTab === 'processes' && <Dashboard />}
         {activeTab === 'logs' && <Logs />}
-        {activeTab === 'alerts' && (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
-            Alerts — Coming soon
-          </div>
-        )}
+        {activeTab === 'alerts' && <Alerts />}
         {activeTab === 'history' && (
           <div className="flex items-center justify-center h-full text-muted-foreground">
             History — Coming soon

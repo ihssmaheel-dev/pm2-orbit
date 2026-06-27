@@ -1,7 +1,8 @@
-import { Sun, Moon, Monitor, Bell } from 'lucide-react';
+import { Sun, Moon, Monitor } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
 import { useUIStore } from '@/store/ui';
 import { ConnectionDot } from '@/components/shared/ConnectionDot';
+import { AlertBadge } from '@/components/alerts/AlertBadge';
 
 export function Header() {
   const { theme, setTheme, resolved } = useTheme();
@@ -55,9 +56,7 @@ export function Header() {
           {theme === 'system' ? <Monitor size={16} /> : <ThemeIcon size={16} />}
         </button>
 
-        <button className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors relative">
-          <Bell size={16} />
-        </button>
+        <AlertBadge onClick={() => setActiveTab('alerts')} />
 
         <ConnectionDot connected={true} />
       </div>
