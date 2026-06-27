@@ -3,6 +3,7 @@ import fastifyHelmet from '@fastify/helmet';
 import fastifyRateLimit from '@fastify/rate-limit';
 import fastifyStatic from '@fastify/static';
 import path from 'path';
+import fs from 'fs';
 
 export interface ServerOpts {
   port: number;
@@ -32,14 +33,17 @@ export async function createServer(_opts: ServerOpts) {
   await app.register(fastifyRateLimit, { max: 100, timeWindow: '1 minute' });
 
   if (!isDev) {
+    const distPath = path.join(__dirname, '..', 'dist-ui');
+
     await app.register(fastifyStatic, {
-      root: path.join(__dirname, 'dist-ui'),
+      root: distPath,
       prefix: '/',
-      decorateReply: false,
     });
 
+    const indexHtml = fs.readFileSync(path.join(distPath, 'index.html'), 'utf-8');
+
     app.setNotFoundHandler((_req, reply) => {
-      return reply.sendFile('index.html');
+      return reply.type('text/html').send(indexHtml);
     });
   }
 

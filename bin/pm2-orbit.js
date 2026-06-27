@@ -3,7 +3,6 @@
 
 const mri = require('mri');
 const { createServer } = require('../dist/server');
-const open = require('open');
 
 const args = mri(process.argv.slice(2), {
   alias: {
@@ -50,8 +49,10 @@ if (args.theme) process.env.PM2_ORBIT_THEME = args.theme;
 async function main() {
   const server = await createServer({ port: args.port, remote: args.remote });
   await server.listen({ port: args.port, host: '127.0.0.1' });
-  console.log(`\n  PM2 Orbit running at http://localhost:${args.port}\n`);
-  if (!args['no-open']) open(`http://localhost:${args.port}`);
+  if (!args['no-open']) {
+    const { default: open } = await import('open');
+    await open(`http://localhost:${args.port}`);
+  }
 }
 
 main().catch((err) => {
