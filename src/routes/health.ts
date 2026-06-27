@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import type { createEventPipeline } from '../core';
-import { getSettings, updateSettings, applySettingsToEnv } from '../core/persistence/settings';
+import { getSettingsSafe, updateSettings, applySettingsToEnv } from '../core/persistence/settings';
 
 type Pipeline = ReturnType<typeof createEventPipeline>;
 
@@ -37,7 +37,7 @@ export async function registerHealthRoutes(app: FastifyInstance, pipeline: Pipel
   });
 
   app.get('/api/settings', async () => {
-    return getSettings();
+    return getSettingsSafe();
   });
 
   app.put('/api/settings', async (req, reply) => {

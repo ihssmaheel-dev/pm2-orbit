@@ -19,7 +19,7 @@ interface Settings {
 }
 
 export function Settings() {
-  const { setTheme } = useTheme();
+  const { theme: currentTheme, setTheme } = useTheme();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -92,9 +92,9 @@ export function Settings() {
                   {(['dark', 'light', 'system'] as const).map((t) => (
                     <button
                       key={t}
-                      onClick={() => update('theme', t)}
+                      onClick={() => { update('theme', t); setTheme(t); }}
                       className={`px-4 py-2 text-xs uppercase tracking-wider border transition-colors ${
-                        settings.theme === t
+                        currentTheme === t
                           ? 'border-primary bg-primary/10 text-primary'
                           : 'border-border text-muted-foreground hover:border-border/80 hover:text-foreground'
                       }`}

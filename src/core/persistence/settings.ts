@@ -1,11 +1,13 @@
 import fs from 'fs';
 import path from 'path';
+import { randomBytes, createCipheriv, createDecipheriv } from 'crypto';
 
 const SETTINGS_DIR = path.join(
   process.env.HOME || process.env.USERPROFILE || '',
   '.pm2-orbit',
 );
 const SETTINGS_FILE = path.join(SETTINGS_DIR, 'settings.json');
+const KEY_FILE = path.join(SETTINGS_DIR, '.key');
 
 export interface Settings {
   theme: 'dark' | 'light' | 'system';
@@ -37,12 +39,68 @@ const DEFAULTS: Settings = {
   smtpTo: '',
 };
 
+const SENSITIVE_KEYS = ['authToken', 'smtpPass', 'slackWebhookUrl', 'discordWebhookUrl', 'webhookUrl'];
+
+function getOrCreateKey(): Buffer {
+  try {
+    if (fs.existsSync(KEY_FILE)) {
+      return Buffer.from(fs.readFileSync(KEY_FILE, 'utf-8'), 'hex');
+    }
+  } catch {
+    // ignore
+  }
+  const key = randomBytes(32);
+  try {
+    if (!fs.existsSync(SETTINGS_DIR)) {
+      fs.mkdirSync(SETTINGS_DIR, { recursive: true });
+    }
+    fs.writeFileSync(KEY_FILE, key.toString('hex'), { mode: 0o600 });
+  } catch {
+    // ignore
+  }
+  return key;
+}
+
+function encrypt(value: string): string {
+  if (!value) return '';
+  try {
+    const key = getOrCreateKey();
+    const iv = randomBytes(16);
+    const cipher = createCipheriv('aes-256-cbc', key, iv);
+    const encrypted = Buffer.concat([cipher.update(value, 'utf8'), cipher.final()]);
+    return iv.toString('hex') + ':' + encrypted.toString('hex');
+  } catch {
+    return value;
+  }
+}
+
+function decrypt(value: string): string {
+  if (!value || !value.includes(':')) return value;
+  try {
+    const key = getOrCreateKey();
+    const [ivHex, encryptedHex] = value.split(':');
+    const iv = Buffer.from(ivHex, 'hex');
+    const encrypted = Buffer.from(encryptedHex, 'hex');
+    const decipher = createDecipheriv('aes-256-cbc', key, iv);
+    const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
+    return decrypted.toString('utf8');
+  } catch {
+    return value;
+  }
+}
+
 function loadSettings(): Settings {
   try {
     if (fs.existsSync(SETTINGS_FILE)) {
       const raw = fs.readFileSync(SETTINGS_FILE, 'utf-8');
       const parsed = JSON.parse(raw);
-      return { ...DEFAULTS, ...parsed };
+      const merged = { ...DEFAULTS, ...parsed };
+      for (const key of SENSITIVE_KEYS) {
+        if (merged[key as keyof Settings]) {
+          merged[key as keyof Settings] = decrypt(merged[key as keyof Settings] as string) as never;
+        }
+      }
+      return merged;
     }
   } catch {
     // ignore
@@ -55,7 +113,13 @@ function saveSettings(settings: Settings): void {
     if (!fs.existsSync(SETTINGS_DIR)) {
       fs.mkdirSync(SETTINGS_DIR, { recursive: true });
     }
-    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
+    const toSave = { ...settings };
+    for (const key of SENSITIVE_KEYS) {
+      if (toSave[key as keyof Settings]) {
+        toSave[key as keyof Settings] = encrypt(toSave[key as keyof Settings] as string) as never;
+      }
+    }
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(toSave, null, 2), { mode: 0o600 });
   } catch {
     // ignore
   }
@@ -65,9 +129,26 @@ export function getSettings(): Settings {
   return loadSettings();
 }
 
+export function getSettingsSafe(): Omit<Settings, 'authToken' | 'smtpPass'> & { authToken: string; smtpPass: string } {
+  const settings = loadSettings();
+  return {
+    ...settings,
+    authToken: settings.authToken ? '••••••••' : '',
+    smtpPass: settings.smtpPass ? '••••••••' : '',
+  };
+}
+
 export function updateSettings(updates: Partial<Settings>): Settings {
   const current = loadSettings();
-  const next = { ...current, ...updates };
+  const next = { ...current };
+  for (const [key, value] of Object.entries(updates)) {
+    if (key === 'authToken' || key === 'smtpPass') {
+      if (value === '••••••••' || value === '') {
+        continue;
+      }
+    }
+    (next as Record<string, unknown>)[key] = value;
+  }
   saveSettings(next);
   return next;
 }
