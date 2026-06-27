@@ -7,12 +7,16 @@ import fs from 'fs';
 import { createEventPipeline } from './core';
 import { createAuthPlugin } from './plugins/auth';
 import { registerRoutes } from './routes';
+import { getSettings, applySettingsToEnv } from './core/persistence/settings';
 
 export interface ServerOpts {
   port: number;
 }
 
 export async function createServer(_opts: ServerOpts) {
+  const settings = getSettings();
+  applySettingsToEnv(settings);
+
   const app = Fastify({ logger: false, trustProxy: false });
 
   const distPath = path.join(__dirname, '..', 'dist-ui');

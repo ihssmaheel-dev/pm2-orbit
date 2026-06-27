@@ -1,16 +1,68 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTheme } from '@/hooks/useTheme';
 import { Button } from '@/components/shared/Button';
 import { Badge } from '@/components/shared/Badge';
+import { Input } from '@/components/shared/Input';
+
+interface Settings {
+  theme: 'dark' | 'light' | 'system';
+  authToken: string;
+  slackWebhookUrl: string;
+  discordWebhookUrl: string;
+  webhookUrl: string;
+  smtpHost: string;
+  smtpPort: number;
+  smtpUser: string;
+  smtpPass: string;
+  smtpFrom: string;
+  smtpTo: string;
+}
 
 export function Settings() {
-  const { theme, setTheme } = useTheme();
+  const { setTheme } = useTheme();
+  const [settings, setSettings] = useState<Settings | null>(null);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((res) => res.json())
+      .then((data) => setSettings(data))
+      .catch(() => {});
+  }, []);
+
+  const update = (key: keyof Settings, value: string | number) => {
+    if (!settings) return;
+    setSettings({ ...settings, [key]: value });
   };
+
+  const handleSave = async () => {
+    if (!settings) return;
+    setSaving(true);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+      });
+      if (res.ok) {
+        setTheme(settings.theme);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }
+    } catch {
+      // ignore
+    }
+    setSaving(false);
+  };
+
+  if (!settings) {
+    return (
+      <div className="flex items-center justify-center h-full text-muted-foreground">
+        Loading settings...
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -22,10 +74,10 @@ export function Settings() {
           </span>
         </div>
         <div className="flex items-center gap-3">
-          {saved && (
-            <Badge variant="success">Saved</Badge>
-          )}
-          <Button size="sm" onClick={handleSave}>Save</Button>
+          {saved && <Badge variant="success">Saved</Badge>}
+          <Button size="sm" onClick={handleSave} disabled={saving}>
+            {saving ? 'Saving...' : 'Save'}
+          </Button>
         </div>
       </div>
 
@@ -40,9 +92,9 @@ export function Settings() {
                   {(['dark', 'light', 'system'] as const).map((t) => (
                     <button
                       key={t}
-                      onClick={() => setTheme(t)}
+                      onClick={() => update('theme', t)}
                       className={`px-4 py-2 text-xs uppercase tracking-wider border transition-colors ${
-                        theme === t
+                        settings.theme === t
                           ? 'border-primary bg-primary/10 text-primary'
                           : 'border-border text-muted-foreground hover:border-border/80 hover:text-foreground'
                       }`}
@@ -54,21 +106,16 @@ export function Settings() {
               </div>
             </Section>
 
-            <Section title="Server">
-              <div className="space-y-0">
-                <InfoRow label="Port" value="9823" hint="PM2_ORBIT_PORT" />
-                <InfoRow label="Host" value="127.0.0.1" hint="Default binding" />
-                <InfoRow label="Auth" value="Token-based" hint="PM2_ORBIT_TOKEN" />
-                <InfoRow label="Version" value="v0.1.0" />
-              </div>
-            </Section>
-
-            <Section title="About">
-              <div className="space-y-2 text-sm text-muted-foreground/70">
-                <p>High-performance PM2 monitoring dashboard</p>
-                <p className="text-[11px] text-muted-foreground/40">
-                  Event-driven architecture • Zero polling • &lt;35MB server RAM
-                </p>
+            <Section title="Security">
+              <div className="space-y-4">
+                <Field
+                  label="Auth Token"
+                  hint="Required for non-localhost access"
+                  value={settings.authToken}
+                  onChange={(v) => update('authToken', v)}
+                  type="password"
+                  placeholder="Leave empty to disable"
+                />
               </div>
             </Section>
           </div>
@@ -76,35 +123,73 @@ export function Settings() {
           {/* Right column */}
           <div className="space-y-6">
             <Section title="Notifications">
-              <div className="space-y-0">
-                <InfoRow label="Browser" value="Requires permission" hint="Browser Notification API" />
-                <InfoRow label="Slack" value="Webhook URL" hint="SLACK_WEBHOOK_URL" />
-                <InfoRow label="Discord" value="Webhook URL" hint="DISCORD_WEBHOOK_URL" />
-                <InfoRow label="Email" value="SMTP config" hint="SMTP_HOST, SMTP_FROM, SMTP_TO" />
+              <div className="space-y-4">
+                <Field
+                  label="Slack Webhook URL"
+                  value={settings.slackWebhookUrl}
+                  onChange={(v) => update('slackWebhookUrl', v)}
+                  placeholder="https://hooks.slack.com/services/..."
+                />
+                <Field
+                  label="Discord Webhook URL"
+                  value={settings.discordWebhookUrl}
+                  onChange={(v) => update('discordWebhookUrl', v)}
+                  placeholder="https://discord.com/api/webhooks/..."
+                />
+                <Field
+                  label="Generic Webhook URL"
+                  value={settings.webhookUrl}
+                  onChange={(v) => update('webhookUrl', v)}
+                  placeholder="https://your-webhook-endpoint.com/..."
+                />
               </div>
             </Section>
 
-            <Section title="Keyboard Shortcuts">
-              <div className="space-y-0">
-                <ShortcutRow keys={['⌘', 'K']} action="Command palette" />
-                <ShortcutRow keys={['R']} action="Restart selected" />
-                <ShortcutRow keys={['S']} action="Stop selected" />
-                <ShortcutRow keys={['L']} action="Go to Logs" />
-                <ShortcutRow keys={['T']} action="Toggle theme" />
-                <ShortcutRow keys={['1-5']} action="Switch tabs" />
-                <ShortcutRow keys={['Esc']} action="Close / deselect" />
-              </div>
-            </Section>
-
-            <Section title="Environment Variables">
-              <div className="space-y-0">
-                <EnvRow name="PM2_ORBIT_PORT" description="Server port (default: 9823)" />
-                <EnvRow name="PM2_ORBIT_TOKEN" description="Auth token for remote access" />
-                <EnvRow name="PM2_ORBIT_THEME" description="Default theme (dark|light|system)" />
-                <EnvRow name="SLACK_WEBHOOK_URL" description="Slack notification webhook" />
-                <EnvRow name="DISCORD_WEBHOOK_URL" description="Discord notification webhook" />
-                <EnvRow name="SMTP_HOST" description="Email SMTP server host" />
-                <EnvRow name="WEBHOOK_URL" description="Generic alert webhook URL" />
+            <Section title="Email (SMTP)">
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <Field
+                    label="SMTP Host"
+                    value={settings.smtpHost}
+                    onChange={(v) => update('smtpHost', v)}
+                    placeholder="smtp.gmail.com"
+                  />
+                  <Field
+                    label="SMTP Port"
+                    value={String(settings.smtpPort)}
+                    onChange={(v) => update('smtpPort', parseInt(v) || 587)}
+                    placeholder="587"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field
+                    label="Username"
+                    value={settings.smtpUser}
+                    onChange={(v) => update('smtpUser', v)}
+                    placeholder="your@email.com"
+                  />
+                  <Field
+                    label="Password"
+                    value={settings.smtpPass}
+                    onChange={(v) => update('smtpPass', v)}
+                    type="password"
+                    placeholder="••••••••"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field
+                    label="From Address"
+                    value={settings.smtpFrom}
+                    onChange={(v) => update('smtpFrom', v)}
+                    placeholder="alerts@yourdomain.com"
+                  />
+                  <Field
+                    label="To Address"
+                    value={settings.smtpTo}
+                    onChange={(v) => update('smtpTo', v)}
+                    placeholder="admin@yourdomain.com"
+                  />
+                </div>
               </div>
             </Section>
           </div>
@@ -126,49 +211,39 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function Label({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="text-xs text-foreground/80">{children}</span>
-  );
+  return <span className="text-xs text-foreground/80">{children}</span>;
 }
 
-function InfoRow({ label, value, hint }: { label: string; value: string; hint?: string }) {
+function Field({
+  label,
+  hint,
+  value,
+  onChange,
+  type = 'text',
+  placeholder,
+}: {
+  label: string;
+  hint?: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  placeholder?: string;
+}) {
   return (
-    <div className="flex items-center justify-between py-2.5 border-b border-border/20 last:border-0">
+    <div className="space-y-1.5">
       <div className="flex items-center gap-2">
-        <span className="text-sm text-foreground/80">{label}</span>
+        <label className="text-xs text-foreground/80">{label}</label>
         {hint && (
-          <span className="text-[10px] font-mono text-muted-foreground/30 bg-subtle/30 px-1.5 py-0.5">
-            {hint}
-          </span>
+          <span className="text-[10px] text-muted-foreground/40">{hint}</span>
         )}
       </div>
-      <span className="text-xs font-mono text-muted-foreground/60">{value}</span>
-    </div>
-  );
-}
-
-function ShortcutRow({ keys, action }: { keys: string[]; action: string }) {
-  return (
-    <div className="flex items-center justify-between py-2 border-b border-border/20 last:border-0">
-      <span className="text-sm text-foreground/70">{action}</span>
-      <div className="flex gap-1">
-        {keys.map((key, i) => (
-          <kbd key={i} className="text-[10px] font-mono text-muted-foreground/60 bg-subtle/30 border border-border/30 px-1.5 py-0.5 leading-none min-w-[20px] text-center">
-            {key}
-          </kbd>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function EnvRow({ name, description }: { name: string; description: string }) {
-  return (
-    <div className="flex items-center justify-between py-2 border-b border-border/20 last:border-0">
-      <div className="flex items-center gap-2">
-        <code className="text-[11px] font-mono text-primary/80">{name}</code>
-      </div>
-      <span className="text-[11px] text-muted-foreground/50">{description}</span>
+      <Input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="h-9 text-xs"
+      />
     </div>
   );
 }
