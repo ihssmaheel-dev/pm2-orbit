@@ -7,10 +7,10 @@ export function Dashboard() {
   const selectedId = useProcessStore((s) => s.selectedId);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full gap-4 p-4">
       <SystemCards />
-      <div className="flex-1 flex overflow-hidden">
-        <div className={selectedId !== null ? 'w-[35%] border-r border-border' : 'w-full'}>
+      <div className="flex-1 flex overflow-hidden min-h-0">
+        <div className={selectedId !== null ? 'w-[35%]' : 'w-full'}>
           <ProcessTable />
         </div>
         {selectedId !== null && <ProcessDetail />}

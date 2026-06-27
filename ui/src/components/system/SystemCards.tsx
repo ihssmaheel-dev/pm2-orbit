@@ -14,35 +14,35 @@ interface CardProps {
 
 function Card({ icon, label, value, subtext, color, bgColor, progress }: CardProps) {
   return (
-    <div className="relative flex flex-col gap-2 px-4 py-3 bg-card border border-border overflow-hidden group hover:border-border/80 transition-colors">
-      <div className="absolute inset-0 opacity-[0.03]" style={{ background: `linear-gradient(135deg, ${bgColor}, transparent)` }} />
+    <div className="relative flex flex-col gap-1.5 px-4 py-3 bg-card/60 border border-border/60 overflow-hidden">
+      <div className="absolute inset-0 opacity-[0.02]" style={{ background: `linear-gradient(135deg, ${bgColor}, transparent)` }} />
 
       <div className="flex items-center justify-between relative">
         <div className="flex items-center gap-2">
-          <div className={`p-1.5 rounded-none ${color}`} style={{ background: `${bgColor}15` }}>
-            {icon}
-          </div>
-          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
+          <div className={`${color} opacity-70`}>{icon}</div>
+          <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted-foreground/60">
+            {label}
+          </span>
         </div>
         {progress !== undefined && (
-          <span className="text-xs font-mono text-muted-foreground">{progress.toFixed(0)}%</span>
+          <span className="text-[10px] font-mono text-muted-foreground/50">{progress.toFixed(0)}%</span>
         )}
       </div>
 
       <div className="relative">
-        <span className="text-xl font-mono font-medium text-foreground">{value}</span>
+        <span className="text-lg font-mono font-medium text-foreground/90">{value}</span>
         {subtext && (
-          <span className="ml-2 text-xs text-muted-foreground">{subtext}</span>
+          <span className="ml-1.5 text-[11px] text-muted-foreground/50">{subtext}</span>
         )}
       </div>
 
       {progress !== undefined && (
-        <div className="h-1 bg-subtle rounded-full overflow-hidden">
+        <div className="h-[3px] bg-subtle/50 overflow-hidden">
           <div
-            className={`h-full transition-all duration-500 ${color}`}
+            className="h-full transition-all duration-500"
             style={{
               width: `${Math.min(progress, 100)}%`,
-              background: `linear-gradient(90deg, ${bgColor}, ${bgColor}cc)`,
+              background: `linear-gradient(90deg, ${bgColor}, ${bgColor}bb)`,
             }}
           />
         </div>
@@ -59,9 +59,9 @@ export function SystemCards() {
     : 0;
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 p-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 shrink-0">
       <Card
-        icon={<Cpu size={14} />}
+        icon={<Cpu size={13} />}
         label="CPU"
         value={`${system.cpu.toFixed(1)}%`}
         color="text-primary"
@@ -69,7 +69,7 @@ export function SystemCards() {
         progress={system.cpu}
       />
       <Card
-        icon={<MemoryStick size={14} />}
+        icon={<MemoryStick size={13} />}
         label="Memory"
         value={formatBytes(system.memory.used)}
         subtext={`/ ${formatBytes(system.memory.total)}`}
@@ -78,7 +78,7 @@ export function SystemCards() {
         progress={memPercent}
       />
       <Card
-        icon={<Activity size={14} />}
+        icon={<Activity size={13} />}
         label="Load"
         value={system.loadAvg[0].toFixed(2)}
         subtext={`${system.loadAvg[1].toFixed(2)} / ${system.loadAvg[2].toFixed(2)}`}
@@ -86,7 +86,7 @@ export function SystemCards() {
         bgColor="#10b981"
       />
       <Card
-        icon={<Network size={14} />}
+        icon={<Network size={13} />}
         label="Network"
         value={`${formatBytes(system.network.rx)}/s`}
         subtext={`↑ ${formatBytes(system.network.tx)}/s`}
@@ -94,7 +94,7 @@ export function SystemCards() {
         bgColor="#019cf6"
       />
       <Card
-        icon={<HardDrive size={14} />}
+        icon={<HardDrive size={13} />}
         label="Disk"
         value={`${formatBytes(system.disk.read)}/s`}
         subtext={`↓ ${formatBytes(system.disk.write)}/s`}
