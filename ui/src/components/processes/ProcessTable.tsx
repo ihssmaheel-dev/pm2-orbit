@@ -25,8 +25,8 @@ const columns: ColumnDef[] = [
   { accessorKey: 'mode', header: 'Mode', width: 'w-[70px]' },
   { accessorKey: 'pid', header: 'PID', width: 'w-[60px]' },
   { accessorKey: 'cpu', header: 'CPU', width: 'w-[70px]', align: 'right' },
-  { accessorKey: 'memory', header: 'Memory', width: 'w-[80px]', align: 'right' },
-  { accessorKey: 'restarts', header: 'Restarts', width: 'w-[60px]', align: 'right' },
+  { accessorKey: 'memory', header: 'Memory', width: 'w-[90px]', align: 'right' },
+  { accessorKey: 'restarts', header: 'Restarts', width: 'w-[70px]', align: 'right' },
 ];
 
 export function ProcessTable() {
@@ -146,6 +146,9 @@ export function ProcessTable() {
             </div>
           </div>
         ))}
+
+        {/* Sparkline column (no header) */}
+        <div className="w-[90px] shrink-0" />
 
         {/* Uptime column */}
         <div className="flex-1 px-3 text-right">
