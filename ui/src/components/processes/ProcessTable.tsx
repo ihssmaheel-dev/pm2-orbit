@@ -98,7 +98,7 @@ export function ProcessTable() {
   return (
     <div className="flex flex-col h-full border border-border/60 bg-card/40">
       {/* ── Card Header ── */}
-      <div className="flex items-center justify-between h-[52px] px-5 shrink-0 border-b border-border/60">
+      <div className="flex items-center justify-between h-[56px] px-6 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-[3px] h-4 bg-primary" />
           <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground/80">
@@ -129,7 +129,7 @@ export function ProcessTable() {
       </div>
 
       {/* ── Column Headers ── */}
-      <div className="flex items-center h-10 px-5 shrink-0 select-none border-b border-border/40 bg-background/50">
+      <div className="flex items-center h-10 px-6 shrink-0 select-none border-t border-border/30 border-b border-border/60 bg-background/30">
         <div className="w-7 shrink-0" />
 
         {columns.map((col) => {
