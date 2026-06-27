@@ -1,57 +1,32 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
   getSortedRowModel,
   getFilteredRowModel,
-  flexRender,
   type SortingState,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useState } from 'react';
-import { ArrowUpDown } from 'lucide-react';
+import { Search, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { useProcessStore } from '@/store/processes';
 import { useUIStore } from '@/store/ui';
 import { ProcessRow } from './ProcessRow';
-import { Input } from '@/components/shared/Input';
 import type { ProcessSnapshot } from '@/types/pm2';
 
-const columns = [
-  {
-    accessorKey: 'name',
-    header: 'Name',
-    cell: (info: { getValue: () => string }) => info.getValue(),
-  },
-  {
-    accessorKey: 'mode',
-    header: 'Mode',
-    cell: (info: { getValue: () => string }) => info.getValue(),
-  },
-  {
-    accessorKey: 'pid',
-    header: 'PID',
-    cell: (info: { getValue: () => number }) => info.getValue(),
-  },
-  {
-    accessorKey: 'cpu',
-    header: 'CPU',
-    cell: (info: { getValue: () => number }) => `${info.getValue().toFixed(1)}%`,
-  },
-  {
-    accessorKey: 'memory',
-    header: 'Memory',
-    cell: (info: { getValue: () => number }) => {
-      const bytes = info.getValue();
-      if (bytes >= 1073741824) return `${(bytes / 1073741824).toFixed(1)} GB`;
-      if (bytes >= 1048576) return `${(bytes / 1048576).toFixed(0)} MB`;
-      return `${(bytes / 1024).toFixed(0)} KB`;
-    },
-  },
-  {
-    accessorKey: 'restarts',
-    header: 'Restarts',
-    cell: (info: { getValue: () => number }) => info.getValue(),
-  },
+interface ColumnDef {
+  accessorKey: string;
+  header: string;
+  width: string;
+  align?: 'left' | 'right';
+}
+
+const columns: ColumnDef[] = [
+  { accessorKey: 'name', header: 'Name', width: 'w-[160px]' },
+  { accessorKey: 'mode', header: 'Mode', width: 'w-[70px]' },
+  { accessorKey: 'pid', header: 'PID', width: 'w-[60px]' },
+  { accessorKey: 'cpu', header: 'CPU', width: 'w-[70px]', align: 'right' },
+  { accessorKey: 'memory', header: 'Memory', width: 'w-[80px]', align: 'right' },
+  { accessorKey: 'restarts', header: 'Restarts', width: 'w-[60px]', align: 'right' },
 ];
 
 export function ProcessTable() {
@@ -61,9 +36,7 @@ export function ProcessTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const parentRef = useRef<HTMLDivElement>(null);
 
-  const data = useMemo(() => {
-    return Array.from(processes.values());
-  }, [processes]);
+  const data = useMemo(() => Array.from(processes.values()), [processes]);
 
   const filteredData = useMemo(() => {
     if (!searchQuery) return data;
@@ -78,7 +51,21 @@ export function ProcessTable() {
 
   const table = useReactTable({
     data: filteredData,
-    columns,
+    columns: columns.map((c) => ({
+      accessorKey: c.accessorKey,
+      header: c.header,
+      cell: (info: { getValue: () => unknown }) => {
+        const val = info.getValue();
+        if (c.accessorKey === 'cpu') return `${(val as number).toFixed(1)}%`;
+        if (c.accessorKey === 'memory') {
+          const bytes = val as number;
+          if (bytes >= 1073741824) return `${(bytes / 1073741824).toFixed(1)} GB`;
+          if (bytes >= 1048576) return `${(bytes / 1048576).toFixed(0)} MB`;
+          return `${(bytes / 1024).toFixed(0)} KB`;
+        }
+        return String(val ?? '');
+      },
+    })),
     state: { sorting },
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
@@ -91,80 +78,114 @@ export function ProcessTable() {
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 48,
+    estimateSize: () => 44,
     overscan: 10,
   });
 
+  const getSortIcon = (columnId: string) => {
+    const sort = sorting.find((s) => s.id === columnId);
+    if (!sort) return <ArrowUpDown size={10} className="opacity-30" />;
+    return sort.desc ? (
+      <ArrowDown size={10} className="text-primary" />
+    ) : (
+      <ArrowUp size={10} className="text-primary" />
+    );
+  };
+
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-border">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground uppercase tracking-wider">
-            Processes ({filteredData.length})
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border shrink-0">
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-foreground font-medium uppercase tracking-wider">
+            Processes
+          </span>
+          <span className="text-xs text-muted-foreground font-mono bg-subtle px-2 py-0.5">
+            {filteredData.length}
           </span>
         </div>
-        <Input
-          placeholder="Search..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-60 h-8 text-xs"
-        />
-      </div>
-
-      <div className="flex items-center gap-1 px-4 py-1 border-b border-border text-xs text-muted-foreground uppercase tracking-wider">
-        <div className="w-3" />
-        {table.getHeaderGroups().map((headerGroup) =>
-          headerGroup.headers.map((header) => (
-            <div
-              key={header.id}
-              className={`cursor-pointer hover:text-foreground transition-colors ${
-                header.id === 'name'
-                  ? 'w-[140px]'
-                  : header.id === 'mode'
-                    ? 'w-[60px]'
-                    : header.id === 'pid'
-                      ? 'w-[60px]'
-                      : header.id === 'cpu'
-                        ? 'w-[80px] text-right'
-                        : header.id === 'memory'
-                          ? 'w-[80px] text-right'
-                          : header.id === 'restarts'
-                            ? 'w-[70px] text-right'
-                            : ''
-              }`}
-              onClick={header.column.getToggleSortingHandler()}
-            >
-              <div className="flex items-center gap-1">
-                {flexRender(header.column.columnDef.header, header.getContext())}
-                <ArrowUpDown size={10} className="opacity-50" />
-              </div>
-            </div>
-          )),
-        )}
-        <div className="ml-auto w-[70px] text-right">Uptime</div>
-      </div>
-
-      <div ref={parentRef} className="flex-1 overflow-auto">
-        <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}>
-          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-            const row = rows[virtualRow.index];
-            const process = row.original as ProcessSnapshot;
-            return (
-              <ProcessRow
-                key={process.id}
-                process={process}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: `${virtualRow.size}px`,
-                  transform: `translateY(${virtualRow.start}px)`,
-                }}
-              />
-            );
-          })}
+        <div className="relative">
+          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input
+            placeholder="Search processes..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-8 w-56 pl-8 pr-3 text-xs bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring rounded-none"
+          />
         </div>
+      </div>
+
+      {/* Column Headers */}
+      <div className="flex items-center h-9 px-0 border-b border-border bg-subtle/30 shrink-0">
+        {/* Status dot column */}
+        <div className="w-10 shrink-0" />
+
+        {columns.map((col) => (
+          <div
+            key={col.accessorKey}
+            className={`${col.width} shrink-0 px-2 cursor-pointer hover:text-foreground transition-colors select-none`}
+            onClick={() => {
+              const isSorted = sorting[0]?.id === col.accessorKey;
+              if (isSorted) {
+                setSorting(sorting[0]?.desc ? [] : [{ id: col.accessorKey, desc: true }]);
+              } else {
+                setSorting([{ id: col.accessorKey, desc: false }]);
+              }
+            }}
+          >
+            <div className={`flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground ${
+              col.align === 'right' ? 'justify-end' : ''
+            }`}>
+              {col.header}
+              {getSortIcon(col.accessorKey)}
+            </div>
+          </div>
+        ))}
+
+        {/* Uptime column */}
+        <div className="flex-1 px-2 text-right">
+          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Uptime
+          </span>
+        </div>
+      </div>
+
+      {/* Virtual Rows */}
+      <div ref={parentRef} className="flex-1 overflow-auto">
+        {rows.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center py-12">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-subtle/50 flex items-center justify-center">
+                <svg className="w-8 h-8 text-muted-foreground/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+              </div>
+              <div className="text-sm text-muted-foreground font-medium">No processes running</div>
+              <div className="text-xs text-muted-foreground/60 mt-1">Start PM2 to see processes here</div>
+            </div>
+          </div>
+        ) : (
+          <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}>
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const row = rows[virtualRow.index];
+              const process = row.original as ProcessSnapshot;
+              return (
+                <ProcessRow
+                  key={process.id}
+                  process={process}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: `${virtualRow.size}px`,
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                />
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

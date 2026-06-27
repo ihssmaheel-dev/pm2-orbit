@@ -19,41 +19,73 @@ export const ProcessRow = memo(function ProcessRow({ process, style }: ProcessRo
     <div
       style={style}
       onClick={() => select(isSelected ? null : process.id)}
-      className={`flex items-center gap-4 px-4 h-12 border-b border-border cursor-pointer transition-colors
-        ${isSelected ? 'bg-primary-subtle border-l-2 border-l-primary' : 'hover:bg-subtle border-l-2 border-l-transparent'}`}
+      className={`flex items-center gap-0 px-0 h-11 cursor-pointer transition-all duration-150 group border-l-2
+        ${isSelected
+          ? 'bg-primary/[0.08] border-l-primary'
+          : 'border-l-transparent hover:bg-subtle/60'
+        }`}
     >
-      <StatusDot status={process.status} />
-
-      <div className="w-[140px] truncate text-sm text-foreground font-normal">
-        {process.name}
+      {/* Status */}
+      <div className="w-10 flex items-center justify-center shrink-0">
+        <StatusDot status={process.status} />
       </div>
 
-      <div className="w-[60px] text-xs text-muted-foreground uppercase">
-        {process.mode}
+      {/* Name */}
+      <div className="w-[160px] shrink-0 px-2">
+        <span className="text-sm text-foreground truncate block group-hover:text-primary transition-colors">
+          {process.name}
+        </span>
       </div>
 
-      <div className="w-[60px] text-xs font-mono text-muted-foreground">
-        {process.pid}
+      {/* Mode */}
+      <div className="w-[70px] shrink-0 px-2">
+        <span className="text-[11px] font-mono text-muted-foreground uppercase">
+          {process.mode}
+        </span>
       </div>
 
-      <div className="w-[80px]">
+      {/* PID */}
+      <div className="w-[60px] shrink-0 px-2">
+        <span className="text-[11px] font-mono text-muted-foreground">
+          {process.pid}
+        </span>
+      </div>
+
+      {/* Sparkline */}
+      <div className="w-[90px] shrink-0 px-2">
         <Sparkline data={process.history.cpu} color="var(--chart-cpu)" />
       </div>
 
-      <div className="w-[70px] text-right text-sm font-mono text-foreground">
-        {formatPercent(process.cpu)}
+      {/* CPU */}
+      <div className="w-[70px] shrink-0 px-2 text-right">
+        <span className={`text-xs font-mono ${
+          process.cpu > 80 ? 'text-destructive' : process.cpu > 50 ? 'text-warning' : 'text-foreground'
+        }`}>
+          {formatPercent(process.cpu)}
+        </span>
       </div>
 
-      <div className="w-[80px] text-right text-sm font-mono text-foreground">
-        {formatBytes(process.memory)}
+      {/* Memory */}
+      <div className="w-[80px] shrink-0 px-2 text-right">
+        <span className="text-xs font-mono text-foreground">
+          {formatBytes(process.memory)}
+        </span>
       </div>
 
-      <div className="w-[70px] text-right text-xs text-muted-foreground">
-        {process.restarts}
+      {/* Restarts */}
+      <div className="w-[60px] shrink-0 px-2 text-right">
+        <span className={`text-xs font-mono ${
+          process.restarts > 0 ? 'text-warning' : 'text-muted-foreground'
+        }`}>
+          {process.restarts}
+        </span>
       </div>
 
-      <div className="ml-auto text-xs text-muted-foreground">
-        {formatDuration(process.uptime)}
+      {/* Uptime */}
+      <div className="flex-1 px-2 text-right">
+        <span className="text-[11px] font-mono text-muted-foreground">
+          {formatDuration(process.uptime)}
+        </span>
       </div>
     </div>
   );
