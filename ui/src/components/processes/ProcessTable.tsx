@@ -109,7 +109,7 @@ export function ProcessTable() {
       </div>
 
       {/* Column Headers */}
-      <div className="flex items-center h-11 px-0 border-b border-border bg-subtle/20 shrink-0">
+      <div className="flex items-center h-10 px-0 border-b border-border/80 bg-background shrink-0">
         {/* Status dot column */}
         <div className="w-10 shrink-0" />
 
@@ -118,7 +118,7 @@ export function ProcessTable() {
           return (
             <div
               key={col.accessorKey}
-              className={`${col.width} shrink-0 px-3 cursor-pointer hover:bg-subtle/40 transition-colors select-none group relative`}
+              className={`${col.width} shrink-0 px-3 cursor-pointer hover:bg-subtle/30 transition-all select-none group`}
               onClick={() => {
                 if (isSorted) {
                   setSorting(sorting[0]?.desc ? [] : [{ id: col.accessorKey, desc: true }]);
@@ -127,17 +127,16 @@ export function ProcessTable() {
                 }
               }}
             >
-              <div className={`flex items-center text-[11px] font-medium uppercase tracking-wider ${
-                isSorted ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
-              } ${col.align === 'right' ? 'justify-end' : 'justify-between'}`}>
+              <div className={`flex items-center gap-1 text-[11px] font-medium uppercase tracking-wider ${
+                isSorted ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground/80'
+              } ${col.align === 'right' ? 'justify-end' : ''}`}>
                 <span>{col.header}</span>
                 {isSorted && (
-                  <span className="text-[9px]">
+                  <span className="text-[8px] text-primary ml-0.5">
                     {sorting[0]?.desc ? '▼' : '▲'}
                   </span>
                 )}
               </div>
-              <div className={`absolute bottom-0 left-0 h-px ${isSorted ? 'bg-primary w-full' : 'bg-transparent'}`} />
             </div>
           );
         })}
