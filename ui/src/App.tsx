@@ -1,10 +1,12 @@
 import { AppShell } from './components/layout/AppShell';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from './hooks/useTheme';
+import { useAlertNotifications } from './hooks/useAlertNotifications';
 
-export default function App() {
+function AppInner() {
+  useAlertNotifications();
   return (
-    <ThemeProvider>
+    <>
       <AppShell />
       <Toaster
         position="bottom-right"
@@ -18,6 +20,14 @@ export default function App() {
           },
         }}
       />
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppInner />
     </ThemeProvider>
   );
 }

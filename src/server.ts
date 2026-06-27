@@ -5,6 +5,7 @@ import fastifyStatic from '@fastify/static';
 import path from 'path';
 import fs from 'fs';
 import { createEventPipeline } from './core';
+import { createAuthPlugin } from './plugins/auth';
 
 export interface ServerOpts {
   port: number;
@@ -32,6 +33,12 @@ export async function createServer(_opts: ServerOpts) {
   });
 
   await app.register(fastifyRateLimit, { max: 100, timeWindow: '1 minute' });
+
+  const token = process.env.PM2_ORBIT_TOKEN;
+  if (token) {
+    app.addHook('onRequest', createAuthPlugin());
+    console.log('  \x1b[32m✓\x1b[0m Token authentication enabled');
+  }
 
   if (!isDev) {
     const distPath = path.join(__dirname, '..', 'dist-ui');
