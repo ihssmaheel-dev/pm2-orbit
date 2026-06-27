@@ -10,7 +10,6 @@ import { registerRoutes } from './routes';
 
 export interface ServerOpts {
   port: number;
-  remote?: string;
 }
 
 export async function createServer(_opts: ServerOpts) {

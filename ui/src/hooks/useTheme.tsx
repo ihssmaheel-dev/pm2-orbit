@@ -23,6 +23,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return (localStorage.getItem(STORAGE_KEY) as Theme) || 'dark';
   });
 
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) return;
+
+    fetch('/api/settings')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.theme && (data.theme === 'dark' || data.theme === 'light' || data.theme === 'system')) {
+          setThemeState(data.theme);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const resolved = theme === 'system' ? getSystemTheme() : theme;
 
   useEffect(() => {

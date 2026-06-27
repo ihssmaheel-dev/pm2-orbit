@@ -126,6 +126,10 @@ export async function registerRoutes(app: FastifyInstance, pipeline: Pipeline) {
     return pipeline.alerts.getHistory();
   });
 
+  app.get('/api/settings', async () => ({
+    theme: process.env.PM2_ORBIT_THEME || 'dark',
+  }));
+
   app.get('/api/logs/:id', async (req, reply) => {
     const { id } = req.params as { id: string };
     const processId = parseInt(id, 10);

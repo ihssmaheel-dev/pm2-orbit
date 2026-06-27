@@ -1,5 +1,4 @@
 import { memo } from 'react';
-import type { ProcessSnapshot } from '@/types/pm2';
 import { StatusDot } from '@/components/shared/StatusDot';
 import { Sparkline } from './Sparkline';
 import { formatBytes, formatDuration, formatPercent } from '@/lib/format';
@@ -13,7 +12,7 @@ interface ColumnDef {
 }
 
 interface ProcessRowProps {
-  process: ProcessSnapshot;
+  processId: number;
   columns: ColumnDef[];
   sparklineWidth: string;
   uptimeWidth: string;
@@ -21,56 +20,61 @@ interface ProcessRowProps {
 }
 
 export const ProcessRow = memo(function ProcessRow({
-  process,
+  processId,
   columns,
   sparklineWidth,
   uptimeWidth,
   style,
 }: ProcessRowProps) {
+  const process = useProcessStore((s) => s.processes.get(processId));
   const selectedId = useProcessStore((s) => s.selectedId);
   const select = useProcessStore((s) => s.select);
-  const isSelected = selectedId === process.id;
+  const isSelected = selectedId === processId;
+
+  if (!process) return null;
+
+  const p = process;
 
   function renderCell(key: string) {
     switch (key) {
       case 'name':
         return (
           <span className="text-[13px] text-foreground truncate block group-hover:text-primary transition-colors duration-75">
-            {process.name}
+            {p.name}
           </span>
         );
       case 'mode':
         return (
           <span className="text-[11px] font-mono text-muted-foreground/70 uppercase">
-            {process.mode}
+            {p.mode}
           </span>
         );
       case 'pid':
         return (
           <span className="text-[11px] font-mono text-muted-foreground/60 tabular-nums">
-            {process.pid}
+            {p.pid}
           </span>
         );
       case 'cpu':
         return (
           <span className={`text-[12px] font-mono tabular-nums ${
-            process.cpu > 80 ? 'text-destructive' : process.cpu > 50 ? 'text-warning' : 'text-foreground/90'
+            p.cpu > 80 ? 'text-destructive' : p.cpu > 50 ? 'text-warning' : 'text-foreground/90'
           }`}>
-            {formatPercent(process.cpu)}
+            {formatPercent(p.cpu)}
           </span>
         );
       case 'memory':
         return (
           <span className="text-[12px] font-mono tabular-nums text-foreground/90">
-            {formatBytes(process.memory)}
+            {formatBytes(p.memory)}
           </span>
         );
       case 'restarts':
         return (
           <span className={`text-[12px] font-mono tabular-nums ${
-            process.restarts > 0 ? 'text-warning' : 'text-muted-foreground/50'
+            p.restarts > 0 ? 'text-warning' : 'text-muted-foreground/50'
           }`}>
-            {process.restarts}
+            {p.restarts}
           </span>
         );
       default:
@@ -81,19 +85,17 @@ export const ProcessRow = memo(function ProcessRow({
   return (
     <div
       style={style}
-      onClick={() => select(isSelected ? null : process.id)}
+      onClick={() => select(isSelected ? null : processId)}
       className={`flex items-center px-6 cursor-pointer transition-colors duration-75 group border-b border-border/30 ${
         isSelected
           ? 'bg-primary/[0.06]'
           : 'hover:bg-subtle/40'
       }`}
     >
-      {/* Status dot */}
       <div className="w-7 shrink-0 flex items-center justify-center">
-        <StatusDot status={process.status} />
+        <StatusDot status={p.status} />
       </div>
 
-      {/* Data cells — all use px-4 to match header */}
       {columns.map((col) => (
         <div
           key={col.accessorKey}
@@ -103,15 +105,13 @@ export const ProcessRow = memo(function ProcessRow({
         </div>
       ))}
 
-      {/* Sparkline */}
       <div className={`${sparklineWidth} shrink-0 px-4`}>
-        <Sparkline data={process.history.cpu} color="var(--chart-cpu)" width={76} height={20} />
+        <Sparkline data={p.history.cpu} color="var(--chart-cpu)" width={76} height={20} />
       </div>
 
-      {/* Uptime */}
       <div className={`${uptimeWidth} shrink-0 px-4 text-right`}>
         <span className="text-[11px] font-mono tabular-nums text-muted-foreground/60">
-          {formatDuration(process.uptime)}
+          {formatDuration(p.uptime)}
         </span>
       </div>
     </div>

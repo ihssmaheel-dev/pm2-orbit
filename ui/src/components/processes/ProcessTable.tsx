@@ -210,7 +210,7 @@ export function ProcessTable() {
               return (
                 <ProcessRow
                   key={process.id}
-                  process={process}
+                  processId={process.id}
                   columns={columns}
                   sparklineWidth={SPARKLINE_WIDTH}
                   uptimeWidth={UPTIME_WIDTH}

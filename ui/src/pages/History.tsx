@@ -24,26 +24,33 @@ export function History() {
   const processes = useProcessStore((s) => s.processes);
   const [timeRange, setTimeRange] = useState<TimeRange>('24h');
   const [systemHistory, setSystemHistory] = useState<SystemHistory[]>([]);
+  const [systemLoading, setSystemLoading] = useState(true);
   const [selectedProcessId, setSelectedProcessId] = useState<number | null>(null);
   const [processHistory, setProcessHistory] = useState<ProcessHistory[]>([]);
+  const [processLoading, setProcessLoading] = useState(false);
 
   const processList = useMemo(() => Array.from(processes.values()), [processes]);
 
   useEffect(() => {
     const hours = timeRange === '1h' ? 1 : timeRange === '6h' ? 6 : 24;
+    setSystemLoading(true);
     fetch(`/api/history/system?hours=${hours}`)
       .then((res) => res.json())
-      .then((data) => setSystemHistory(data))
-      .catch(() => setSystemHistory([]));
+      .then((data) => { setSystemHistory(data); setSystemLoading(false); })
+      .catch(() => { setSystemHistory([]); setSystemLoading(false); });
   }, [timeRange]);
 
   useEffect(() => {
-    if (selectedProcessId === null) return;
+    if (selectedProcessId === null) {
+      setProcessHistory([]);
+      return;
+    }
     const hours = timeRange === '1h' ? 1 : timeRange === '6h' ? 6 : 24;
+    setProcessLoading(true);
     fetch(`/api/history/${selectedProcessId}?hours=${hours}`)
       .then((res) => res.json())
-      .then((data) => setProcessHistory(data))
-      .catch(() => setProcessHistory([]));
+      .then((data) => { setProcessHistory(data); setProcessLoading(false); })
+      .catch(() => { setProcessHistory([]); setProcessLoading(false); });
   }, [selectedProcessId, timeRange]);
 
   const cpuData = useMemo(() => ({
@@ -93,14 +100,25 @@ export function History() {
       <div className="flex-1 overflow-auto p-4">
         <div className="mb-6">
           <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-3">System Metrics</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-card border border-border p-4">
-              <CpuChart data={cpuData} label="CPU %" />
+          {systemLoading ? (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-card border border-border p-4 h-[160px] flex items-center justify-center">
+                <span className="text-xs text-muted-foreground/50">Loading...</span>
+              </div>
+              <div className="bg-card border border-border p-4 h-[160px] flex items-center justify-center">
+                <span className="text-xs text-muted-foreground/50">Loading...</span>
+              </div>
             </div>
-            <div className="bg-card border border-border p-4">
-              <MemoryChart data={memData} label="Memory" />
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-card border border-border p-4">
+                <CpuChart data={cpuData} label="CPU %" />
+              </div>
+              <div className="bg-card border border-border p-4">
+                <MemoryChart data={memData} label="Memory" />
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <div>
@@ -119,14 +137,25 @@ export function History() {
           </div>
 
           {selectedProcessId !== null ? (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-card border border-border p-4">
-                <CpuChart data={processCpuData} label="CPU %" />
+            processLoading ? (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-card border border-border p-4 h-[160px] flex items-center justify-center">
+                  <span className="text-xs text-muted-foreground/50">Loading...</span>
+                </div>
+                <div className="bg-card border border-border p-4 h-[160px] flex items-center justify-center">
+                  <span className="text-xs text-muted-foreground/50">Loading...</span>
+                </div>
               </div>
-              <div className="bg-card border border-border p-4">
-                <MemoryChart data={processMemData} label="Memory" />
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-card border border-border p-4">
+                  <CpuChart data={processCpuData} label="CPU %" />
+                </div>
+                <div className="bg-card border border-border p-4">
+                  <MemoryChart data={processMemData} label="Memory" />
+                </div>
               </div>
-            </div>
+            )
           ) : (
             <div className="text-center py-12 text-muted-foreground text-sm">
               Select a process to view its history

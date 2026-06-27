@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { RotateCw, Play, Square, RefreshCw, Trash2, MoreHorizontal, Minus } from 'lucide-react';
+import { toast } from 'sonner';
 import { Dropdown, DropdownItem, DropdownSeparator } from '@/components/shared/Dropdown';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
@@ -14,13 +15,25 @@ export function ActionMenu({ processId, processName }: ActionMenuProps) {
 
   const handleAction = async (action: string) => {
     try {
-      await fetch(`/api/processes/${processId}/action`, {
+      const res = await fetch(`/api/processes/${processId}/action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),
       });
-    } catch {
-      // Action failed
+      if (res.ok) {
+        toast.success(`${action.charAt(0).toUpperCase() + action.slice(1)} sent`, {
+          description: processName,
+        });
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error(`Failed to ${action}`, {
+          description: data.error || 'Unknown error',
+        });
+      }
+    } catch (err) {
+      toast.error(`Failed to ${action}`, {
+        description: err instanceof Error ? err.message : 'Network error',
+      });
     }
     setOpen(false);
   };

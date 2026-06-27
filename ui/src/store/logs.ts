@@ -16,7 +16,6 @@ interface LogsStore {
   clearLogs: (processId?: number) => void;
   setPaused: (paused: boolean) => void;
   getLogs: (processId: number) => LogEntry[];
-  getAllLogs: () => LogEntry[];
 }
 
 const DEFAULT_MAX_SIZE = 500;
@@ -53,12 +52,4 @@ export const useLogsStore = create<LogsStore>((set, get) => ({
   setPaused: (paused) => set({ paused }),
 
   getLogs: (processId) => get().buffers.get(processId) || [],
-
-  getAllLogs: () => {
-    const all: LogEntry[] = [];
-    for (const entries of get().buffers.values()) {
-      all.push(...entries);
-    }
-    return all.sort((a, b) => a.ts - b.ts);
-  },
 }));

@@ -11,14 +11,13 @@ const args = mri(process.argv.slice(2), {
     'no-open': 'n',
     help: 'h',
     version: 'v',
-    remote: 'r',
   },
   default: {
     port: parseInt(process.env.PM2_ORBIT_PORT || '9823', 10),
     'no-open': false,
   },
   boolean: ['no-open', 'help', 'version'],
-  string: ['port', 'theme', 'remote'],
+  string: ['port', 'theme'],
 });
 
 if (args.help) {
@@ -32,7 +31,6 @@ if (args.help) {
     --port, -p       Port to listen on (default: 9823)
     --no-open, -n    Don't open browser automatically
     --theme, -t      Force theme (dark|light|system)
-    --remote, -r     Connect to remote PM2 instance (user@host)
     --help, -h       Show this help
     --version, -v    Show version
   `);
@@ -47,7 +45,7 @@ if (args.version) {
 if (args.theme) process.env.PM2_ORBIT_THEME = args.theme;
 
 async function main() {
-  const server = await createServer({ port: args.port, remote: args.remote });
+  const server = await createServer({ port: args.port });
   await server.listen({ port: args.port, host: '127.0.0.1' });
   if (!args['no-open']) {
     const { default: open } = await import('open');
