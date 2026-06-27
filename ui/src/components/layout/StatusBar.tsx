@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Wifi, WifiOff } from 'lucide-react';
 import { ConnectionDot } from '@/components/shared/ConnectionDot';
 
@@ -5,8 +6,21 @@ interface StatusBarProps {
   wsStatus?: 'connecting' | 'connected' | 'disconnected';
 }
 
+interface HealthData {
+  version?: string;
+  nodeVersion?: string;
+}
+
 export function StatusBar({ wsStatus = 'disconnected' }: StatusBarProps) {
   const connected = wsStatus === 'connected';
+  const [health, setHealth] = useState<HealthData>({});
+
+  useEffect(() => {
+    fetch('/api/health')
+      .then((res) => res.json())
+      .then((data) => setHealth(data))
+      .catch(() => {});
+  }, []);
 
   return (
     <footer className="h-7 border-t border-border flex items-center px-4 text-xs text-muted-foreground gap-3 shrink-0 select-none">
@@ -19,12 +33,18 @@ export function StatusBar({ wsStatus = 'disconnected' }: StatusBarProps) {
       <span className="uppercase tracking-wider">
         {connected ? 'Connected' : wsStatus === 'connecting' ? 'Connecting...' : 'Disconnected'}
       </span>
-      <span className="text-border">·</span>
-      <span>pm2 v5.3.0</span>
-      <span className="text-border">·</span>
-      <span>Node v22</span>
-      <span className="text-border">·</span>
-      <span className="font-mono">v0.1.0</span>
+      {health.version && (
+        <>
+          <span className="text-border">·</span>
+          <span className="font-mono">v{health.version}</span>
+        </>
+      )}
+      {health.nodeVersion && (
+        <>
+          <span className="text-border">·</span>
+          <span>Node {health.nodeVersion}</span>
+        </>
+      )}
     </footer>
   );
 }

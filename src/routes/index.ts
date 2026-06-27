@@ -9,6 +9,7 @@ export async function registerRoutes(app: FastifyInstance, pipeline: Pipeline) {
     uptime: process.uptime(),
     version: require('../../package.json').version,
     processes: (await pipeline.bridge.list()).length,
+    nodeVersion: process.version,
   }));
 
   app.get('/api/ping', async () => 'pong');

@@ -84,32 +84,43 @@ export const ProcessRow = memo(function ProcessRow({
 
   return (
     <div
+      role="row"
+      aria-rowindex={processId + 1}
+      aria-selected={isSelected}
+      tabIndex={0}
       style={style}
       onClick={() => select(isSelected ? null : processId)}
-      className={`flex items-center px-6 cursor-pointer transition-colors duration-75 group border-b border-border/30 ${
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          select(isSelected ? null : processId);
+        }
+      }}
+      className={`flex items-center px-6 cursor-pointer transition-colors duration-75 group border-b border-border/30 outline-none focus-visible:ring-1 focus-visible:ring-primary ${
         isSelected
           ? 'bg-primary/[0.06]'
           : 'hover:bg-subtle/40'
       }`}
     >
-      <div className="w-7 shrink-0 flex items-center justify-center">
+      <div role="cell" className="w-7 shrink-0 flex items-center justify-center">
         <StatusDot status={p.status} />
       </div>
 
       {columns.map((col) => (
         <div
           key={col.accessorKey}
+          role="cell"
           className={`${col.width} shrink-0 px-4 ${col.align === 'right' ? 'text-right' : ''}`}
         >
           {renderCell(col.accessorKey)}
         </div>
       ))}
 
-      <div className={`${sparklineWidth} shrink-0 px-4`}>
+      <div role="cell" className={`${sparklineWidth} shrink-0 px-4`}>
         <Sparkline data={p.history.cpu} color="var(--chart-cpu)" width={76} height={20} />
       </div>
 
-      <div className={`${uptimeWidth} shrink-0 px-4 text-right`}>
+      <div role="cell" className={`${uptimeWidth} shrink-0 px-4 text-right`}>
         <span className="text-[11px] font-mono tabular-nums text-muted-foreground/60">
           {formatDuration(p.uptime)}
         </span>
