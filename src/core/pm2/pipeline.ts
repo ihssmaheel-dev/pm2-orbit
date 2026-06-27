@@ -5,6 +5,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import type { Tick } from '../../types';
 import { createStore } from '../persistence/store';
 import { createAlertEngine } from '../alerts/engine';
+import { sendWebhook, sendSlack, sendDiscord, sendEmailNotification } from '../notifications/channels';
 
 const FULL_SYNC_INTERVAL = 5000;
 
@@ -57,6 +58,11 @@ export function createEventPipeline() {
   }
 
   function evaluateAlerts(tick: Tick) {
+    const webhookUrl = process.env.WEBHOOK_URL;
+    const slackUrl = process.env.SLACK_WEBHOOK_URL;
+    const discordUrl = process.env.DISCORD_WEBHOOK_URL;
+    const emailEnabled = !!process.env.SMTP_HOST && !!process.env.SMTP_FROM && !!process.env.SMTP_TO;
+
     for (const event of tick.events) {
       if (event.type === 'remove') continue;
       const proc = event.process;
@@ -69,6 +75,27 @@ export function createEventPipeline() {
       if (fired.length > 0) {
         for (const alertEvent of fired) {
           console.log(`  \x1b[33m⚠\x1b[0m Alert: ${alertEvent.message}`);
+
+          const notificationPayload = {
+            message: alertEvent.message,
+            processName: alertEvent.processName,
+            metric: alertEvent.metric,
+            value: alertEvent.value,
+            threshold: alertEvent.threshold,
+          };
+
+          if (webhookUrl) {
+            sendWebhook(webhookUrl, notificationPayload).catch(() => {});
+          }
+          if (slackUrl) {
+            sendSlack(slackUrl, { message: alertEvent.message }).catch(() => {});
+          }
+          if (discordUrl) {
+            sendDiscord(discordUrl, { message: alertEvent.message }).catch(() => {});
+          }
+          if (emailEnabled) {
+            sendEmailNotification(`Alert: ${alertEvent.processName}`, alertEvent.message).catch(() => {});
+          }
         }
       }
     }

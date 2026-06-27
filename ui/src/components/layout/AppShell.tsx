@@ -16,7 +16,7 @@ export function AppShell({ wsStatus }: AppShellProps) {
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
-      <Header />
+      <Header wsStatus={wsStatus} />
       <main className="flex-1 overflow-hidden">
         {activeTab === 'processes' && <Dashboard />}
         {activeTab === 'logs' && <Logs />}

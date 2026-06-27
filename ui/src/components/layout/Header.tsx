@@ -4,7 +4,11 @@ import { useUIStore } from '@/store/ui';
 import { ConnectionDot } from '@/components/shared/ConnectionDot';
 import { AlertBadge } from '@/components/alerts/AlertBadge';
 
-export function Header() {
+interface HeaderProps {
+  wsStatus: 'connecting' | 'connected' | 'disconnected';
+}
+
+export function Header({ wsStatus }: HeaderProps) {
   const { theme, setTheme, resolved } = useTheme();
   const activeTab = useUIStore((s) => s.activeTab);
   const setActiveTab = useUIStore((s) => s.setActiveTab);
@@ -58,7 +62,7 @@ export function Header() {
 
         <AlertBadge onClick={() => setActiveTab('alerts')} />
 
-        <ConnectionDot connected={true} />
+        <ConnectionDot connected={wsStatus === 'connected'} />
       </div>
     </header>
   );

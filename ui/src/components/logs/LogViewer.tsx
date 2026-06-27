@@ -49,36 +49,55 @@ function highlightMatch(text: string, query: string): { parts: Array<{ text: str
 }
 
 export function LogViewer() {
-  const logs = useLogsStore((s) => s.getAllLogs());
   const paused = useLogsStore((s) => s.paused);
   const setPaused = useLogsStore((s) => s.setPaused);
   const clearLogs = useLogsStore((s) => s.clearLogs);
   const addLog = useLogsStore((s) => s.addLog);
+  const buffers = useLogsStore((s) => s.buffers);
   const processes = useProcessStore((s) => s.processes);
   const [searchQuery, setSearchQuery] = useState('');
   const [autoScroll, setAutoScroll] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const eventSourcesRef = useRef<Map<number, EventSource>>(new Map());
 
-  const processNames = useMemo(() => {
-    const names = new Map<number, string>();
+  const processIds = useMemo(() => {
+    const ids: { id: number; name: string }[] = [];
     for (const proc of processes.values()) {
-      names.set(proc.id, proc.name);
+      ids.push({ id: proc.id, name: proc.name });
     }
-    return names;
+    return ids.map((p) => p.id).join(',');
   }, [processes]);
 
-  useEffect(() => {
+  const processEntries = useMemo(() => {
+    const entries: { id: number; name: string }[] = [];
     for (const proc of processes.values()) {
-      if (!eventSourcesRef.current.has(proc.id)) {
-        const es = new EventSource(`/api/logs/${proc.id}`);
+      entries.push({ id: proc.id, name: proc.name });
+    }
+    return entries;
+  }, [processes]);
+
+  const logs = useMemo(() => {
+    const all: Array<{ ts: number; processId: number; processName: string; stream: string; message: string }> = [];
+    for (const [processId, entries] of buffers) {
+      for (const entry of entries) {
+        const procName = processEntries.find((p) => p.id === processId)?.name || `PID ${processId}`;
+        all.push({ ...entry, processId, processName: procName });
+      }
+    }
+    return all.sort((a, b) => a.ts - b.ts);
+  }, [buffers, processEntries]);
+
+  useEffect(() => {
+    for (const entry of processEntries) {
+      if (!eventSourcesRef.current.has(entry.id)) {
+        const es = new EventSource(`/api/logs/${entry.id}`);
         es.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
             addLog({
               ts: data.ts,
-              processId: proc.id,
-              processName: proc.name,
+              processId: entry.id,
+              processName: entry.name,
               stream: data.stream,
               message: data.message,
             });
@@ -86,7 +105,7 @@ export function LogViewer() {
             // ignore
           }
         };
-        eventSourcesRef.current.set(proc.id, es);
+        eventSourcesRef.current.set(entry.id, es);
       }
     }
 
@@ -96,7 +115,8 @@ export function LogViewer() {
       }
       eventSourcesRef.current.clear();
     };
-  }, [processes, addLog]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [processIds]);
 
   const filteredLogs = useMemo(() => {
     if (!searchQuery) return logs;
@@ -123,8 +143,7 @@ export function LogViewer() {
   const downloadLogs = () => {
     const text = filteredLogs
       .map((log) => {
-        const name = processNames.get(log.processId) || 'unknown';
-        return `[${new Date(log.ts).toISOString()}] [${name}] ${log.message}`;
+        return `[${new Date(log.ts).toISOString()}] [${log.processName}] ${log.message}`;
       })
       .join('\n');
 
@@ -185,8 +204,7 @@ export function LogViewer() {
           </div>
         ) : (
           filteredLogs.map((log, i) => {
-            const processName = processNames.get(log.processId) || `PID ${log.processId}`;
-            const colorClass = getColorForProcess(processName);
+            const colorClass = getColorForProcess(log.processName);
             const levelColor = getLevelColor(log.message);
             const { parts } = highlightMatch(log.message, searchQuery);
 
@@ -196,7 +214,7 @@ export function LogViewer() {
                   {new Date(log.ts).toLocaleTimeString()}
                 </span>
                 <span className={`shrink-0 w-[100px] truncate ${colorClass}`}>
-                  {processName}
+                  {log.processName}
                 </span>
                 <span className={`${levelColor} flex-1`}>
                   {parts.map((part, j) =>

@@ -4,8 +4,11 @@ import type { AlertRule, AlertEvent } from '@/types/alerts';
 interface AlertsStore {
   rules: AlertRule[];
   history: AlertEvent[];
-  addRule: (rule: AlertRule) => void;
-  removeRule: (id: string) => void;
+  loading: boolean;
+  fetchRules: () => Promise<void>;
+  fetchHistory: () => Promise<void>;
+  addRule: (rule: AlertRule) => Promise<void>;
+  removeRule: (id: string) => Promise<void>;
   updateRule: (id: string, updates: Partial<AlertRule>) => void;
   addEvent: (event: AlertEvent) => void;
   clearHistory: () => void;
@@ -14,12 +17,56 @@ interface AlertsStore {
 export const useAlertsStore = create<AlertsStore>((set) => ({
   rules: [],
   history: [],
+  loading: false,
 
-  addRule: (rule) =>
-    set((state) => ({ rules: [...state.rules, rule] })),
+  fetchRules: async () => {
+    set({ loading: true });
+    try {
+      const res = await fetch('/api/alerts');
+      if (res.ok) {
+        const rules = await res.json();
+        set({ rules, loading: false });
+      } else {
+        set({ loading: false });
+      }
+    } catch {
+      set({ loading: false });
+    }
+  },
 
-  removeRule: (id) =>
-    set((state) => ({ rules: state.rules.filter((r) => r.id !== id) })),
+  fetchHistory: async () => {
+    try {
+      const res = await fetch('/api/alerts/history');
+      if (res.ok) {
+        const history = await res.json();
+        set({ history });
+      }
+    } catch {
+      // ignore
+    }
+  },
+
+  addRule: async (rule) => {
+    set((state) => ({ rules: [...state.rules, rule] }));
+    try {
+      await fetch('/api/alerts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(rule),
+      });
+    } catch {
+      // Server failed, rule already in local state
+    }
+  },
+
+  removeRule: async (id) => {
+    set((state) => ({ rules: state.rules.filter((r) => r.id !== id) }));
+    try {
+      await fetch(`/api/alerts/${id}`, { method: 'DELETE' });
+    } catch {
+      // Server failed, rule already removed locally
+    }
+  },
 
   updateRule: (id, updates) =>
     set((state) => ({

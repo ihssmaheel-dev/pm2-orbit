@@ -144,15 +144,16 @@ export async function registerRoutes(app: FastifyInstance, pipeline: Pipeline) {
 
     const { createLogTailer } = await import('../core/logs/tailer');
     const tailer = createLogTailer(processId, proc.name);
-
-    const sendLog = (entry: { ts: number; stream: string; message: string }) => {
-      reply.raw.write(`data: ${JSON.stringify(entry)}\n\n`);
-    };
+    let lastSentIndex = 0;
 
     const interval = setInterval(() => {
       const buffer = tailer.getBuffer();
-      for (const entry of buffer) {
-        sendLog(entry);
+      if (buffer.length > lastSentIndex) {
+        const newEntries = buffer.slice(lastSentIndex);
+        lastSentIndex = buffer.length;
+        for (const entry of newEntries) {
+          reply.raw.write(`data: ${JSON.stringify(entry)}\n\n`);
+        }
       }
     }, 1000);
 
