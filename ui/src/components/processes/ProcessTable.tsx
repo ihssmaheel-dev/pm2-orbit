@@ -95,35 +95,38 @@ export function ProcessTable() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border shrink-0">
+      <div className="flex items-center justify-between px-5 py-3 border-b border-border shrink-0 bg-card/50">
         <div className="flex items-center gap-3">
-          <span className="text-sm text-foreground font-medium uppercase tracking-wider">
-            Processes
-          </span>
-          <span className="text-xs text-muted-foreground font-mono bg-subtle px-2 py-0.5">
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-4 bg-primary rounded-full" />
+            <span className="text-sm text-foreground font-medium tracking-wide">
+              PROCESSES
+            </span>
+          </div>
+          <span className="text-[10px] text-primary-foreground font-mono bg-primary/20 text-primary px-2 py-0.5 min-w-[20px] text-center">
             {filteredData.length}
           </span>
         </div>
         <div className="relative">
-          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             placeholder="Search processes..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-8 w-56 pl-8 pr-3 text-xs bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring rounded-none"
+            className="h-9 w-64 pl-9 pr-4 text-xs bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 rounded-none transition-colors"
           />
         </div>
       </div>
 
       {/* Column Headers */}
-      <div className="flex items-center h-9 px-0 border-b border-border bg-subtle/30 shrink-0">
+      <div className="flex items-center h-10 px-0 border-b border-border bg-background shrink-0">
         {/* Status dot column */}
         <div className="w-10 shrink-0" />
 
         {columns.map((col) => (
           <div
             key={col.accessorKey}
-            className={`${col.width} shrink-0 px-2 cursor-pointer hover:text-foreground transition-colors select-none`}
+            className={`${col.width} shrink-0 px-3 cursor-pointer hover:bg-subtle/50 transition-colors select-none group`}
             onClick={() => {
               const isSorted = sorting[0]?.id === col.accessorKey;
               if (isSorted) {
@@ -133,19 +136,21 @@ export function ProcessTable() {
               }
             }}
           >
-            <div className={`flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground ${
+            <div className={`flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground group-hover:text-foreground transition-colors ${
               col.align === 'right' ? 'justify-end' : ''
             }`}>
               {col.header}
-              {getSortIcon(col.accessorKey)}
+              <span className="opacity-40 group-hover:opacity-100 transition-opacity">
+                {getSortIcon(col.accessorKey)}
+              </span>
             </div>
           </div>
         ))}
 
         {/* Uptime column */}
-        <div className="flex-1 px-2 text-right">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            Uptime
+        <div className="flex-1 px-3 text-right">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+            UPTIME
           </span>
         </div>
       </div>
