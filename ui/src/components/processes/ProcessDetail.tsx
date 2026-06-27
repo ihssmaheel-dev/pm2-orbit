@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Clock, RotateCw, Hash, Server, Eye, EyeOff } from 'lucide-react';
+import { X, Clock, RotateCw, Hash, Server, Eye, EyeOff, MousePointerClick } from 'lucide-react';
 import { useProcessStore } from '@/store/processes';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/shared/Tabs';
 import { Badge } from '@/components/shared/Badge';
@@ -37,7 +37,14 @@ export function ProcessDetail() {
     }
   }, [process]);
 
-  if (!process) return null;
+  if (!process) {
+    return (
+      <div className="w-[420px] shrink-0 h-full bg-card border border-border/60 flex flex-col items-center justify-center">
+        <MousePointerClick size={32} className="text-muted-foreground/20 mb-4" />
+        <p className="text-sm text-muted-foreground/40">Select a process to view details</p>
+      </div>
+    );
+  }
 
   const cpuData = { ts: process.history.ts, values: process.history.cpu };
   const memData = { ts: process.history.ts, values: process.history.memory };
@@ -68,9 +75,9 @@ export function ProcessDetail() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-hidden flex flex-col">
         <Tabs defaultValue="overview">
-          <div className="px-5 border-b border-border/40">
+          <div className="px-5 border-b border-border/40 shrink-0">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="metrics">Metrics</TabsTrigger>
@@ -78,7 +85,7 @@ export function ProcessDetail() {
             </TabsList>
           </div>
 
-          <div className="p-5">
+          <div className="flex-1 overflow-auto p-5">
             <TabsContent value="overview">
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">

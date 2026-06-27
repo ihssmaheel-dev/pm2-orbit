@@ -21,16 +21,17 @@ interface ColumnDef {
 }
 
 const columns: ColumnDef[] = [
-  { accessorKey: 'name', header: 'Name', width: 'w-[180px]' },
-  { accessorKey: 'mode', header: 'Mode', width: 'w-[72px]' },
-  { accessorKey: 'pid', header: 'PID', width: 'w-[64px]' },
-  { accessorKey: 'cpu', header: 'CPU', width: 'w-[88px]', align: 'right' },
-  { accessorKey: 'memory', header: 'Memory', width: 'w-[88px]', align: 'right' },
+  { accessorKey: 'name', header: 'Name', width: 'flex-1 min-w-[140px]' },
+  { accessorKey: 'mode', header: 'Mode', width: 'w-[80px]' },
+  { accessorKey: 'pid', header: 'PID', width: 'w-[70px]' },
+  { accessorKey: 'cpu', header: 'CPU', width: 'w-[80px]', align: 'right' },
+  { accessorKey: 'memory', header: 'Memory', width: 'w-[90px]', align: 'right' },
   { accessorKey: 'restarts', header: 'Restarts', width: 'w-[80px]', align: 'right' },
 ];
 
-const SPARKLINE_WIDTH = 'w-[88px]';
-const UPTIME_WIDTH = 'w-[88px]';
+const SPARKLINE_WIDTH = 'w-[100px]';
+const UPTIME_WIDTH = 'w-[90px]';
+const ACTION_WIDTH = 'w-[50px]';
 
 export function ProcessTable() {
   const processes = useProcessStore((s) => s.processes);
@@ -81,7 +82,7 @@ export function ProcessTable() {
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 46,
+    estimateSize: () => 44,
     overscan: 10,
   });
 
@@ -109,7 +110,7 @@ export function ProcessTable() {
   return (
     <div className="flex flex-col h-full border border-border/60 bg-card/40">
       {/* Card Header */}
-      <div className="flex items-center justify-between h-[56px] px-6 shrink-0">
+      <div className="flex items-center justify-between h-[52px] px-5 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-[3px] h-4 bg-primary" />
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground/80">
@@ -152,9 +153,9 @@ export function ProcessTable() {
         <div role="rowgroup" className="shrink-0">
           <div
             role="row"
-            className="flex items-center h-10 px-6 select-none border-t border-border/30 border-b border-border/60 bg-background/30"
+            className="flex items-center h-9 px-5 select-none border-t border-border/30 border-b border-border/60 bg-background/30"
           >
-            <div role="columnheader" className="w-7 shrink-0" aria-label="Status" />
+            <div role="columnheader" className="w-6 shrink-0" aria-label="Status" />
 
             {columns.map((col) => {
               const sortEntry = sorting.find((s) => s.id === col.accessorKey);
@@ -166,7 +167,7 @@ export function ProcessTable() {
                   role="columnheader"
                   aria-sort={sortDir === 'asc' ? 'ascending' : sortDir === 'desc' ? 'descending' : 'none'}
                   tabIndex={0}
-                  className={`${col.width} shrink-0 px-4 cursor-pointer group relative`}
+                  className={`${col.width} shrink-0 px-3 cursor-pointer group`}
                   onClick={() => toggleSort(col.accessorKey)}
                   onKeyDown={(e) => handleHeaderKeyDown(e, col.accessorKey)}
                 >
@@ -176,29 +177,15 @@ export function ProcessTable() {
                     } ${
                       sortDir
                         ? 'text-primary'
-                        : 'text-muted-foreground/60 group-hover:text-foreground/60'
+                        : 'text-muted-foreground/50 group-hover:text-foreground/60'
                     }`}
                   >
                     {col.header}
                     <span className="inline-flex flex-col -space-y-[2px] ml-0.5" aria-hidden="true">
-                      <svg
-                        width="8"
-                        height="8"
-                        viewBox="0 0 8 8"
-                        className={`transition-colors duration-100 ${
-                          sortDir === 'asc' ? 'text-primary' : 'text-muted-foreground/25 group-hover:text-muted-foreground/40'
-                        }`}
-                      >
+                      <svg width="7" height="7" viewBox="0 0 8 8" className={`transition-colors ${sortDir === 'asc' ? 'text-primary' : 'text-muted-foreground/20'}`}>
                         <path d="M4 1L7 5H1L4 1Z" fill="currentColor" />
                       </svg>
-                      <svg
-                        width="8"
-                        height="8"
-                        viewBox="0 0 8 8"
-                        className={`transition-colors duration-100 ${
-                          sortDir === 'desc' ? 'text-primary' : 'text-muted-foreground/25 group-hover:text-muted-foreground/40'
-                        }`}
-                      >
+                      <svg width="7" height="7" viewBox="0 0 8 8" className={`transition-colors ${sortDir === 'desc' ? 'text-primary' : 'text-muted-foreground/20'}`}>
                         <path d="M4 7L1 3H7L4 7Z" fill="currentColor" />
                       </svg>
                     </span>
@@ -207,17 +194,15 @@ export function ProcessTable() {
               );
             })}
 
-            <div role="columnheader" className={`${SPARKLINE_WIDTH} shrink-0 px-4`}>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/60">
-                History
-              </span>
+            <div role="columnheader" className={`${SPARKLINE_WIDTH} shrink-0 px-3`}>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/50">History</span>
             </div>
 
-            <div role="columnheader" className={`${UPTIME_WIDTH} shrink-0 px-4 text-right`}>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/60">
-                Uptime
-              </span>
+            <div role="columnheader" className={`${UPTIME_WIDTH} shrink-0 px-3 text-right`}>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/50">Uptime</span>
             </div>
+
+            <div role="columnheader" className={`${ACTION_WIDTH} shrink-0`} />
           </div>
         </div>
 
@@ -247,6 +232,7 @@ export function ProcessTable() {
                     columns={columns}
                     sparklineWidth={SPARKLINE_WIDTH}
                     uptimeWidth={UPTIME_WIDTH}
+                    actionWidth={ACTION_WIDTH}
                     style={{
                       position: 'absolute',
                       top: 0,

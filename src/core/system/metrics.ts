@@ -12,63 +12,44 @@ export interface SystemSnapshot {
 let prevIdle = 0;
 let prevTotal = 0;
 
-let prevDiskRead = 0;
-let prevDiskWrite = 0;
 let prevNetRx = 0;
 let prevNetTx = 0;
-let prevDiskTime = Date.now();
 let prevNetTime = Date.now();
 
-function readDiskLinux(): { read: number; write: number } {
-  try {
-    const data = execSync('cat /proc/diskstats', { encoding: 'utf-8', timeout: 1000 });
-    let readBytes = 0;
-    let writeBytes = 0;
-    for (const line of data.split('\n')) {
-      const parts = line.trim().split(/\s+/);
-      if (parts.length < 14) continue;
-      const name = parts[2];
-      if (name === 'sda' || name === 'nvme0n1' || name === 'vda' || name === 'xvda') {
-        readBytes += parseInt(parts[5]) * 512;
-        writeBytes += parseInt(parts[9]) * 512;
-      }
-    }
-    const now = Date.now();
-    const elapsed = (now - prevDiskTime) / 1000;
-    prevDiskTime = now;
-    const readRate = elapsed > 0 ? (readBytes - prevDiskRead) / elapsed : 0;
-    const writeRate = elapsed > 0 ? (writeBytes - prevDiskWrite) / elapsed : 0;
-    prevDiskRead = readBytes;
-    prevDiskWrite = writeBytes;
-    return { read: Math.max(0, readRate), write: Math.max(0, writeRate) };
-  } catch {
-    return { read: 0, write: 0 };
-  }
-}
-
-function readDiskWindows(): { read: number; write: number } {
+function readNetWindows(): { rx: number; tx: number } {
   try {
     const output = execSync(
-      'powershell -Command "Get-Counter \'\\PhysicalDisk(_Total)\\Disk Read Bytes/sec\',\'\\PhysicalDisk(_Total)\\Disk Write Bytes/sec\' | Select-Object -ExpandProperty CounterSamples | ConvertTo-Json"',
-      { encoding: 'utf-8', timeout: 2000 },
+      'wmic path Win32_PerfFormattedData_Tcpip_NetworkInterface get BytesReceivedPerSec,BytesSentPerSec /format:csv',
+      { encoding: 'utf-8', timeout: 3000 },
     );
-    const data = JSON.parse(output);
-    const samples = Array.isArray(data) ? data : [data];
-    let read = 0;
-    let write = 0;
-    for (const s of samples) {
-      if (s.Path?.includes('Read Bytes/sec')) read = s.CookedValue || 0;
-      if (s.Path?.includes('Write Bytes/sec')) write = s.CookedValue || 0;
+    const lines = output.trim().split('\n').filter((l) => l.includes(','));
+    let rx = 0;
+    let tx = 0;
+    for (const line of lines) {
+      const parts = line.split(',');
+      if (parts.length >= 3) {
+        const r = parseInt(parts[1]);
+        const s = parseInt(parts[2]);
+        if (!isNaN(r)) rx += r;
+        if (!isNaN(s)) tx += s;
+      }
     }
-    return { read, write };
+    return { rx, tx };
   } catch {
-    return { read: 0, write: 0 };
+    return { rx: 0, tx: 0 };
   }
 }
 
-function readNetLinux(): { rx: number; tx: number } {
+function readNet(): { rx: number; tx: number } {
+  const platform = os.platform();
+
+  if (platform === 'win32') {
+    return readNetWindows();
+  }
+
+  // Linux / macOS
   try {
-    const data = execSync('cat /proc/net/dev', { encoding: 'utf-8', timeout: 1000 });
+    const data = require('fs').readFileSync('/proc/net/dev', 'utf-8');
     let rxBytes = 0;
     let txBytes = 0;
     for (const line of data.split('\n')) {
@@ -96,40 +77,6 @@ function readNetLinux(): { rx: number; tx: number } {
   }
 }
 
-function readNetWindows(): { rx: number; tx: number } {
-  try {
-    const output = execSync(
-      'powershell -Command "Get-Counter \'\\Network Interface(*)\\Bytes Received/sec\',\'\\Network Interface(*)\\Bytes Sent/sec\' | Select-Object -ExpandProperty CounterSamples | ConvertTo-Json"',
-      { encoding: 'utf-8', timeout: 2000 },
-    );
-    const data = JSON.parse(output);
-    const samples = Array.isArray(data) ? data : [data];
-    let rx = 0;
-    let tx = 0;
-    for (const s of samples) {
-      if (s.Path?.includes('Bytes Received/sec')) rx += s.CookedValue || 0;
-      if (s.Path?.includes('Bytes Sent/sec')) tx += s.CookedValue || 0;
-    }
-    return { rx, tx };
-  } catch {
-    return { rx: 0, tx: 0 };
-  }
-}
-
-function readDisk(): { read: number; write: number } {
-  const platform = os.platform();
-  if (platform === 'linux') return readDiskLinux();
-  if (platform === 'win32') return readDiskWindows();
-  return { read: 0, write: 0 };
-}
-
-function readNet(): { rx: number; tx: number } {
-  const platform = os.platform();
-  if (platform === 'linux') return readNetLinux();
-  if (platform === 'win32') return readNetWindows();
-  return { rx: 0, tx: 0 };
-}
-
 export function readSystem(): SystemSnapshot {
   const cpus = os.cpus();
   let idle = 0;
@@ -152,7 +99,7 @@ export function readSystem(): SystemSnapshot {
     cpu: cpuPercent,
     memory: { used: os.totalmem() - os.freemem(), total: os.totalmem() },
     loadAvg: os.loadavg() as [number, number, number],
-    disk: readDisk(),
+    disk: { read: 0, write: 0 },
     network: readNet(),
   };
 }
