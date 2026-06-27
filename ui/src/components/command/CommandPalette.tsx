@@ -1,28 +1,25 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Command } from 'cmdk';
 import { Search, RotateCw, Square, Play, Terminal, Bell, Settings, LayoutGrid, RefreshCw, Moon, Sun } from 'lucide-react';
 import { useProcessStore } from '@/store/processes';
 import { useUIStore } from '@/store/ui';
 import { useTheme } from '@/hooks/useTheme';
 
-interface CommandItem {
-  id: string;
-  label: string;
-  icon: React.ReactNode;
-  action: () => void;
-  category: string;
-  shortcut?: string;
-}
-
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
   const processes = useProcessStore((s) => s.processes);
   const setActiveTab = useUIStore((s) => s.setActiveTab);
   const select = useProcessStore((s) => s.select);
   const { theme, setTheme } = useTheme();
 
   const processList = useMemo(() => Array.from(processes.values()), [processes]);
+
+  const close = useCallback(() => {
+    setOpen(false);
+    setQuery('');
+  }, []);
 
   const runAction = useCallback(async (processId: number, action: string) => {
     try {
@@ -36,63 +33,6 @@ export function CommandPalette() {
     }
   }, []);
 
-  const items: CommandItem[] = useMemo(() => {
-    const cmds: CommandItem[] = [
-      { id: 'nav-processes', label: 'Go to Processes', icon: <LayoutGrid size={14} />, action: () => { setActiveTab('processes'); setOpen(false); }, category: 'Navigation', shortcut: '1' },
-      { id: 'nav-logs', label: 'Go to Logs', icon: <Terminal size={14} />, action: () => { setActiveTab('logs'); setOpen(false); }, category: 'Navigation', shortcut: '2' },
-      { id: 'nav-alerts', label: 'Go to Alerts', icon: <Bell size={14} />, action: () => { setActiveTab('alerts'); setOpen(false); }, category: 'Navigation', shortcut: '3' },
-      { id: 'nav-history', label: 'Go to History', icon: <LayoutGrid size={14} />, action: () => { setActiveTab('history'); setOpen(false); }, category: 'Navigation', shortcut: '4' },
-      { id: 'nav-settings', label: 'Go to Settings', icon: <Settings size={14} />, action: () => { setActiveTab('settings'); setOpen(false); }, category: 'Navigation', shortcut: '5' },
-      { id: 'action-restart-all', label: 'Restart All Processes', icon: <RotateCw size={14} />, action: () => { processList.forEach((p) => runAction(p.id, 'restart')); setOpen(false); }, category: 'Actions' },
-      { id: 'action-stop-all', label: 'Stop All Processes', icon: <Square size={14} />, action: () => { processList.forEach((p) => runAction(p.id, 'stop')); setOpen(false); }, category: 'Actions' },
-      { id: 'theme-toggle', label: 'Toggle Theme', icon: theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />, action: () => { setTheme(theme === 'dark' ? 'light' : 'dark'); setOpen(false); }, category: 'Appearance' },
-      { id: 'action-restart-all-2', label: 'Reload All Processes', icon: <RefreshCw size={14} />, action: () => { processList.forEach((p) => runAction(p.id, 'reload')); setOpen(false); }, category: 'Actions' },
-    ];
-
-    for (const proc of processList) {
-      cmds.push({
-        id: `proc-${proc.id}`,
-        label: `${proc.name} (PID ${proc.pid})`,
-        icon: <div className={`w-2 h-2 rounded-full ${proc.status === 'online' ? 'bg-success' : proc.status === 'errored' ? 'bg-destructive' : 'bg-muted-foreground'}`} />,
-        action: () => { select(proc.id); setActiveTab('processes'); setOpen(false); },
-        category: 'Processes',
-      });
-      cmds.push({
-        id: `restart-${proc.id}`,
-        label: `Restart ${proc.name}`,
-        icon: <RotateCw size={14} />,
-        action: () => { runAction(proc.id, 'restart'); setOpen(false); },
-        category: 'Process Actions',
-      });
-      cmds.push({
-        id: `stop-${proc.id}`,
-        label: `Stop ${proc.name}`,
-        icon: <Square size={14} />,
-        action: () => { runAction(proc.id, 'stop'); setOpen(false); },
-        category: 'Process Actions',
-      });
-      cmds.push({
-        id: `start-${proc.id}`,
-        label: `Start ${proc.name}`,
-        icon: <Play size={14} />,
-        action: () => { runAction(proc.id, 'start'); setOpen(false); },
-        category: 'Process Actions',
-      });
-    }
-
-    return cmds;
-  }, [processList, setActiveTab, select, runAction, theme, setTheme]);
-
-  const filtered = useMemo(() => {
-    if (!query) return items;
-    const q = query.toLowerCase();
-    return items.filter(
-      (item) =>
-        item.label.toLowerCase().includes(q) ||
-        item.category.toLowerCase().includes(q),
-    );
-  }, [items, query]);
-
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -104,67 +44,237 @@ export function CommandPalette() {
     return () => document.removeEventListener('keydown', onKeyDown);
   }, []);
 
+  useEffect(() => {
+    if (open) {
+      requestAnimationFrame(() => inputRef.current?.focus());
+    }
+  }, [open]);
+
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]">
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setOpen(false)} />
-      <Command
-        className="relative w-full max-w-lg bg-card border border-border shadow-glow-lg overflow-hidden"
-        onKeyDown={(e: React.KeyboardEvent) => {
-          if (e.key === 'Escape') setOpen(false);
-        }}
-      >
-        <div className="flex items-center gap-2 px-4 h-12 border-b border-border">
-          <Search size={14} className="text-muted-foreground/60 shrink-0" />
-          <Command.Input
-            value={query}
-            onValueChange={setQuery}
-            placeholder="Type a command or search..."
-            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none"
-          />
-          <kbd className="text-[10px] font-mono text-muted-foreground/40 border border-border/60 px-1.5 py-0.5 leading-none">
-            ESC
-          </kbd>
-        </div>
+    <div className="fixed inset-0 z-50">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" onClick={close} />
 
-        <Command.List className="max-h-[300px] overflow-auto p-1">
-          <Command.Empty className="py-8 text-center text-sm text-muted-foreground/50">
-            No results found
-          </Command.Empty>
+      <div className="absolute inset-0 flex items-start justify-center pt-[18vh]">
+        <Command
+          className="relative w-full max-w-[520px] bg-card border border-border/80 overflow-hidden"
+          loop
+          onKeyDown={(e: React.KeyboardEvent) => {
+            if (e.key === 'Escape') close();
+          }}
+        >
+          {/* Search */}
+          <div className="flex items-center gap-3 px-5 h-[52px] border-b border-border/50">
+            <Search size={15} className="text-muted-foreground/40 shrink-0" />
+            <Command.Input
+              ref={inputRef as React.RefObject<HTMLInputElement>}
+              value={query}
+              onValueChange={setQuery}
+              placeholder="Search commands, processes, actions..."
+              className="flex-1 bg-transparent text-[13px] text-foreground placeholder:text-muted-foreground/35 focus:outline-none font-light"
+            />
+            <kbd className="text-[10px] font-mono text-muted-foreground/30 border border-border/40 px-1.5 py-[3px] leading-none shrink-0">
+              esc
+            </kbd>
+          </div>
 
-          {(['Navigation', 'Actions', 'Appearance', 'Processes', 'Process Actions'] as const).map((cat) => {
-            const catItems = filtered.filter((i) => i.category === cat);
-            if (catItems.length === 0) return null;
-            return (
-              <Command.Group key={cat} heading={cat} className="mb-1">
-                {catItems.map((item) => (
-                  <Command.Item
-                    key={item.id}
-                    value={item.label}
-                    onSelect={() => item.action()}
-                    className="flex items-center gap-3 px-3 py-2 text-sm cursor-pointer text-foreground/80 rounded-none data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary transition-colors"
-                  >
-                    <span className="text-muted-foreground/60">{item.icon}</span>
-                    <span className="flex-1">{item.label}</span>
-                    {item.shortcut && (
-                      <kbd className="text-[10px] font-mono text-muted-foreground/40 border border-border/60 px-1.5 py-0.5 leading-none">
-                        {item.shortcut}
-                      </kbd>
-                    )}
-                  </Command.Item>
-                ))}
-              </Command.Group>
-            );
-          })}
-        </Command.List>
+          {/* Results */}
+          <Command.List className="max-h-[340px] overflow-auto p-1.5">
+            <Command.Empty className="py-12 text-center">
+              <div className="text-sm text-muted-foreground/40">No results found</div>
+              <div className="text-[11px] text-muted-foreground/25 mt-1">Try a different search term</div>
+            </Command.Empty>
 
-        <div className="flex items-center gap-4 px-4 h-9 border-t border-border text-[10px] text-muted-foreground/40">
-          <span>↑↓ Navigate</span>
-          <span>↵ Select</span>
-          <span>ESC Close</span>
-        </div>
-      </Command>
+            <Command.Group heading="Navigate" className="mb-1.5">
+              <CommandItem
+                value="Processes navigate"
+                icon={<LayoutGrid size={14} />}
+                label="Processes"
+                shortcut="1"
+                onSelect={() => { setActiveTab('processes'); close(); }}
+              />
+              <CommandItem
+                value="Logs navigate"
+                icon={<Terminal size={14} />}
+                label="Logs"
+                shortcut="2"
+                onSelect={() => { setActiveTab('logs'); close(); }}
+              />
+              <CommandItem
+                value="Alerts navigate"
+                icon={<Bell size={14} />}
+                label="Alerts"
+                shortcut="3"
+                onSelect={() => { setActiveTab('alerts'); close(); }}
+              />
+              <CommandItem
+                value="History navigate"
+                icon={<LayoutGrid size={14} />}
+                label="History"
+                shortcut="4"
+                onSelect={() => { setActiveTab('history'); close(); }}
+              />
+              <CommandItem
+                value="Settings navigate"
+                icon={<Settings size={14} />}
+                label="Settings"
+                shortcut="5"
+                onSelect={() => { setActiveTab('settings'); close(); }}
+              />
+            </Command.Group>
+
+            <Command.Group heading="Preferences" className="mb-1.5">
+              <CommandItem
+                value="Toggle theme preferences"
+                icon={theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+                label={theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
+                onSelect={() => { setTheme(theme === 'dark' ? 'light' : 'dark'); close(); }}
+              />
+            </Command.Group>
+
+            <Command.Group heading="Processes" className="mb-1.5">
+              {processList.map((proc) => (
+                <CommandItem
+                  key={proc.id}
+                  value={`${proc.name} process PID ${proc.pid}`}
+                  icon={
+                    <span className={`inline-block w-1.5 h-1.5 rounded-full ${
+                      proc.status === 'online' ? 'bg-success' :
+                      proc.status === 'errored' ? 'bg-destructive' :
+                      proc.status === 'stopped' ? 'bg-muted-foreground/40' :
+                      'bg-warning'
+                    }`} />
+                  }
+                  label={proc.name}
+                  hint={`PID ${proc.pid} · ${proc.mode}`}
+                  onSelect={() => { select(proc.id); setActiveTab('processes'); close(); }}
+                />
+              ))}
+            </Command.Group>
+
+            <Command.Group heading="Process Actions" className="mb-1.5">
+              {processList.map((proc) => (
+                <CommandItem
+                  key={`actions-${proc.id}`}
+                  value={`Restart ${proc.name} process action`}
+                  icon={<RotateCw size={14} />}
+                  label={`Restart ${proc.name}`}
+                  onSelect={() => { runAction(proc.id, 'restart'); close(); }}
+                />
+              ))}
+              {processList.map((proc) => (
+                <CommandItem
+                  key={`stop-${proc.id}`}
+                  value={`Stop ${proc.name} process action`}
+                  icon={<Square size={14} />}
+                  label={`Stop ${proc.name}`}
+                  destructive
+                  onSelect={() => { runAction(proc.id, 'stop'); close(); }}
+                />
+              ))}
+              {processList.map((proc) => (
+                <CommandItem
+                  key={`start-${proc.id}`}
+                  value={`Start ${proc.name} process action`}
+                  icon={<Play size={14} />}
+                  label={`Start ${proc.name}`}
+                  onSelect={() => { runAction(proc.id, 'start'); close(); }}
+                />
+              ))}
+            </Command.Group>
+
+            <Command.Group heading="Bulk Actions" className="mb-1.5">
+              <CommandItem
+                value="Restart all processes bulk"
+                icon={<RotateCw size={14} />}
+                label="Restart All"
+                hint={`${processList.length} processes`}
+                onSelect={() => { processList.forEach((p) => runAction(p.id, 'restart')); close(); }}
+              />
+              <CommandItem
+                value="Stop all processes bulk"
+                icon={<Square size={14} />}
+                label="Stop All"
+                hint={`${processList.length} processes`}
+                destructive
+                onSelect={() => { processList.forEach((p) => runAction(p.id, 'stop')); close(); }}
+              />
+              <CommandItem
+                value="Reload all processes bulk"
+                icon={<RefreshCw size={14} />}
+                label="Reload All"
+                hint={`${processList.length} processes`}
+                onSelect={() => { processList.forEach((p) => runAction(p.id, 'reload')); close(); }}
+              />
+            </Command.Group>
+          </Command.List>
+
+          {/* Footer */}
+          <div className="flex items-center gap-5 px-5 h-[34px] border-t border-border/40 text-[10px] text-muted-foreground/30">
+            <span className="flex items-center gap-1.5">
+              <kbd className="font-mono border border-border/30 px-1 py-[1px] leading-none">↑</kbd>
+              <kbd className="font-mono border border-border/30 px-1 py-[1px] leading-none">↓</kbd>
+              <span className="ml-0.5">navigate</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <kbd className="font-mono border border-border/30 px-1 py-[1px] leading-none">↵</kbd>
+              <span className="ml-0.5">select</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <kbd className="font-mono border border-border/30 px-1.5 py-[1px] leading-none">esc</kbd>
+              <span className="ml-0.5">close</span>
+            </span>
+          </div>
+        </Command>
+      </div>
     </div>
+  );
+}
+
+function CommandItem({
+  value,
+  icon,
+  label,
+  hint,
+  shortcut,
+  destructive,
+  onSelect,
+}: {
+  value: string;
+  icon: React.ReactNode;
+  label: string;
+  hint?: string;
+  shortcut?: string;
+  destructive?: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <Command.Item
+      value={value}
+      onSelect={onSelect}
+      className="flex items-center gap-3 px-3 py-[7px] text-[13px] cursor-pointer rounded-none group data-[selected=true]:bg-primary/[0.08] transition-colors duration-75"
+    >
+      <span className={`w-5 flex items-center justify-center shrink-0 ${
+        destructive ? 'text-destructive/70' : 'text-muted-foreground/40 group-data-[selected=true]:text-primary/80'
+      }`}>
+        {icon}
+      </span>
+      <div className="flex-1 min-w-0 flex items-center gap-2">
+        <span className={destructive ? 'text-destructive/90' : 'text-foreground/80 group-data-[selected=true]:text-foreground'}>
+          {label}
+        </span>
+        {hint && (
+          <span className="text-[11px] text-muted-foreground/35">
+            {hint}
+          </span>
+        )}
+      </div>
+      {shortcut && (
+        <kbd className="text-[10px] font-mono text-muted-foreground/25 border border-border/30 px-1.5 py-[2px] leading-none shrink-0 group-data-[selected=true]:border-border/50">
+          {shortcut}
+        </kbd>
+      )}
+    </Command.Item>
   );
 }
