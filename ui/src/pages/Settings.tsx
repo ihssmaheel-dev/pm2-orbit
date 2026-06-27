@@ -21,9 +21,12 @@ export function Settings() {
             Settings
           </span>
         </div>
-        {saved && (
-          <Badge variant="success">Saved</Badge>
-        )}
+        <div className="flex items-center gap-3">
+          {saved && (
+            <Badge variant="success">Saved</Badge>
+          )}
+          <Button size="sm" onClick={handleSave}>Save</Button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-auto p-6">
@@ -105,10 +108,6 @@ export function Settings() {
               </div>
             </Section>
           </div>
-        </div>
-
-        <div className="mt-8 pb-8">
-          <Button onClick={handleSave}>Save Settings</Button>
         </div>
       </div>
     </div>
