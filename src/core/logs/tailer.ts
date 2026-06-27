@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import readline from 'readline';
 
 const MAX_BUFFER_SIZE = parseInt(process.env.PM2_ORBIT_LOG_BUFFER || '500', 10);
 
@@ -13,44 +12,82 @@ interface LogEntry {
 export function createLogTailer(processId: number, processName: string) {
   const buffer: LogEntry[] = [];
   let closed = false;
+  const watchers: fs.FSWatcher[] = [];
+  const filePositions: Record<string, number> = {};
 
   function getLogPath(type: 'out' | 'err'): string {
     const homeDir = process.env.HOME || process.env.USERPROFILE || '';
     return path.join(homeDir, '.pm2', 'logs', `${processName}-${type}.log`);
   }
 
-  function tail(type: 'out' | 'err'): readline.Interface | null {
-    const logPath = getLogPath(type);
-    if (!fs.existsSync(logPath)) return null;
+  function readNewLines(filePath: string, stream: 'stdout' | 'stderr') {
+    try {
+      if (!fs.existsSync(filePath)) return;
 
-    const stream = fs.createReadStream(logPath, { encoding: 'utf-8', flags: 'r' });
-    const rl = readline.createInterface({ input: stream, terminal: false });
+      const stat = fs.statSync(filePath);
+      const lastPos = filePositions[filePath] || 0;
 
-    // Read last N lines
-    const lines: string[] = [];
-    rl.on('line', (line) => {
-      lines.push(line);
-      if (lines.length > MAX_BUFFER_SIZE) lines.shift();
-    });
+      if (stat.size <= lastPos) return;
 
-    rl.on('close', () => {
+      const fd = fs.openSync(filePath, 'r');
+      const buf = Buffer.alloc(stat.size - lastPos);
+      fs.readSync(fd, buf, 0, buf.length, lastPos);
+      fs.closeSync(fd);
+
+      filePositions[filePath] = stat.size;
+
+      const text = buf.toString('utf-8');
+      const lines = text.split('\n').filter((l) => l.length > 0);
+
       for (const line of lines) {
         buffer.push({
           ts: Date.now(),
-          stream: type === 'err' ? 'stderr' : 'stdout',
+          stream,
           message: line,
         });
       }
+
       if (buffer.length > MAX_BUFFER_SIZE) {
         buffer.splice(0, buffer.length - MAX_BUFFER_SIZE);
       }
-    });
-
-    return rl;
+    } catch {
+      // ignore read errors
+    }
   }
 
-  const stdoutRl = tail('out');
-  const stderrRl = tail('err');
+  function startWatching() {
+    const outPath = getLogPath('out');
+    const errPath = getLogPath('err');
+
+    // Read initial content
+    readNewLines(outPath, 'stdout');
+    readNewLines(errPath, 'stderr');
+
+    // Watch for changes
+    try {
+      if (fs.existsSync(outPath)) {
+        const watcher = fs.watch(outPath, () => {
+          if (!closed) readNewLines(outPath, 'stdout');
+        });
+        watchers.push(watcher);
+      }
+    } catch {
+      // ignore
+    }
+
+    try {
+      if (fs.existsSync(errPath)) {
+        const watcher = fs.watch(errPath, () => {
+          if (!closed) readNewLines(errPath, 'stderr');
+        });
+        watchers.push(watcher);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  startWatching();
 
   function getBuffer(): LogEntry[] {
     return [...buffer];
@@ -58,8 +95,9 @@ export function createLogTailer(processId: number, processName: string) {
 
   function close(): void {
     closed = true;
-    stdoutRl?.close();
-    stderrRl?.close();
+    for (const w of watchers) {
+      try { w.close(); } catch { /* ignore */ }
+    }
   }
 
   function isClosed(): boolean {
