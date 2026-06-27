@@ -1,26 +1,16 @@
 import { Header } from './Header';
 import { StatusBar } from './StatusBar';
 import { useWebSocket } from '@/hooks/useWebSocket';
+import { Dashboard } from '@/pages/Dashboard';
 
-interface AppShellProps {
-  children?: React.ReactNode;
-}
-
-export function AppShell({ children }: AppShellProps) {
+export function AppShell() {
   const { status } = useWebSocket();
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
       <Header />
-      <main className="flex-1 overflow-auto">
-        {children || (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
-            <div className="text-center">
-              <div className="text-4xl font-light tracking-widest text-primary mb-2">PM2 ORBIT</div>
-              <div className="text-sm uppercase tracking-wider">Monitoring Dashboard</div>
-            </div>
-          </div>
-        )}
+      <main className="flex-1 overflow-hidden">
+        <Dashboard />
       </main>
       <StatusBar wsStatus={status} />
     </div>
