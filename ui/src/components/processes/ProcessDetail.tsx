@@ -28,6 +28,7 @@ export function ProcessDetail() {
   const process = useProcessStore((s) => (selectedId !== null ? s.processes.get(selectedId) : undefined));
   const [envVars, setEnvVars] = useState<Record<string, string>>({});
   const [showMasked, setShowMasked] = useState(true);
+  const liveUptime = useLiveUptime(process);
 
   useEffect(() => {
     if (process) {
@@ -47,7 +48,6 @@ export function ProcessDetail() {
     );
   }
 
-  const liveUptime = useLiveUptime(process);
   const cpuData = { ts: process.history.ts, values: process.history.cpu };
   const memData = { ts: process.history.ts, values: process.history.memory };
   const envEntries = Object.entries(envVars);
