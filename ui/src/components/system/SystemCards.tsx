@@ -57,12 +57,12 @@ function Card({ icon, label, value, subtext, color, bgColor, progress, circular 
         )}
       </div>
 
-      <div className="relative z-0 flex items-center gap-1.5">
+      <div className="relative z-0 flex items-baseline gap-2.5">
         <span className="text-[15px] font-medium font-mono tracking-tight tabular-nums leading-none text-foreground/90">
           {value}
         </span>
         {subtext && (
-          <span className="text-[10px] font-mono tabular-nums leading-none text-muted-foreground/40 pt-[1px]">
+          <span className="text-[10px] font-mono tabular-nums leading-none text-muted-foreground/40">
             {subtext}
           </span>
         )}
