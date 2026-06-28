@@ -1,5 +1,5 @@
-import { memo, useState, useRef, useEffect } from 'react';
-import { MoreHorizontal, RotateCw, Square, Play, Trash2 } from 'lucide-react';
+import { memo, useState } from 'react';
+import { RotateCw, Square, Play, Trash2 } from 'lucide-react';
 import { StatusDot } from '@/components/shared/StatusDot';
 import { Sparkline } from './Sparkline';
 import { formatBytes, formatDuration, formatPercent } from '@/lib/format';
@@ -33,27 +33,14 @@ export const ProcessRow = memo(function ProcessRow({
   const selectedId = useProcessStore((s) => s.selectedId);
   const select = useProcessStore((s) => s.select);
   const isSelected = selectedId === processId;
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
-  const menuRef = useRef<HTMLDivElement>(null);
-  const btnRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [menuOpen]);
+  const [loading, setLoading] = useState<string | null>(null);
 
   if (!process) return null;
 
   const p = process;
 
   const handleAction = async (action: string) => {
+    setLoading(action);
     try {
       await fetch(`/api/processes/${p.id}/action`, {
         method: 'POST',
@@ -63,7 +50,7 @@ export const ProcessRow = memo(function ProcessRow({
     } catch {
       // ignore
     }
-    setMenuOpen(false);
+    setLoading(null);
   };
 
   function renderCell(key: string) {
@@ -120,7 +107,7 @@ export const ProcessRow = memo(function ProcessRow({
       aria-selected={isSelected}
       tabIndex={0}
       style={style}
-      onClick={() => { if (!menuOpen) select(isSelected ? null : processId); }}
+      onClick={() => select(isSelected ? null : processId)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
@@ -157,50 +144,57 @@ export const ProcessRow = memo(function ProcessRow({
         </span>
       </div>
 
-      <div role="cell" className={`${actionWidth} shrink-0 flex items-center justify-center`} ref={menuRef}>
-        <button
-          ref={btnRef}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (!menuOpen && btnRef.current) {
-              const rect = btnRef.current.getBoundingClientRect();
-              setMenuPos({ top: rect.bottom + 4, left: rect.right - 160 });
-            }
-            setMenuOpen(!menuOpen);
-          }}
-          className="h-7 w-7 flex items-center justify-center text-muted-foreground/50 hover:text-foreground hover:bg-subtle/50 transition-colors"
-          aria-label="Process actions"
-        >
-          <MoreHorizontal size={14} />
-        </button>
-
-        {menuOpen && (
-          <div
-            className="fixed z-[100] min-w-[160px] bg-card border border-border py-1"
-            style={{ top: menuPos.top, left: menuPos.left }}
-          >
-            <MenuRow icon={<RotateCw size={13} />} label="Restart" onClick={() => handleAction('restart')} />
-            <MenuRow icon={<Play size={13} />} label="Start" onClick={() => handleAction('start')} />
-            <MenuRow icon={<Square size={13} />} label="Stop" onClick={() => handleAction('stop')} />
-            <div className="border-t border-border/30 my-1" />
-            <MenuRow icon={<Trash2 size={13} />} label="Delete" onClick={() => handleAction('delete')} danger />
-          </div>
-        )}
+      <div role="cell" className={`${actionWidth} shrink-0 flex items-center justify-center gap-0.5`}>
+        <ActionIcon
+          icon={<RotateCw size={12} className={loading === 'restart' ? 'animate-spin' : ''} />}
+          label="Restart"
+          onClick={() => handleAction('restart')}
+          disabled={loading !== null}
+        />
+        <ActionIcon
+          icon={p.status === 'stopped' ? <Play size={12} /> : <Square size={12} />}
+          label={p.status === 'stopped' ? 'Start' : 'Stop'}
+          onClick={() => handleAction(p.status === 'stopped' ? 'start' : 'stop')}
+          disabled={loading !== null}
+        />
+        <ActionIcon
+          icon={<Trash2 size={12} />}
+          label="Delete"
+          onClick={() => handleAction('delete')}
+          disabled={loading !== null}
+          danger
+        />
       </div>
     </div>
   );
 });
 
-function MenuRow({ icon, label, onClick, danger }: { icon: React.ReactNode; label: string; onClick: () => void; danger?: boolean }) {
+function ActionIcon({
+  icon,
+  label,
+  onClick,
+  disabled,
+  danger,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  danger?: boolean;
+}) {
   return (
     <button
       onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left transition-colors ${
-        danger ? 'text-destructive hover:bg-destructive/10' : 'text-foreground/80 hover:bg-subtle/50'
-      }`}
+      disabled={disabled}
+      title={label}
+      aria-label={label}
+      className={`h-6 w-6 flex items-center justify-center transition-colors ${
+        danger
+          ? 'text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10'
+          : 'text-muted-foreground/40 hover:text-foreground hover:bg-subtle/50'
+      } disabled:opacity-30 disabled:pointer-events-none`}
     >
-      <span className="text-muted-foreground/60">{icon}</span>
-      {label}
+      {icon}
     </button>
   );
 }
