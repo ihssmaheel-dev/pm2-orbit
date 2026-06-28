@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { useRef, useEffect, type ReactNode } from 'react';
+import { useRef, useEffect, useCallback, type ReactNode } from 'react';
 
 interface DropdownProps {
   trigger: ReactNode;
@@ -12,6 +12,22 @@ interface DropdownProps {
 
 export function Dropdown({ trigger, children, open, onOpenChange, align = 'right', className }: DropdownProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+
+  const getItems = useCallback(() => {
+    if (!menuRef.current) return [];
+    return Array.from(menuRef.current.querySelectorAll('[role="menuitem"]')) as HTMLElement[];
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      const items = getItems();
+      if (items.length > 0) {
+        requestAnimationFrame(() => items[0]?.focus());
+      }
+    }
+  }, [open, getItems]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -23,11 +39,49 @@ export function Dropdown({ trigger, children, open, onOpenChange, align = 'right
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [open, onOpenChange]);
 
+  useEffect(() => {
+    function handleEscape(e: KeyboardEvent) {
+      if (open && e.key === 'Escape') {
+        onOpenChange(false);
+        triggerRef.current?.focus();
+      }
+    }
+    if (open) document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [open, onOpenChange]);
+
+  const handleMenuKeyDown = useCallback((e: React.KeyboardEvent) => {
+    const items = getItems();
+    if (items.length === 0) return;
+
+    const currentIndex = items.findIndex((el) => el === document.activeElement);
+
+    switch (e.key) {
+      case 'ArrowDown': {
+        e.preventDefault();
+        const next = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+        items[next]?.focus();
+        break;
+      }
+      case 'ArrowUp': {
+        e.preventDefault();
+        const prev = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+        items[prev]?.focus();
+        break;
+      }
+    }
+  }, [getItems]);
+
   return (
     <div ref={ref} className="relative inline-block">
-      <div onClick={() => onOpenChange(!open)}>{trigger}</div>
+      <div ref={triggerRef} onClick={() => onOpenChange(!open)}>
+        {trigger}
+      </div>
       {open && (
         <div
+          ref={menuRef}
+          role="menu"
+          onKeyDown={handleMenuKeyDown}
           className={cn(
             'absolute z-50 mt-1.5 min-w-[176px] bg-card border border-border/60',
             'shadow-lg shadow-black/30',
@@ -52,10 +106,12 @@ interface DropdownItemProps {
 export function DropdownItem({ children, onClick, danger, className }: DropdownItemProps) {
   return (
     <button
+      role="menuitem"
+      tabIndex={-1}
       onClick={onClick}
       className={cn(
         'w-full px-4 py-2.5 text-sm text-left flex items-center gap-3',
-        'hover:bg-subtle/60 transition-colors',
+        'hover:bg-subtle/60 transition-colors focus-visible:bg-subtle/60 focus-visible:outline-none',
         danger ? 'text-destructive' : 'text-foreground',
         className,
       )}

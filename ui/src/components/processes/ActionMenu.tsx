@@ -45,7 +45,12 @@ export function ActionMenu({ processId, processName }: ActionMenuProps) {
         onOpenChange={setOpen}
         align="right"
         trigger={
-          <button className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
+          <button
+            aria-haspopup="menu"
+            aria-expanded={open}
+            aria-label={`Actions for ${processName}`}
+            className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+          >
             <MoreHorizontal size={16} />
           </button>
         }
