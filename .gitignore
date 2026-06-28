@@ -9,3 +9,5 @@ coverage/
 .vite/
 tasks.md
 doc.md
+test-servers/
+ecosystem.config.js

@@ -1,73 +1,74 @@
-import { useMemo, useRef, useState, useCallback } from 'react';
+import { useMemo, useRef, useState, useCallback } from "react";
 import {
   useReactTable,
   getCoreRowModel,
   getSortedRowModel,
   getFilteredRowModel,
   type SortingState,
-} from '@tanstack/react-table';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import { Search, X } from 'lucide-react';
-import { useProcessStore } from '@/store/processes';
-import { useUIStore } from '@/store/ui';
-import { ProcessRow } from './ProcessRow';
-import type { ProcessSnapshot } from '@/types/pm2';
+} from "@tanstack/react-table";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { Search, X } from "lucide-react";
+import { useProcessStore } from "@/store/processes";
+import { useUIStore } from "@/store/ui";
+import { ProcessRow } from "./ProcessRow";
+import type { ProcessSnapshot } from "@/types/pm2";
 
-interface ColumnDef {
-  accessorKey: string;
-  header: string;
-  width: string;
-  align?: 'left' | 'right';
+interface Col {
+  id: string;
+  label: string;
+  w: string;
+  right?: boolean;
 }
 
-const columns: ColumnDef[] = [
-  { accessorKey: 'name', header: 'Name', width: 'flex-1 min-w-[140px]' },
-  { accessorKey: 'mode', header: 'Mode', width: 'w-[80px]' },
-  { accessorKey: 'pid', header: 'PID', width: 'w-[70px]' },
-  { accessorKey: 'cpu', header: 'CPU', width: 'w-[80px]', align: 'right' },
-  { accessorKey: 'memory', header: 'Memory', width: 'w-[90px]', align: 'right' },
-  { accessorKey: 'restarts', header: 'Restarts', width: 'w-[80px]', align: 'right' },
+const COLS: Col[] = [
+  { id: "name", label: "Name", w: "flex-1 min-w-1" },
+  { id: "mode", label: "Mode", w: "w-19" },
+  { id: "pid", label: "PID", w: "w-19" },
+  { id: "cpu", label: "CPU", w: "w-24" },
+  { id: "memory", label: "Memory", w: "w-24" },
+  { id: "restarts", label: "Rst", w: "w-15" },
 ];
 
-const SPARKLINE_WIDTH = 'w-[100px]';
-const UPTIME_WIDTH = 'w-[90px]';
-const ACTION_WIDTH = 'w-[50px]';
+const W_SPARKLINE = "w-[104px]";
+const W_STATUS = "w-[90px]";
+const W_UPTIME = "w-[108px]";
+const W_ACTIONS = "w-[72px]";
 
 export function ProcessTable() {
   const processes = useProcessStore((s) => s.processes);
-  const searchQuery = useUIStore((s) => s.searchQuery);
-  const setSearchQuery = useUIStore((s) => s.setSearchQuery);
+  const sq = useUIStore((s) => s.searchQuery);
+  const setSq = useUIStore((s) => s.setSearchQuery);
   const [sorting, setSorting] = useState<SortingState>([]);
   const parentRef = useRef<HTMLDivElement>(null);
 
   const data = useMemo(() => Array.from(processes.values()), [processes]);
 
   const filteredData = useMemo(() => {
-    if (!searchQuery) return data;
-    const q = searchQuery.toLowerCase();
+    if (!sq) return data;
+    const q = sq.toLowerCase();
     return data.filter(
       (p) =>
         p.name.toLowerCase().includes(q) ||
         String(p.pid).includes(q) ||
         p.status.toLowerCase().includes(q),
     );
-  }, [data, searchQuery]);
+  }, [data, sq]);
 
   const table = useReactTable({
     data: filteredData,
-    columns: columns.map((c) => ({
-      accessorKey: c.accessorKey,
-      header: c.header,
+    columns: COLS.map((c) => ({
+      accessorKey: c.id,
+      header: c.label,
       cell: (info: { getValue: () => unknown }) => {
-        const val = info.getValue();
-        if (c.accessorKey === 'cpu') return `${(val as number).toFixed(1)}%`;
-        if (c.accessorKey === 'memory') {
-          const bytes = val as number;
-          if (bytes >= 1073741824) return `${(bytes / 1073741824).toFixed(1)} GB`;
-          if (bytes >= 1048576) return `${(bytes / 1048576).toFixed(0)} MB`;
-          return `${(bytes / 1024).toFixed(0)} KB`;
+        const v = info.getValue();
+        if (c.id === "cpu") return `${(v as number).toFixed(1)}%`;
+        if (c.id === "memory") {
+          const b = v as number;
+          if (b >= 1073741824) return `${(b / 1073741824).toFixed(1)} GB`;
+          if (b >= 1048576) return `${(b / 1048576).toFixed(0)} MB`;
+          return `${(b / 1024).toFixed(0)} KB`;
         }
-        return String(val ?? '');
+        return String(v ?? "");
       },
     })),
     state: { sorting },
@@ -79,64 +80,58 @@ export function ProcessTable() {
 
   const rows = table.getRowModel().rows;
 
-  const rowVirtualizer = useVirtualizer({
+  const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 44,
-    overscan: 10,
+    overscan: 15,
   });
 
   const toggleSort = useCallback((key: string) => {
     setSorting((prev) => {
-      const current = prev.find((s) => s.id === key);
-      if (current) {
-        if (current.desc) return [];
-        return [{ id: key, desc: true }];
-      }
+      const cur = prev.find((s) => s.id === key);
+      if (cur) return cur.desc ? [] : [{ id: key, desc: true }];
       return [{ id: key, desc: false }];
     });
-    if (parentRef.current) {
-      parentRef.current.scrollTop = 0;
-    }
+    if (parentRef.current) parentRef.current.scrollTop = 0;
   }, []);
 
-  const handleHeaderKeyDown = useCallback((e: React.KeyboardEvent, key: string) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      toggleSort(key);
-    }
-  }, [toggleSort]);
+  const sd = (id: string) => {
+    const s = sorting.find((x) => x.id === id);
+    return s ? (s.desc ? "descending" : "ascending") : null;
+  };
 
   return (
-    <div className="flex flex-col h-full border border-border/60 bg-card/40">
-      {/* Card Header */}
-      <div className="flex items-center justify-between h-[52px] px-5 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-[3px] h-4 bg-primary" />
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground/80">
+    <div className="flex flex-col h-full bg-card/30 border border-border/50">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between h-12 px-5 shrink-0 border-b border-border/50">
+        <div className="flex items-center gap-2.5">
+          <span className="text-[12px] font-semibold text-foreground/85">
             Processes
-          </h2>
-          <span className="text-[10px] font-mono font-medium text-primary bg-primary/10 px-1.5 py-[1px] leading-[18px]">
+          </span>
+          <span className="text-[11px] font-mono text-primary bg-primary/10 px-1.5 leading-4.5 tabular-nums">
             {filteredData.length}
           </span>
         </div>
-
         <div className="relative">
-          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60" />
-          <input
-            placeholder="Search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label="Search processes"
-            className="h-8 w-52 pl-8 pr-8 text-[11px] bg-background border border-border/80 text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/40 rounded-none"
+          <Search
+            size={11}
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/30"
           />
-          {searchQuery && (
+          <input
+            placeholder="Search processes…"
+            value={sq}
+            onChange={(e) => setSq(e.target.value)}
+            aria-label="Search processes"
+            className="h-7 w-49 pl-7 pr-7 text-[12px] bg-background border border-border/80 text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/40 rounded-none"
+          />
+          {sq && (
             <button
-              onClick={() => setSearchQuery('')}
+              onClick={() => setSq("")}
               aria-label="Clear search"
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground transition-colors"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground/30 hover:text-foreground"
             >
-              <X size={12} />
+              <X size={10} />
             </button>
           )}
         </div>
@@ -149,99 +144,127 @@ export function ProcessTable() {
         aria-rowcount={rows.length}
         className="flex flex-col flex-1 min-h-0"
       >
-        {/* Column Headers */}
+        {/* Header row */}
         <div role="rowgroup" className="shrink-0">
           <div
             role="row"
-            className="flex items-center h-9 px-5 select-none border-t border-border/30 border-b border-border/60 bg-background/30"
+            className="flex items-center h-8 px-5 border-b border-border/40 bg-background/40 text-muted-foreground/50 select-none"
           >
-            <div role="columnheader" className="w-6 shrink-0" aria-label="Status" />
-
-            {columns.map((col) => {
-              const sortEntry = sorting.find((s) => s.id === col.accessorKey);
-              const sortDir = sortEntry ? (sortEntry.desc ? 'desc' : 'asc') : null;
-
+            {COLS.map((col) => {
+              const dir = sd(col.id);
               return (
                 <div
-                  key={col.accessorKey}
+                  key={col.id}
                   role="columnheader"
-                  aria-sort={sortDir === 'asc' ? 'ascending' : sortDir === 'desc' ? 'descending' : 'none'}
+                  aria-sort={dir || "none"}
                   tabIndex={0}
-                  className={`${col.width} shrink-0 px-3 cursor-pointer group`}
-                  onClick={() => toggleSort(col.accessorKey)}
-                  onKeyDown={(e) => handleHeaderKeyDown(e, col.accessorKey)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      toggleSort(col.id);
+                    }
+                  }}
+                  onClick={() => toggleSort(col.id)}
+                  className={`${col.w} shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest cursor-pointer transition-colors hover:text-foreground/60 ${col.right ? "text-right" : ""} ${dir ? "text-primary" : ""}`}
                 >
-                  <span
-                    className={`inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.1em] transition-colors duration-100 ${
-                      col.align === 'right' ? 'justify-end w-full' : ''
-                    } ${
-                      sortDir
-                        ? 'text-primary'
-                        : 'text-muted-foreground/50 group-hover:text-foreground/60'
-                    }`}
-                  >
-                    {col.header}
-                    <span className="inline-flex flex-col -space-y-[2px] ml-0.5" aria-hidden="true">
-                      <svg width="7" height="7" viewBox="0 0 8 8" className={`transition-colors ${sortDir === 'asc' ? 'text-primary' : 'text-muted-foreground/20'}`}>
+                  {col.label}
+                  {dir && (
+                    <svg
+                      width="6"
+                      height="6"
+                      viewBox="0 0 8 8"
+                      className="inline-block ml-1 -mt-px text-primary align-middle"
+                    >
+                      {dir === "ascending" ? (
                         <path d="M4 1L7 5H1L4 1Z" fill="currentColor" />
-                      </svg>
-                      <svg width="7" height="7" viewBox="0 0 8 8" className={`transition-colors ${sortDir === 'desc' ? 'text-primary' : 'text-muted-foreground/20'}`}>
+                      ) : (
                         <path d="M4 7L1 3H7L4 7Z" fill="currentColor" />
-                      </svg>
-                    </span>
-                  </span>
+                      )}
+                    </svg>
+                  )}
                 </div>
               );
             })}
 
-            <div role="columnheader" className={`${SPARKLINE_WIDTH} shrink-0 px-3`}>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/50">History</span>
+            <div
+              role="columnheader"
+              className={`${W_SPARKLINE} shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/40`}
+            >
+              History
             </div>
 
-            <div role="columnheader" className={`${UPTIME_WIDTH} shrink-0 px-3 text-right`}>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/50">Uptime</span>
+            <div
+              role="columnheader"
+              className={`${W_STATUS} shrink-0 pl-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50`}
+            >
+              Status
             </div>
 
-            <div role="columnheader" className={`${ACTION_WIDTH} shrink-0 flex items-center justify-center`}>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/50">Actions</span>
+            <div
+              role="columnheader"
+              className={`${W_UPTIME} shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50`}
+            >
+              Uptime
+            </div>
+
+            <div
+              role="columnheader"
+              className={`${W_ACTIONS} shrink-0 flex items-center justify-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/40`}
+            >
+              Actions
             </div>
           </div>
         </div>
 
-        {/* Rows */}
+        {/* Data rows */}
         <div role="rowgroup" ref={parentRef} className="flex-1 overflow-auto">
           {rows.length === 0 ? (
-            <div role="row" className="flex items-center justify-center h-full">
-              <div role="cell" className="text-center py-12">
-                <div className="w-12 h-12 mx-auto mb-3 bg-subtle/30 flex items-center justify-center border border-border/40">
-                  <svg className="w-6 h-6 text-muted-foreground/25" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            <div className="flex items-center justify-center h-full text-center py-16">
+              <div>
+                <div className="w-12 h-12 mx-auto mb-4 bg-subtle/40 border border-border/30 flex items-center justify-center">
+                  <svg
+                    className="w-5 h-5 text-muted-foreground/25"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                    />
                   </svg>
                 </div>
-                <div className="text-sm text-muted-foreground/70">No processes running</div>
-                <div className="text-[11px] text-muted-foreground/40 mt-1">Start PM2 to see processes here</div>
+                <p className="text-sm text-muted-foreground/60">
+                  No processes running
+                </p>
+                <p className="text-xs text-muted-foreground/30 mt-1">
+                  Start PM2 to see your processes here
+                </p>
               </div>
             </div>
           ) : (
-            <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}>
-              {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                const row = rows[virtualRow.index];
-                const process = row.original as ProcessSnapshot;
+            <div
+              style={{
+                height: `${virtualizer.getTotalSize()}px`,
+                position: "relative",
+              }}
+            >
+              {virtualizer.getVirtualItems().map((vr) => {
+                const row = rows[vr.index];
+                const p = row.original as ProcessSnapshot;
                 return (
                   <ProcessRow
-                    key={process.id}
-                    processId={process.id}
-                    columns={columns}
-                    sparklineWidth={SPARKLINE_WIDTH}
-                    uptimeWidth={UPTIME_WIDTH}
-                    actionWidth={ACTION_WIDTH}
+                    key={p.id}
+                    pid={p.id}
                     style={{
-                      position: 'absolute',
+                      position: "absolute",
                       top: 0,
                       left: 0,
-                      width: '100%',
-                      height: `${virtualRow.size}px`,
-                      transform: `translateY(${virtualRow.start}px)`,
+                      width: "100%",
+                      height: `${vr.size}px`,
+                      transform: `translateY(${vr.start}px)`,
                     }}
                   />
                 );

@@ -1,167 +1,213 @@
-import { memo, useState } from 'react';
-import { RotateCw, Square, Play, Trash2 } from 'lucide-react';
-import { StatusDot } from '@/components/shared/StatusDot';
-import { Sparkline } from './Sparkline';
-import { formatBytes, formatDuration, formatPercent } from '@/lib/format';
-import { useProcessStore } from '@/store/processes';
+import { memo, useState } from "react";
+import { RotateCw, Square, Play, Trash2, Clock } from "lucide-react";
+import { Sparkline } from "./Sparkline";
+import { formatBytes, formatDuration, formatPercent } from "@/lib/format";
+import { useProcessStore } from "@/store/processes";
+import type { ProcessStatus } from "@/types/pm2";
 
-interface ColumnDef {
-  accessorKey: string;
-  header: string;
-  width: string;
-  align?: 'left' | 'right';
-}
-
-interface ProcessRowProps {
-  processId: number;
-  columns: ColumnDef[];
-  sparklineWidth: string;
-  uptimeWidth: string;
-  actionWidth: string;
+interface Props {
+  pid: number;
   style?: React.CSSProperties;
 }
 
-export const ProcessRow = memo(function ProcessRow({
-  processId,
-  columns,
-  sparklineWidth,
-  uptimeWidth,
-  actionWidth,
-  style,
-}: ProcessRowProps) {
-  const process = useProcessStore((s) => s.processes.get(processId));
-  const selectedId = useProcessStore((s) => s.selectedId);
+const CFG: Record<ProcessStatus, { label: string; dot: string; txt: string }> =
+  {
+    online: { label: "Running", dot: "bg-success", txt: "text-success" },
+    stopped: {
+      label: "Stopped",
+      dot: "bg-muted-foreground",
+      txt: "text-muted-foreground/60",
+    },
+    errored: {
+      label: "Errored",
+      dot: "bg-destructive",
+      txt: "text-destructive",
+    },
+    launching: { label: "Starting", dot: "bg-warning", txt: "text-warning" },
+    stopping: { label: "Stopping", dot: "bg-warning", txt: "text-warning" },
+  };
+
+export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
+  const proc = useProcessStore((s) => s.processes.get(pid));
+  const sel = useProcessStore((s) => s.selectedId);
   const select = useProcessStore((s) => s.select);
-  const isSelected = selectedId === processId;
-  const [loading, setLoading] = useState<string | null>(null);
+  const isSel = sel === pid;
+  const [ld, setLd] = useState<string | null>(null);
 
-  if (!process) return null;
+  if (!proc) return null;
 
-  const p = process;
+  const p = proc;
+  const st = CFG[p.status];
 
-  const handleAction = async (action: string) => {
-    setLoading(action);
+  const act = async (action: string) => {
+    setLd(action);
     try {
       await fetch(`/api/processes/${p.id}/action`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),
       });
     } catch {
-      // ignore
+      /* ignore */
     }
-    setLoading(null);
+    setLd(null);
   };
-
-  function renderCell(key: string) {
-    switch (key) {
-      case 'name':
-        return (
-          <span className="text-[13px] text-foreground truncate block group-hover:text-primary transition-colors duration-75">
-            {p.name}
-          </span>
-        );
-      case 'mode':
-        return (
-          <span className="text-[11px] font-mono text-muted-foreground/60 uppercase">
-            {p.mode}
-          </span>
-        );
-      case 'pid':
-        return (
-          <span className="text-[11px] font-mono text-muted-foreground/50 tabular-nums">
-            {p.pid}
-          </span>
-        );
-      case 'cpu':
-        return (
-          <span className={`text-[12px] font-mono tabular-nums ${
-            p.cpu > 80 ? 'text-destructive' : p.cpu > 50 ? 'text-warning' : 'text-foreground/80'
-          }`}>
-            {formatPercent(p.cpu)}
-          </span>
-        );
-      case 'memory':
-        return (
-          <span className="text-[12px] font-mono tabular-nums text-foreground/80">
-            {formatBytes(p.memory)}
-          </span>
-        );
-      case 'restarts':
-        return (
-          <span className={`text-[12px] font-mono tabular-nums ${
-            p.restarts > 0 ? 'text-warning' : 'text-muted-foreground/40'
-          }`}>
-            {p.restarts}
-          </span>
-        );
-      default:
-        return null;
-    }
-  }
 
   return (
     <div
       role="row"
-      aria-rowindex={processId + 1}
-      aria-selected={isSelected}
+      aria-rowindex={pid + 1}
+      aria-selected={isSel}
       tabIndex={0}
       style={style}
-      onClick={() => select(isSelected ? null : processId)}
+      onClick={() => select(isSel ? null : pid)}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          select(isSelected ? null : processId);
+          select(isSel ? null : pid);
         }
       }}
-      className={`flex items-center px-5 cursor-pointer transition-colors duration-75 group border-b border-border/20 outline-none focus-visible:ring-1 focus-visible:ring-primary ${
-        isSelected
-          ? 'bg-primary/[0.06]'
-          : 'hover:bg-subtle/30'
-      }`}
+      className={`flex items-center px-5 cursor-pointer transition-colors duration-75 group border-b border-border/10 outline-none focus-visible:ring-1 focus-visible:ring-primary ${
+        isSel ? "bg-primary/4" : "hover:bg-subtle/20"
+      } ${pid % 2 === 0 ? "bg-background/20" : ""}`}
     >
-      <div role="cell" className="w-6 shrink-0 flex items-center justify-center">
-        <StatusDot status={p.status} />
-      </div>
-
-      {columns.map((col) => (
-        <div
-          key={col.accessorKey}
-          role="cell"
-          className={`${col.width} shrink-0 px-3 ${col.align === 'right' ? 'text-right' : ''}`}
-        >
-          {renderCell(col.accessorKey)}
-        </div>
-      ))}
-
-      <div role="cell" className={`${sparklineWidth} shrink-0 px-3`}>
-        <Sparkline data={p.history.cpu} color="var(--chart-cpu)" width={80} height={18} />
-      </div>
-
-      <div role="cell" className={`${uptimeWidth} shrink-0 px-3 text-right`}>
-        <span className="text-[11px] font-mono tabular-nums text-muted-foreground/50">
-          {formatDuration(p.uptime)}
+      {/* Name */}
+      <div role="cell" className="flex-1 min-w-0 px-3 overflow-hidden">
+        <span className="text-[13px] font-medium text-foreground truncate block group-hover:text-primary transition-colors duration-75">
+          {p.name}
         </span>
       </div>
 
-      <div role="cell" className={`${actionWidth} shrink-0 flex items-center justify-center gap-0.5`}>
-        <ActionIcon
-          icon={<RotateCw size={12} className={loading === 'restart' ? 'animate-spin' : ''} />}
+      {/* Mode */}
+      <div role="cell" className="w-19 shrink-0 px-3 overflow-hidden">
+        <span className="text-[11px] font-mono text-muted-foreground/55 uppercase tracking-wider">
+          {p.mode}
+        </span>
+      </div>
+
+      {/* PID */}
+      <div role="cell" className="w-19 shrink-0 px-3 overflow-hidden">
+        <span className="text-[11px] font-mono text-muted-foreground/45 tabular-nums">
+          {p.pid}
+        </span>
+      </div>
+
+      {/* CPU */}
+      <div role="cell" className="w-24 shrink-0 px-3 overflow-hidden">
+        <span
+          className={`text-[12px] font-mono tabular-nums ${
+            p.cpu > 80
+              ? "text-destructive"
+              : p.cpu > 50
+                ? "text-warning"
+                : "text-foreground/80"
+          }`}
+        >
+          {formatPercent(p.cpu)}
+        </span>
+      </div>
+
+      {/* Memory */}
+      <div role="cell" className="w-24 shrink-0 px-3 overflow-hidden">
+        <span className="text-[12px] font-mono tabular-nums text-foreground/80">
+          {formatBytes(p.memory)}
+        </span>
+      </div>
+
+      {/* Restarts */}
+      <div role="cell" className="w-15 shrink-0 px-3 overflow-hidden">
+        <span
+          className={`text-[12px] font-mono tabular-nums ${
+            p.restarts > 0 ? "text-warning" : "text-muted-foreground/30"
+          }`}
+        >
+          {p.restarts}
+        </span>
+      </div>
+
+      {/* CPU History sparkline */}
+      <div
+        role="cell"
+        className="w-26 shrink-0 px-3 flex items-center overflow-hidden"
+      >
+        {p.history.cpu.length >= 2 ? (
+          <Sparkline
+            data={p.history.cpu}
+            color="var(--chart-cpu)"
+            width={80}
+            height={20}
+            fill={false}
+          />
+        ) : (
+          <span className="text-[10px] text-muted-foreground/20 font-mono">
+            —
+          </span>
+        )}
+      </div>
+
+      {/* Status */}
+      <div
+        role="cell"
+        className="w-22.5 shrink-0 flex items-center gap-2 pl-3 overflow-hidden"
+      >
+        <span className="relative inline-flex h-2 w-2 shrink-0">
+          {p.status === "online" && (
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-70 motion-safe:animate-[ping_1.5s_ease-in-out_infinite]" />
+          )}
+          <span
+            className={`relative inline-flex h-2 w-2 rounded-full ${st.dot}`}
+          />
+        </span>
+        <span
+          className={`text-[12px] font-medium leading-none truncate ${st.txt}`}
+        >
+          {st.label}
+        </span>
+      </div>
+
+      {/* Uptime */}
+      <div role="cell" className="w-27 shrink-0 px-3 overflow-hidden">
+        {p.status === "online" ? (
+          <span className="inline-flex items-center justify-end gap-1.5 text-[12px] font-mono tabular-nums text-success">
+            <Clock size={10} className="text-success/60 shrink-0" />
+            {formatDuration(p.uptime)}
+          </span>
+        ) : (
+          <span className="text-[12px] font-mono tabular-nums text-muted-foreground/20">
+            —
+          </span>
+        )}
+      </div>
+
+      {/* Actions — hover only */}
+      <div
+        role="cell"
+        className="w-18 shrink-0 flex items-center justify-center gap-px transition-opacity duration-75"
+      >
+        <ActBtn
+          icon={
+            <RotateCw
+              size={10}
+              className={ld === "restart" ? "animate-spin" : ""}
+            />
+          }
           label="Restart"
-          onClick={() => handleAction('restart')}
-          disabled={loading !== null}
+          onClick={() => act("restart")}
+          disabled={ld !== null}
         />
-        <ActionIcon
-          icon={p.status === 'stopped' ? <Play size={12} /> : <Square size={12} />}
-          label={p.status === 'stopped' ? 'Start' : 'Stop'}
-          onClick={() => handleAction(p.status === 'stopped' ? 'start' : 'stop')}
-          disabled={loading !== null}
+        <ActBtn
+          icon={
+            p.status === "stopped" ? <Play size={10} /> : <Square size={10} />
+          }
+          label={p.status === "stopped" ? "Start" : "Stop"}
+          onClick={() => act(p.status === "stopped" ? "start" : "stop")}
+          disabled={ld !== null}
         />
-        <ActionIcon
-          icon={<Trash2 size={12} />}
+        <ActBtn
+          icon={<Trash2 size={10} />}
           label="Delete"
-          onClick={() => handleAction('delete')}
-          disabled={loading !== null}
+          onClick={() => act("delete")}
+          disabled={ld !== null}
           danger
         />
       </div>
@@ -169,7 +215,7 @@ export const ProcessRow = memo(function ProcessRow({
   );
 });
 
-function ActionIcon({
+function ActBtn({
   icon,
   label,
   onClick,
@@ -184,15 +230,18 @@ function ActionIcon({
 }) {
   return (
     <button
-      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
       disabled={disabled}
       title={label}
       aria-label={label}
-      className={`h-6 w-6 flex items-center justify-center rounded-sm transition-all duration-100 ${
+      className={`cursor-pointer h-5 w-5 flex items-center justify-center transition-all duration-75 ${
         danger
-          ? 'text-muted-foreground/50 hover:text-white hover:bg-destructive/80'
-          : 'text-muted-foreground/50 hover:text-white hover:bg-primary/70'
-      } disabled:opacity-30 disabled:pointer-events-none`}
+          ? "text-muted-foreground/30 hover:text-destructive hover:bg-destructive/10"
+          : "text-muted-foreground/30 hover:text-primary hover:bg-primary/8"
+      } disabled:opacity-15 disabled:pointer-events-none`}
     >
       {icon}
     </button>
