@@ -9,15 +9,32 @@ interface LogEntry {
   message: string;
 }
 
-export function createLogTailer(processId: number, processName: string) {
+export function createLogTailer(processId: number, processName: string, logPaths?: { out?: string; err?: string }) {
   const buffer: LogEntry[] = [];
   let closed = false;
   const watchers: fs.FSWatcher[] = [];
   const filePositions: Record<string, number> = {};
 
   function getLogPath(type: 'out' | 'err'): string {
+    if (logPaths) {
+      if (type === 'out' && logPaths.out) return logPaths.out;
+      if (type === 'err' && logPaths.err) return logPaths.err;
+    }
+
     const homeDir = process.env.HOME || process.env.USERPROFILE || '';
-    return path.join(homeDir, '.pm2', 'logs', `${processName}-${type}.log`);
+    const base = path.join(homeDir, '.pm2', 'logs', processName);
+
+    const patterns = [`${base}-${type}.log`];
+    if (type === 'err') patterns.push(`${base}-error.log`);
+    for (let i = 0; i < 16; i++) {
+      patterns.push(`${base}-${type}-${i}.log`);
+      if (type === 'err') patterns.push(`${base}-error-${i}.log`);
+    }
+
+    for (const p of patterns) {
+      if (fs.existsSync(p)) return p;
+    }
+    return patterns[0];
   }
 
   function readNewLines(filePath: string, stream: 'stdout' | 'stderr') {
@@ -59,31 +76,22 @@ export function createLogTailer(processId: number, processName: string) {
     const outPath = getLogPath('out');
     const errPath = getLogPath('err');
 
-    // Read initial content
     readNewLines(outPath, 'stdout');
     readNewLines(errPath, 'stderr');
 
-    // Watch for changes
-    try {
-      if (fs.existsSync(outPath)) {
-        const watcher = fs.watch(outPath, () => {
-          if (!closed) readNewLines(outPath, 'stdout');
-        });
-        watchers.push(watcher);
+    for (const fp of [outPath, errPath]) {
+      try {
+        if (fs.existsSync(fp)) {
+          const watcher = fs.watch(fp, () => {
+            if (!closed) {
+              readNewLines(fp, fp === outPath ? 'stdout' : 'stderr');
+            }
+          });
+          watchers.push(watcher);
+        }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
-    }
-
-    try {
-      if (fs.existsSync(errPath)) {
-        const watcher = fs.watch(errPath, () => {
-          if (!closed) readNewLines(errPath, 'stderr');
-        });
-        watchers.push(watcher);
-      }
-    } catch {
-      // ignore
     }
   }
 
