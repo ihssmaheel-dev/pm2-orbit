@@ -1,41 +1,49 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import {
-  Pause, Play, Download, Trash2, Search, Copy,
-  WrapText, Terminal, ScrollText,
-} from 'lucide-react';
-import { useLogsStore, type LogEntry } from '@/store/logs';
-import { useProcessStore } from '@/store/processes';
-import { Button } from '@/components/shared/Button';
-import { cn } from '@/lib/utils';
+  Pause,
+  Play,
+  Download,
+  Trash2,
+  Search,
+  Copy,
+  Terminal,
+} from "lucide-react";
+import { useLogsStore, type LogEntry } from "@/store/logs";
+import { useProcessStore } from "@/store/processes";
+import { Button } from "@/components/shared/Button";
+import { cn } from "@/lib/utils";
 
-type StreamFilter = 'all' | 'stdout' | 'stderr';
+type StreamFilter = "all" | "stdout" | "stderr";
 
 function formatTime(ts: number): string {
   const d = new Date(ts);
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mm = String(d.getMinutes()).padStart(2, '0');
-  const ss = String(d.getSeconds()).padStart(2, '0');
-  const ms = String(d.getMilliseconds()).padStart(3, '0');
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  const ss = String(d.getSeconds()).padStart(2, "0");
+  const ms = String(d.getMilliseconds()).padStart(3, "0");
   return `${hh}:${mm}:${ss}.${ms}`;
 }
 
 function formatDate(ts: number): string {
   const d = new Date(ts);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function highlightMatch(text: string, query: string) {
   if (!query) return [{ text, highlight: false as const }];
 
   try {
-    const regex = new RegExp(`(${query})`, 'gi');
+    const regex = new RegExp(`(${query})`, "gi");
     const parts: Array<{ text: string; highlight: boolean }> = [];
     let lastIndex = 0;
     let match: RegExpExecArray | null;
 
     while ((match = regex.exec(text)) !== null) {
       if (match.index > lastIndex) {
-        parts.push({ text: text.slice(lastIndex, match.index), highlight: false });
+        parts.push({
+          text: text.slice(lastIndex, match.index),
+          highlight: false,
+        });
       }
       parts.push({ text: match[0], highlight: true });
       lastIndex = regex.lastIndex;
@@ -55,24 +63,22 @@ function LogLine({
   log,
   searchQuery,
   showProcess,
-  wrap,
   isLast,
 }: {
   log: LogEntry;
   searchQuery: string;
   showProcess: boolean;
-  wrap: boolean;
   isLast: boolean;
 }) {
   const parts = highlightMatch(log.message, searchQuery);
-  const isStdErr = log.stream === 'stderr';
+  const isStdErr = log.stream === "stderr";
 
   return (
     <div
       className={cn(
-        'flex gap-2 px-4 py-0.5 hover:bg-subtle transition-colors leading-5',
-        isStdErr && 'bg-destructive/5',
-        isLast && 'mb-0',
+        "flex gap-2 px-4 py-0.5 hover:bg-subtle transition-colors leading-5",
+        isStdErr && "bg-destructive/5",
+        isLast && "mb-0",
       )}
     >
       <span className="text-muted-foreground shrink-0 w-[90px] text-right tabular-nums select-none">
@@ -80,11 +86,11 @@ function LogLine({
       </span>
       <span
         className={cn(
-          'shrink-0 w-[44px] text-[10px] uppercase tracking-wider font-semibold select-none',
-          isStdErr ? 'text-destructive' : 'text-primary',
+          "shrink-0 w-[44px] text-[10px] uppercase tracking-wider font-semibold select-none",
+          isStdErr ? "text-destructive" : "text-primary",
         )}
       >
-        {log.stream === 'stderr' ? 'ERR' : 'OUT'}
+        {log.stream === "stderr" ? "ERR" : "OUT"}
       </span>
       {showProcess && (
         <span className="shrink-0 w-[100px] truncate text-accent select-none">
@@ -93,15 +99,16 @@ function LogLine({
       )}
       <span
         className={cn(
-          'flex-1 min-w-0',
-          isStdErr ? 'text-destructive' : 'text-foreground',
-          wrap ? 'whitespace-pre-wrap break-all' : 'whitespace-nowrap overflow-hidden text-ellipsis',
+          "flex-1 min-w-0 whitespace-pre-wrap break-all",
+          isStdErr ? "text-destructive" : "text-foreground",
         )}
-        title={wrap ? undefined : log.message}
       >
         {parts.map((part, j) =>
           part.highlight ? (
-            <span key={j} className="bg-primary/30 text-primary rounded-[1px] px-0.5">
+            <span
+              key={j}
+              className="bg-primary/30 text-primary rounded-[1px] px-0.5"
+            >
               {part.text}
             </span>
           ) : (
@@ -113,7 +120,7 @@ function LogLine({
   );
 }
 
-const VIEW_VERSION = '__log_viewer_version_1';
+const VIEW_VERSION = "__log_viewer_version_1";
 
 export function LogViewer() {
   const paused = useLogsStore((s) => s.paused);
@@ -123,12 +130,12 @@ export function LogViewer() {
   const buffers = useLogsStore((s) => s.buffers);
   const processes = useProcessStore((s) => s.processes);
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [autoScroll, setAutoScroll] = useState(true);
-  const [wrap, setWrap] = useState(false);
-  const [streamFilter, setStreamFilter] = useState<StreamFilter>('all');
-  const [selectedProcessId, setSelectedProcessId] = useState<number | 'all'>('all');
-  const [showDate, setShowDate] = useState(false);
+  const [streamFilter, setStreamFilter] = useState<StreamFilter>("all");
+  const [selectedProcessId, setSelectedProcessId] = useState<number | "all">(
+    "all",
+  );
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const eventSourcesRef = useRef<Map<number, EventSource>>(new Map());
@@ -142,7 +149,10 @@ export function LogViewer() {
     return entries;
   }, [processes]);
 
-  const processIds = useMemo(() => processEntries.map((p) => p.id).join(','), [processEntries]);
+  const processIds = useMemo(
+    () => processEntries.map((p) => p.id).join(","),
+    [processEntries],
+  );
 
   useEffect(() => {
     for (const entry of processEntries) {
@@ -185,13 +195,15 @@ export function LogViewer() {
         }
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [processIds]);
 
   const allLogs = useMemo(() => {
     const result: LogEntry[] = [];
     for (const [processId, entries] of buffers) {
-      const name = processEntries.find((p) => p.id === processId)?.name || `PID ${processId}`;
+      const name =
+        processEntries.find((p) => p.id === processId)?.name ||
+        `PID ${processId}`;
       for (const e of entries) {
         result.push({ ...e, processName: name });
       }
@@ -203,15 +215,15 @@ export function LogViewer() {
   const filteredLogs = useMemo(() => {
     let filtered = allLogs;
 
-    if (selectedProcessId !== 'all') {
+    if (selectedProcessId !== "all") {
       filtered = filtered.filter((l) => l.processId === selectedProcessId);
     }
-    if (streamFilter !== 'all') {
+    if (streamFilter !== "all") {
       filtered = filtered.filter((l) => l.stream === streamFilter);
     }
     if (searchQuery) {
       try {
-        const regex = new RegExp(searchQuery, 'i');
+        const regex = new RegExp(searchQuery, "i");
         filtered = filtered.filter((l) => regex.test(l.message));
       } catch {
         // bad regex
@@ -220,7 +232,8 @@ export function LogViewer() {
     return filtered;
   }, [allLogs, selectedProcessId, streamFilter, searchQuery]);
 
-  const showProcessColumn = selectedProcessId === 'all' && processEntries.length > 1;
+  const showProcessColumn =
+    selectedProcessId === "all" && processEntries.length > 1;
 
   const totalLogCount = allLogs.length;
   const filteredLogCount = filteredLogs.length;
@@ -239,14 +252,15 @@ export function LogViewer() {
 
   const downloadLogs = useCallback(() => {
     const text = filteredLogs
-      .map((log) =>
-        `[${new Date(log.ts).toISOString()}] [${log.processName}] [${log.stream}] ${log.message}`,
+      .map(
+        (log) =>
+          `[${new Date(log.ts).toISOString()}] [${log.processName}] [${log.stream}] ${log.message}`,
       )
-      .join('\n');
+      .join("\n");
 
-    const blob = new Blob([text], { type: 'text/plain' });
+    const blob = new Blob([text], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `pm2-orbit-logs-${Date.now()}.txt`;
     a.click();
@@ -255,10 +269,11 @@ export function LogViewer() {
 
   const copyLogs = useCallback(() => {
     const text = filteredLogs
-      .map((log) =>
-        `[${formatDate(log.ts)} ${formatTime(log.ts)}] [${log.processName}] [${log.stream}] ${log.message}`,
+      .map(
+        (log) =>
+          `[${formatDate(log.ts)} ${formatTime(log.ts)}] [${log.processName}] [${log.stream}] ${log.message}`,
       )
-      .join('\n');
+      .join("\n");
 
     navigator.clipboard.writeText(text);
   }, [filteredLogs]);
@@ -285,7 +300,10 @@ export function LogViewer() {
 
         <div className="ml-auto flex items-center gap-2">
           <div className="relative">
-            <Search size={13} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Search
+              size={13}
+              className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+            />
             <input
               placeholder="Regex filter..."
               value={searchQuery}
@@ -294,7 +312,7 @@ export function LogViewer() {
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery('')}
+                onClick={() => setSearchQuery("")}
                 className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground px-1"
               >
                 &times;
@@ -303,44 +321,21 @@ export function LogViewer() {
           </div>
 
           <div className="flex border border-border h-7">
-            {(['all', 'stdout', 'stderr'] as const).map((s) => (
+            {(["all", "stdout", "stderr"] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setStreamFilter(s)}
                 className={cn(
-                  'px-2 text-[10px] uppercase tracking-wider',
-                  'hover:bg-subtle transition-colors',
+                  "px-2 text-[10px] uppercase tracking-wider",
+                  "hover:bg-subtle transition-colors",
                   streamFilter === s
-                    ? 'bg-primary/10 text-primary font-semibold'
-                    : 'text-muted-foreground',
+                    ? "bg-primary/10 text-primary font-semibold"
+                    : "text-muted-foreground",
                 )}
               >
-                {s === 'all' ? 'All' : s === 'stdout' ? 'OUT' : 'ERR'}
+                {s === "all" ? "All" : s === "stdout" ? "OUT" : "ERR"}
               </button>
             ))}
-          </div>
-
-          <div className="flex border border-border h-7">
-            <button
-              onClick={() => setWrap(!wrap)}
-              className={cn(
-                'px-2 h-full flex items-center justify-center transition-colors',
-                wrap ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground',
-              )}
-              title={wrap ? 'Disable word wrap' : 'Enable word wrap'}
-            >
-              <WrapText size={13} />
-            </button>
-            <button
-              onClick={() => setShowDate(!showDate)}
-              className={cn(
-                'px-2 h-full flex items-center justify-center transition-colors',
-                showDate ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground',
-              )}
-              title={showDate ? 'Hide date' : 'Show date'}
-            >
-              <ScrollText size={13} />
-            </button>
           </div>
 
           <Button
@@ -350,7 +345,7 @@ export function LogViewer() {
             className="h-7 px-2 text-[10px]"
           >
             {paused ? <Play size={12} /> : <Pause size={12} />}
-            {paused ? 'Resume' : 'Pause'}
+            {paused ? "Resume" : "Pause"}
           </Button>
 
           <div className="flex border border-border h-7">
@@ -384,12 +379,12 @@ export function LogViewer() {
           Process:
         </span>
         <button
-          onClick={() => setSelectedProcessId('all')}
+          onClick={() => setSelectedProcessId("all")}
           className={cn(
-            'px-2 py-0.5 text-[11px] rounded-sm transition-colors',
-            selectedProcessId === 'all'
-              ? 'bg-primary/15 text-primary font-semibold'
-              : 'text-muted-foreground hover:text-foreground hover:bg-subtle',
+            "px-2 py-0.5 text-[11px] rounded-sm transition-colors cursor-pointer",
+            selectedProcessId === "all"
+              ? "bg-primary/15 text-primary font-semibold"
+              : "text-muted-foreground hover:text-foreground hover:bg-subtle",
           )}
         >
           All ({totalLogCount.toLocaleString()})
@@ -401,13 +396,14 @@ export function LogViewer() {
               key={p.id}
               onClick={() => setSelectedProcessId(p.id)}
               className={cn(
-                'px-2 py-0.5 text-[11px] rounded-sm transition-colors max-w-[120px] truncate',
+                "px-2 py-0.5 text-[11px] rounded-sm transition-colors max-w-[120px] truncate cursor-pointer",
                 selectedProcessId === p.id
-                  ? 'bg-primary/15 text-primary font-semibold'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-subtle',
+                  ? "bg-primary/15 text-primary font-semibold"
+                  : "text-muted-foreground hover:text-foreground hover:bg-subtle",
               )}
             >
-              {p.name}{count > 0 && <span className="ml-1 opacity-60">({count})</span>}
+              {p.name}
+              {count > 0 && <span className="ml-1 opacity-60">({count})</span>}
             </button>
           );
         })}
@@ -422,16 +418,20 @@ export function LogViewer() {
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
             <Terminal size={32} className="opacity-30" />
             <p className="text-sm">No processes running</p>
-            <p className="text-xs opacity-60">Start a PM2 process to see logs here</p>
+            <p className="text-xs opacity-60">
+              Start a PM2 process to see logs here
+            </p>
           </div>
         ) : isLogEmpty ? (
           <div className="flex items-center justify-center h-full text-muted-foreground">
             <span>
               {totalLogCount > 0
-                ? searchQuery || streamFilter !== 'all' || selectedProcessId !== 'all'
-                  ? 'No logs match the current filters'
-                  : 'No logs yet. Waiting for log output...'
-                : 'No logs yet. Waiting for log output...'}
+                ? searchQuery ||
+                  streamFilter !== "all" ||
+                  selectedProcessId !== "all"
+                  ? "No logs match the current filters"
+                  : "No logs yet. Waiting for log output..."
+                : "No logs yet. Waiting for log output..."}
             </span>
           </div>
         ) : (
@@ -442,7 +442,6 @@ export function LogViewer() {
                 log={log}
                 searchQuery={searchQuery}
                 showProcess={showProcessColumn}
-                wrap={wrap}
                 isLast={i === filteredLogs.length - 1}
               />
             ))}
@@ -470,7 +469,8 @@ export function LogViewer() {
           </span>
         )}
         <span className="ml-auto text-[10px] text-muted-foreground tabular-nums">
-          {filteredLogCount.toLocaleString()} / {totalLogCount.toLocaleString()} entries
+          {filteredLogCount.toLocaleString()} / {totalLogCount.toLocaleString()}{" "}
+          entries
         </span>
       </div>
     </div>
