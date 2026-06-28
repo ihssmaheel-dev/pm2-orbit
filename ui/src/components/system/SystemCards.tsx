@@ -2,8 +2,9 @@ import { Cpu, MemoryStick, Activity, Network, HardDrive, Server } from 'lucide-r
 import { useSystemStore } from '@/store/system';
 import { formatBytes } from '@/lib/format';
 
-function CircularProgress({ percent, color, size = 26 }: { percent: number; color: string; size?: number }) {
-  const stroke = 3;
+function CircularProgress({ percent, color }: { percent: number; color: string }) {
+  const size = 18;
+  const stroke = 2.5;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const o = c - (Math.min(percent, 100) / 100) * c;
