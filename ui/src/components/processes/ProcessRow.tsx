@@ -3,7 +3,8 @@ import { RotateCw, Square, Play, Trash2, Clock } from "lucide-react";
 import { Sparkline } from "./Sparkline";
 import { formatBytes, formatDuration, formatPercent } from "@/lib/format";
 import { useProcessStore } from "@/store/processes";
-import type { ProcessStatus } from "@/types/pm2";
+import { useLiveUptime } from "@/hooks/useLiveUptime";
+import type { ProcessSnapshot, ProcessStatus } from "@/types/pm2";
 
 interface Props {
   pid: number;
@@ -165,44 +166,42 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
         </span>
       </div>
 
-      {/* Uptime */}
-      <div role="cell" className="w-27 shrink-0 px-3 overflow-hidden">
-        {p.status === "online" ? (
-          <span className="inline-flex items-center justify-end gap-1.5 text-[12px] font-mono tabular-nums text-success">
-            <Clock size={10} className="text-success/60 shrink-0" />
-            {formatDuration(p.uptime)}
-          </span>
-        ) : (
-          <span className="text-[12px] font-mono tabular-nums text-muted-foreground/20">
-            —
-          </span>
-        )}
-      </div>
+      <UptimeCell process={p} />
 
       {/* Actions — hover only */}
       <div
         role="cell"
         className="w-18 shrink-0 flex items-center justify-center gap-px transition-opacity duration-75"
       >
-        <ActBtn
-          icon={
-            <RotateCw
-              size={10}
-              className={ld === "restart" ? "animate-spin" : ""}
-            />
-          }
-          label="Restart"
-          onClick={() => act("restart")}
-          disabled={ld !== null}
-        />
-        <ActBtn
-          icon={
-            p.status === "stopped" ? <Play size={10} /> : <Square size={10} />
-          }
-          label={p.status === "stopped" ? "Start" : "Stop"}
-          onClick={() => act(p.status === "stopped" ? "start" : "stop")}
-          disabled={ld !== null}
-        />
+        {(p.status === "online" || p.status === "errored") && (
+          <ActBtn
+            icon={
+              <RotateCw
+                size={10}
+                className={ld === "restart" ? "animate-spin" : ""}
+              />
+            }
+            label="Restart"
+            onClick={() => act("restart")}
+            disabled={ld !== null}
+          />
+        )}
+        {p.status === "online" && (
+          <ActBtn
+            icon={<Square size={10} />}
+            label="Stop"
+            onClick={() => act("stop")}
+            disabled={ld !== null}
+          />
+        )}
+        {p.status === "stopped" && (
+          <ActBtn
+            icon={<Play size={10} />}
+            label="Start"
+            onClick={() => act("start")}
+            disabled={ld !== null}
+          />
+        )}
         <ActBtn
           icon={<Trash2 size={10} />}
           label="Delete"
@@ -214,6 +213,24 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
     </div>
   );
 });
+
+function UptimeCell({ process }: { process: ProcessSnapshot }) {
+  const uptime = useLiveUptime(process);
+  return (
+    <div role="cell" className="w-27 shrink-0 px-3 overflow-hidden">
+      {process.status === "online" ? (
+        <span className="inline-flex items-center justify-end gap-1.5 text-[12px] font-mono tabular-nums text-success">
+          <Clock size={10} className="text-success/60 shrink-0" />
+          {formatDuration(uptime)}
+        </span>
+      ) : (
+        <span className="text-[12px] font-mono tabular-nums text-muted-foreground/20">
+          &mdash;
+        </span>
+      )}
+    </div>
+  );
+}
 
 function ActBtn({
   icon,

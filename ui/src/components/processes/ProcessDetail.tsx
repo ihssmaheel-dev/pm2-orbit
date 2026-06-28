@@ -6,6 +6,7 @@ import { Badge } from '@/components/shared/Badge';
 import { CpuChart, MemoryChart } from '@/components/charts/Charts';
 import { ActionMenu } from './ActionMenu';
 import { formatBytes, formatDuration } from '@/lib/format';
+import { useLiveUptime } from '@/hooks/useLiveUptime';
 
 const statusVariant: Record<string, 'success' | 'warning' | 'destructive' | 'outline'> = {
   online: 'success',
@@ -46,6 +47,7 @@ export function ProcessDetail() {
     );
   }
 
+  const liveUptime = useLiveUptime(process);
   const cpuData = { ts: process.history.ts, values: process.history.cpu };
   const memData = { ts: process.history.ts, values: process.history.memory };
   const envEntries = Object.entries(envVars);
@@ -91,7 +93,7 @@ export function ProcessDetail() {
                 <div className="grid grid-cols-2 gap-3">
                   <StatCard icon={<Hash size={13} />} label="PID" value={String(process.pid)} />
                   <StatCard icon={<Server size={13} />} label="Mode" value={process.mode} />
-                  <StatCard icon={<Clock size={13} />} label="Uptime" value={formatDuration(process.uptime)} />
+                  <StatCard icon={<Clock size={13} />} label="Uptime" value={formatDuration(liveUptime)} />
                   <StatCard icon={<RotateCw size={13} />} label="Restarts" value={String(process.restarts)} />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
