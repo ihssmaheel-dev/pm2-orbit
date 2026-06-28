@@ -44,6 +44,8 @@ export function ProcessTable() {
   const parentRef = useRef<HTMLDivElement>(null);
 
   const data = useMemo(() => Array.from(processes.values()), [processes]);
+  const onlineCount = useMemo(() => data.filter((p) => p.status === 'online').length, [data]);
+  const stoppedCount = useMemo(() => data.filter((p) => p.status === 'stopped').length, [data]);
 
   const filteredData = useMemo(() => {
     if (!sq) return data;
@@ -117,7 +119,7 @@ export function ProcessTable() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            disabled={busy}
+            disabled={busy || onlineCount === 0}
             onClick={async () => {
               const targets = Array.from(processes.values()).filter((p) => p.status === 'online');
               if (targets.length === 0) return;
@@ -127,14 +129,14 @@ export function ProcessTable() {
               ));
               setBusy(false);
               const ok = results.filter((r) => r.status === 'fulfilled' && r.value.ok).length;
-              toast.success(`Stopped ${ok}/${targets.length} process${targets.length !== 1 ? 'es' : ''}`);
+              if (ok > 0) toast.success(`Stopped ${ok} of ${targets.length} process${targets.length !== 1 ? 'es' : ''}`);
             }}
             className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-muted-foreground/70 hover:text-destructive border border-border/60 hover:border-destructive/40 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
             <Square size={10} /> Stop All
           </button>
           <button
-            disabled={busy}
+            disabled={busy || stoppedCount === 0}
             onClick={async () => {
               const targets = Array.from(processes.values()).filter((p) => p.status === 'stopped');
               if (targets.length === 0) return;
@@ -144,7 +146,7 @@ export function ProcessTable() {
               ));
               setBusy(false);
               const ok = results.filter((r) => r.status === 'fulfilled' && r.value.ok).length;
-              toast.success(`Started ${ok}/${targets.length} process${targets.length !== 1 ? 'es' : ''}`);
+              if (ok > 0) toast.success(`Started ${ok} of ${targets.length} process${targets.length !== 1 ? 'es' : ''}`);
             }}
             className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-muted-foreground/70 hover:text-success border border-border/60 hover:border-success/40 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
