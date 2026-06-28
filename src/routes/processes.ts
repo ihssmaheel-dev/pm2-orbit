@@ -27,8 +27,25 @@ export async function registerProcessRoutes(app: FastifyInstance, pipeline: Pipe
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const env = (proc as any).pm2_env || {};
           const envVars: Record<string, string> = {};
+
+          const systemVars = new Set([
+            'PATH', 'PATHEXT', 'SYSTEMROOT', 'SYSTEMDRIVE', 'WINDIR',
+            'TEMP', 'TMP', 'USERPROFILE', 'USERNAME', 'USERDOMAIN',
+            'USERDOMAIN_ROAMINGPROFILE', 'PROCESSOR_ARCHITECTURE',
+            'PROCESSOR_IDENTIFIER', 'PROCESSOR_LEVEL', 'PROCESSOR_REVISION',
+            'PROGRAMDATA', 'PROGRAMFILES', 'PROGRAMW6432',
+            'COMMONPROGRAMFILES', 'COMMONPROGRAMW6432', 'COMPUTERNAME',
+            'COMSPEC', 'DRIVERDATA', 'HOMEDRIVE', 'HOMEPATH',
+            'LOCALAPPDATA', 'LOGONSERVER', 'NUMBER_OF_PROCESSORS',
+            'ONEDRIVE', 'OS', 'PSMODULEPATH', 'PUBLIC', 'SESSIONNAME',
+            'ALLUSERSPROFILE', 'APPDATA', 'COLORTERM', 'LANG',
+            'TERM', 'TERM_PROGRAM', 'TERM_PROGRAM_VERSION',
+            'ZES_ENABLE_SYSMAN', 'ZED_TERM', 'ZED_ENVIRONMENT',
+            'PM2_USAGE', 'PM2_JSON_PROCESSING',
+          ]);
+
           for (const [key, value] of Object.entries(env)) {
-            if (typeof value === 'string') {
+            if (typeof value === 'string' && !systemVars.has(key) && !key.startsWith('MIMOCODE_') && !key.startsWith('FPS_BROWSER_') && !key.startsWith('EFC_')) {
               envVars[key] = value;
             }
           }
