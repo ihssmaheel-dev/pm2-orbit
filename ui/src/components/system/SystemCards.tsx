@@ -40,7 +40,7 @@ function Card({ icon, label, value, subtext, color, bgColor, progress, circular 
         style={{ background: `radial-gradient(ellipse 80% 60% at 50% 0%, ${bgColor}, transparent)` }}
       />
 
-      <div className="flex items-center justify-between relative z-0">
+      <div className="flex items-center justify-between relative z-0 mb-1">
         <div className="flex items-center gap-2 min-w-0">
           <span className={`${color} shrink-0`}>{icon}</span>
           <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50 truncate">
