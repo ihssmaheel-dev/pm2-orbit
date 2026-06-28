@@ -1,4 +1,4 @@
-import { Cpu, MemoryStick, Activity, Network, HardDrive } from 'lucide-react';
+import { Cpu, MemoryStick, Activity, Network, HardDrive, Server } from 'lucide-react';
 import { useSystemStore } from '@/store/system';
 import { formatBytes } from '@/lib/format';
 
@@ -59,7 +59,7 @@ export function SystemCards() {
     : 0;
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 shrink-0">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 shrink-0">
       <Card
         icon={<Cpu size={13} />}
         label="CPU"
@@ -67,6 +67,14 @@ export function SystemCards() {
         color="text-primary"
         bgColor="#019cf6"
         progress={system.cpu}
+      />
+      <Card
+        icon={<Server size={13} />}
+        label="Cores"
+        value={String(system.cpuCores)}
+        subtext={system.cpuCores === 1 ? 'logical' : 'logical'}
+        color="text-primary/80"
+        bgColor="#019cf6"
       />
       <Card
         icon={<MemoryStick size={13} />}

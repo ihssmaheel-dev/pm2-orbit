@@ -7,6 +7,7 @@ const defaultSystem: SystemSnapshot = {
   loadAvg: [0, 0, 0],
   disk: { read: 0, write: 0 },
   network: { rx: 0, tx: 0 },
+  cpuCores: 0,
 };
 
 interface SystemStore {

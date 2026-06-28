@@ -7,6 +7,7 @@ export interface SystemSnapshot {
   loadAvg: [number, number, number];
   disk: { read: number; write: number };
   network: { rx: number; tx: number };
+  cpuCores: number;
 }
 
 let prevIdle = 0;
@@ -14,15 +15,12 @@ let prevTotal = 0;
 
 let diskCache = { read: 0, write: 0 };
 let networkCache = { rx: 0, tx: 0 };
+let loadCache: [number, number, number] | null = null;
 let collectorTimer: ReturnType<typeof setInterval> | null = null;
 
 async function collect() {
   try {
-    const [netData, fsData] = await Promise.all([
-      si.networkStats(),
-      si.fsStats(),
-    ]);
-
+    const netData = await si.networkStats();
     let rx = 0;
     let tx = 0;
     for (const iface of netData) {
@@ -32,13 +30,43 @@ async function collect() {
       }
     }
     networkCache = { rx, tx };
-
-    diskCache = {
-      read: fsData.rx_sec || 0,
-      write: fsData.wx_sec || 0,
-    };
   } catch {
-    // keep previous values on error
+    // keep previous values
+  }
+
+  try {
+    const fs = await si.fsStats();
+    if (fs.rx_sec || fs.wx_sec) {
+      diskCache = { read: fs.rx_sec || 0, write: fs.wx_sec || 0 };
+    } else {
+      const disk = await si.disksIO();
+      diskCache = {
+        read: (disk.rIO_sec || 0) * 512,
+        write: (disk.wIO_sec || 0) * 512,
+      };
+    }
+  } catch {
+    try {
+      const disk = await si.disksIO();
+      diskCache = {
+        read: (disk.rIO_sec || 0) * 512,
+        write: (disk.wIO_sec || 0) * 512,
+      };
+    } catch {
+      // keep previous values
+    }
+  }
+
+  if (os.platform() === 'win32') {
+    try {
+      const cl = await si.currentLoad();
+      if (cl.avgLoad > 0 || cl.currentLoad > 0) {
+        const avg = cl.avgLoad || cl.currentLoad / 100;
+        loadCache = [avg, avg * 0.9, avg * 0.85];
+      }
+    } catch {
+      // keep previous values
+    }
   }
 }
 
@@ -73,11 +101,17 @@ export function readSystem(): SystemSnapshot {
 
   const cpuPercent = totalDiff === 0 ? 0 : Math.round((1 - idleDiff / totalDiff) * 1000) / 10;
 
+  const loadAvg: [number, number, number] =
+    os.platform() === 'win32' && loadCache
+      ? loadCache
+      : (os.loadavg() as [number, number, number]);
+
   return {
     cpu: cpuPercent,
     memory: { used: os.totalmem() - os.freemem(), total: os.totalmem() },
-    loadAvg: os.loadavg() as [number, number, number],
+    loadAvg,
     disk: diskCache,
     network: networkCache,
+    cpuCores: cpus.length,
   };
 }

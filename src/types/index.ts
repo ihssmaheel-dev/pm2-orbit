@@ -28,6 +28,7 @@ export interface SystemSnapshot {
   loadAvg: [number, number, number];
   disk: { read: number; write: number };
   network: { rx: number; tx: number };
+  cpuCores: number;
 }
 
 export interface Tick {
