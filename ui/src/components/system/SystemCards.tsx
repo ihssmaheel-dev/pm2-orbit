@@ -2,6 +2,24 @@ import { Cpu, MemoryStick, Activity, Network, HardDrive, Server } from 'lucide-r
 import { useSystemStore } from '@/store/system';
 import { formatBytes } from '@/lib/format';
 
+function CircularProgress({ percent, color, size = 26 }: { percent: number; color: string; size?: number }) {
+  const stroke = 3;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const o = c - (Math.min(percent, 100) / 100) * c;
+
+  return (
+    <svg width={size} height={size} className="-rotate-90 shrink-0">
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="currentColor" strokeWidth={stroke} className="text-subtle/50" />
+      <circle
+        cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke}
+        strokeDasharray={c} strokeDashoffset={o} strokeLinecap="round"
+        className="transition-all duration-700 ease-out"
+      />
+    </svg>
+  );
+}
+
 interface CardProps {
   icon: React.ReactNode;
   label: string;
@@ -10,9 +28,10 @@ interface CardProps {
   color: string;
   bgColor: string;
   progress?: number;
+  circular?: boolean;
 }
 
-function Card({ icon, label, value, subtext, color, bgColor, progress }: CardProps) {
+function Card({ icon, label, value, subtext, color, bgColor, progress, circular }: CardProps) {
   return (
     <div className="relative flex flex-col gap-2 px-4 py-3.5 bg-card border border-border/50 overflow-hidden group hover:border-border/80 transition-colors duration-200">
       <div
@@ -20,20 +39,21 @@ function Card({ icon, label, value, subtext, color, bgColor, progress }: CardPro
         style={{ background: `radial-gradient(ellipse 80% 60% at 50% 0%, ${bgColor}, transparent)` }}
       />
 
-      <div className="flex items-center justify-between relative z-0">
-        <div className="flex items-center gap-2">
-          <span className={`${color}`}>{icon}</span>
-          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50">
+      <div className="flex items-start justify-between relative z-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className={`${color} shrink-0`}>{icon}</span>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50 truncate">
             {label}
           </span>
         </div>
-        {progress !== undefined && (
-          <span className="text-[10px] font-mono tabular-nums text-muted-foreground/50">
+        {circular && progress !== undefined ? (
+          <CircularProgress percent={progress} color={bgColor} />
+        ) : progress !== undefined ? (
+          <span className="text-[10px] font-mono tabular-nums text-muted-foreground/50 shrink-0 ml-2">
             {progress.toFixed(0)}%
           </span>
-        )}
-        {progress === undefined && (
-          <span className="h-1.5 w-1.5 rounded-full opacity-30 group-hover:opacity-60 transition-opacity" style={{ background: bgColor }} />
+        ) : (
+          <span className="h-1.5 w-1.5 rounded-full opacity-30 group-hover:opacity-60 transition-opacity shrink-0" style={{ background: bgColor }} />
         )}
       </div>
 
@@ -48,7 +68,7 @@ function Card({ icon, label, value, subtext, color, bgColor, progress }: CardPro
         )}
       </div>
 
-      {progress !== undefined && (
+      {progress !== undefined && !circular && (
         <div className="h-[2px] bg-subtle/60 overflow-hidden rounded-full relative z-0">
           <div
             className="h-full rounded-full transition-all duration-700 ease-out"
@@ -79,6 +99,7 @@ export function SystemCards() {
         color="text-primary"
         bgColor="#14b8a6"
         progress={system.cpu}
+        circular
       />
       <Card
         icon={<Server size={13} />}
@@ -95,6 +116,7 @@ export function SystemCards() {
         color="text-chart-memory"
         bgColor="#7f45e7"
         progress={memPercent}
+        circular
       />
       <Card
         icon={<Activity size={13} />}
