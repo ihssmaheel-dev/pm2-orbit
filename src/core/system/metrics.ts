@@ -18,7 +18,7 @@ let networkCache = { rx: 0, tx: 0 };
 let loadCache: [number, number, number] | null = null;
 let collectorTimer: ReturnType<typeof setInterval> | null = null;
 
-async function collect() {
+async function collectNetwork() {
   try {
     const netData = await si.networkStats();
     let rx = 0;
@@ -33,30 +33,53 @@ async function collect() {
   } catch {
     // keep previous values
   }
+}
 
+async function collectDisk() {
+  // Method 1: systeminformation disksIO (ops/sec × 512 byte sectors)
+  try {
+    const disk = await si.disksIO();
+    if (disk.rIO_sec || disk.wIO_sec) {
+      diskCache = {
+        read: Math.round((disk.rIO_sec || 0) * 512),
+        write: Math.round((disk.wIO_sec || 0) * 512),
+      };
+      return;
+    }
+  } catch {}
+
+  // Method 2: systeminformation fsStats (bytes/sec, filesystem layer)
   try {
     const fs = await si.fsStats();
     if (fs.rx_sec || fs.wx_sec) {
       diskCache = { read: fs.rx_sec || 0, write: fs.wx_sec || 0 };
-    } else {
-      const disk = await si.disksIO();
-      diskCache = {
-        read: (disk.rIO_sec || 0) * 512,
-        write: (disk.wIO_sec || 0) * 512,
-      };
+      return;
     }
-  } catch {
-    try {
-      const disk = await si.disksIO();
-      diskCache = {
-        read: (disk.rIO_sec || 0) * 512,
-        write: (disk.wIO_sec || 0) * 512,
-      };
-    } catch {
-      // keep previous values
-    }
-  }
+  } catch {}
 
+  // Method 3: PowerShell CIM query on Windows
+  if (os.platform() === 'win32') {
+    try {
+      const { execSync } = require('child_process');
+      const output = execSync(
+        'powershell -NoProfile -Command "Get-CimInstance Win32_PerfFormattedData_PerfDisk_PhysicalDisk -Filter \'Name LIKE \\\"%Total%\\\"\' | Select-Object DiskReadBytesPerSec, DiskWriteBytesPerSec | ConvertTo-Json"',
+        { encoding: 'utf-8', timeout: 5000 },
+      );
+      const data = JSON.parse(output.trim());
+      const items = Array.isArray(data) ? data : [data];
+      if (items.length > 0) {
+        const read = parseFloat(items[0].DiskReadBytesPerSec) || 0;
+        const write = parseFloat(items[0].DiskWriteBytesPerSec) || 0;
+        if (read || write) {
+          diskCache = { read, write };
+          return;
+        }
+      }
+    } catch {}
+  }
+}
+
+async function collectLoad() {
   if (os.platform() === 'win32') {
     try {
       const cl = await si.currentLoad();
@@ -68,6 +91,10 @@ async function collect() {
       // keep previous values
     }
   }
+}
+
+async function collect() {
+  await Promise.all([collectNetwork(), collectDisk(), collectLoad()]);
 }
 
 export function startMetricsCollector(intervalMs = 2000) {
