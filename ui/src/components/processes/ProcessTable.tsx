@@ -202,7 +202,9 @@ export function ProcessTable() {
               <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/50">Uptime</span>
             </div>
 
-            <div role="columnheader" className={`${ACTION_WIDTH} shrink-0`} />
+            <div role="columnheader" className={`${ACTION_WIDTH} shrink-0 flex items-center justify-center`}>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/50">Actions</span>
+            </div>
           </div>
         </div>
 

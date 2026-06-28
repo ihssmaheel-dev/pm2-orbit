@@ -188,10 +188,10 @@ function ActionIcon({
       disabled={disabled}
       title={label}
       aria-label={label}
-      className={`h-6 w-6 flex items-center justify-center transition-colors ${
+      className={`h-6 w-6 flex items-center justify-center rounded-sm transition-all duration-100 ${
         danger
-          ? 'text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10'
-          : 'text-muted-foreground/40 hover:text-foreground hover:bg-subtle/50'
+          ? 'text-muted-foreground/50 hover:text-white hover:bg-destructive/80'
+          : 'text-muted-foreground/50 hover:text-white hover:bg-primary/70'
       } disabled:opacity-30 disabled:pointer-events-none`}
     >
       {icon}
