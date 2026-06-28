@@ -29,6 +29,7 @@
     "fastify": "^4",
     "mri": "^1.2",
     "open": "^10",
+    "systeminformation": "^5.31.11",
     "ws": "^8"
   },
   "optionalDependencies": {

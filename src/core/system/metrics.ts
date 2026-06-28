@@ -1,5 +1,5 @@
 import os from 'os';
-import fs from 'fs';
+import si from 'systeminformation';
 
 export interface SystemSnapshot {
   cpu: number;
@@ -12,73 +12,47 @@ export interface SystemSnapshot {
 let prevIdle = 0;
 let prevTotal = 0;
 
-let prevNetRx = 0;
-let prevNetTx = 0;
-let prevNetTime = Date.now();
+let diskCache = { read: 0, write: 0 };
+let networkCache = { rx: 0, tx: 0 };
+let collectorTimer: ReturnType<typeof setInterval> | null = null;
 
-function readNetWindows(): { rx: number; tx: number } {
+async function collect() {
   try {
-    // Use PowerShell with a simpler command
-    const { execSync } = require('child_process');
-    const output = execSync(
-      'powershell -NoProfile -Command "Get-NetAdapter | Select-Object BytesReceived,BytesSent | ConvertTo-Json"',
-      { encoding: 'utf-8', timeout: 5000 },
-    );
-    const data = JSON.parse(output);
-    const adapters = Array.isArray(data) ? data : [data];
+    const [netData, fsData] = await Promise.all([
+      si.networkStats(),
+      si.fsStats(),
+    ]);
+
     let rx = 0;
     let tx = 0;
-    for (const a of adapters) {
-      rx += a.BytesReceived || 0;
-      tx += a.BytesSent || 0;
-    }
-    const now = Date.now();
-    const elapsed = (now - prevNetTime) / 1000;
-    prevNetTime = now;
-    const rxRate = elapsed > 0 ? (rx - prevNetRx) / elapsed : 0;
-    const txRate = elapsed > 0 ? (tx - prevNetTx) / elapsed : 0;
-    prevNetRx = rx;
-    prevNetTx = tx;
-    return { rx: Math.max(0, rxRate), tx: Math.max(0, txRate) };
-  } catch {
-    return { rx: 0, tx: 0 };
-  }
-}
-
-function readNetLinux(): { rx: number; tx: number } {
-  try {
-    const data = fs.readFileSync('/proc/net/dev', 'utf-8');
-    let rxBytes = 0;
-    let txBytes = 0;
-    for (const line of data.split('\n')) {
-      if (line.includes(':') && !line.includes('lo:')) {
-        const parts = line.split(':');
-        if (parts.length >= 2) {
-          const stats = parts[1].trim().split(/\s+/);
-          if (stats.length >= 10) {
-            rxBytes += parseInt(stats[0]) || 0;
-            txBytes += parseInt(stats[8]) || 0;
-          }
-        }
+    for (const iface of netData) {
+      if (iface.iface !== 'lo' && !iface.iface.startsWith('lo')) {
+        rx += iface.rx_sec || 0;
+        tx += iface.tx_sec || 0;
       }
     }
-    const now = Date.now();
-    const elapsed = (now - prevNetTime) / 1000;
-    prevNetTime = now;
-    const rxRate = elapsed > 0 ? (rxBytes - prevNetRx) / elapsed : 0;
-    const txRate = elapsed > 0 ? (txBytes - prevNetTx) / elapsed : 0;
-    prevNetRx = rxBytes;
-    prevNetTx = txBytes;
-    return { rx: Math.max(0, rxRate), tx: Math.max(0, txRate) };
+    networkCache = { rx, tx };
+
+    diskCache = {
+      read: fsData.rx_sec || 0,
+      write: fsData.wx_sec || 0,
+    };
   } catch {
-    return { rx: 0, tx: 0 };
+    // keep previous values on error
   }
 }
 
-function readNet(): { rx: number; tx: number } {
-  const platform = os.platform();
-  if (platform === 'win32') return readNetWindows();
-  return readNetLinux();
+export function startMetricsCollector(intervalMs = 2000) {
+  if (collectorTimer) return;
+  collect();
+  collectorTimer = setInterval(collect, intervalMs);
+}
+
+export function stopMetricsCollector() {
+  if (collectorTimer) {
+    clearInterval(collectorTimer);
+    collectorTimer = null;
+  }
 }
 
 export function readSystem(): SystemSnapshot {
@@ -103,7 +77,7 @@ export function readSystem(): SystemSnapshot {
     cpu: cpuPercent,
     memory: { used: os.totalmem() - os.freemem(), total: os.totalmem() },
     loadAvg: os.loadavg() as [number, number, number],
-    disk: { read: 0, write: 0 },
-    network: readNet(),
+    disk: diskCache,
+    network: networkCache,
   };
 }

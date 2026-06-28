@@ -1,6 +1,6 @@
 import { createPm2Bridge, type ProcessEvent } from './bridge';
 import { BufferStore } from './buffer';
-import { readSystem } from '../system/metrics';
+import { readSystem, startMetricsCollector, stopMetricsCollector } from '../system/metrics';
 import { WebSocketServer, WebSocket } from 'ws';
 import type { Tick } from '../../types';
 import { createStore } from '../persistence/store';
@@ -128,6 +128,7 @@ export function createEventPipeline() {
   }
 
   function start(): void {
+    startMetricsCollector();
     bridge.subscribe((events) => {
       const now = Date.now();
 
@@ -174,6 +175,7 @@ export function createEventPipeline() {
     }
     for (const client of clients) client.close();
     clients.clear();
+    stopMetricsCollector();
     persistence?.close();
     bridge.disconnect();
   }
