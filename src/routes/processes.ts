@@ -56,13 +56,31 @@ export async function registerProcessRoutes(app: FastifyInstance, pipeline: Pipe
 
     try {
       const pm2Module = require('pm2');
+
+      if (action === 'scale') {
+        const name = await new Promise<string>((resolve, reject) => {
+          pm2Module.list((err: Error | null, list: { name: string; pm_id: number }[]) => {
+            if (err) return reject(err);
+            const proc = list.find((p) => p.pm_id === processId);
+            if (!proc) return reject(new Error('Process not found'));
+            resolve(proc.name);
+          });
+        });
+        await new Promise<void>((resolve, reject) => {
+          pm2Module.scale(name, instances || '+1', (err: Error | null) => {
+            if (err) reject(err);
+            else resolve();
+          });
+        });
+        return { success: true };
+      }
+
       const actionFn = {
         restart: (cb: (err: Error | null) => void) => pm2Module.restart(processId, cb),
         stop: (cb: (err: Error | null) => void) => pm2Module.stop(processId, cb),
         start: (cb: (err: Error | null) => void) => pm2Module.start(processId, cb),
         reload: (cb: (err: Error | null) => void) => pm2Module.reload(processId, cb),
         delete: (cb: (err: Error | null) => void) => pm2Module.delete(processId, cb),
-        scale: (cb: (err: Error | null) => void) => pm2Module.scale(processId, instances || 1, cb),
         flush: (cb: (err: Error | null) => void) => pm2Module.flush(processId, cb),
       }[action];
 

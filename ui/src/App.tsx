@@ -17,13 +17,8 @@ function AppInner() {
       <Toaster
         position="bottom-right"
         toastOptions={{
-          style: {
-            background: 'hsl(var(--card))',
-            border: '1px solid hsl(var(--border))',
-            borderRadius: '0px',
-            fontFamily: 'Exo, sans-serif',
-            color: 'hsl(var(--foreground))',
-          },
+          className: '!bg-card !border !border-border/70 !text-foreground !shadow-lg !shadow-black/30 !rounded-none !font-sans',
+          style: { fontFamily: 'Exo, sans-serif' },
         }}
       />
     </>
