@@ -1,10 +1,9 @@
-import { memo, useState } from 'react';
-import { MoreHorizontal } from 'lucide-react';
+import { memo, useState, useRef, useEffect } from 'react';
+import { MoreHorizontal, RotateCw, Square, Play, Trash2 } from 'lucide-react';
 import { StatusDot } from '@/components/shared/StatusDot';
 import { Sparkline } from './Sparkline';
 import { formatBytes, formatDuration, formatPercent } from '@/lib/format';
 import { useProcessStore } from '@/store/processes';
-import { Dropdown, DropdownItem, DropdownSeparator } from '@/components/shared/Dropdown';
 
 interface ColumnDef {
   accessorKey: string;
@@ -35,6 +34,18 @@ export const ProcessRow = memo(function ProcessRow({
   const select = useProcessStore((s) => s.select);
   const isSelected = selectedId === processId;
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpen]);
 
   if (!process) return null;
 
@@ -107,7 +118,7 @@ export const ProcessRow = memo(function ProcessRow({
       aria-selected={isSelected}
       tabIndex={0}
       style={style}
-      onClick={() => select(isSelected ? null : processId)}
+      onClick={() => { if (!menuOpen) select(isSelected ? null : processId); }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
@@ -144,29 +155,39 @@ export const ProcessRow = memo(function ProcessRow({
         </span>
       </div>
 
-      <div role="cell" className={`${actionWidth} shrink-0 flex items-center justify-center`}>
-        <Dropdown
-          open={menuOpen}
-          onOpenChange={setMenuOpen}
-          align="right"
-          trigger={
-            <button
-              onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
-              className="h-7 w-7 flex items-center justify-center text-muted-foreground/40 hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-              aria-label="Process actions"
-            >
-              <MoreHorizontal size={14} />
-            </button>
-          }
+      <div role="cell" className={`${actionWidth} shrink-0 flex items-center justify-center`} ref={menuRef}>
+        <button
+          onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
+          className="h-7 w-7 flex items-center justify-center text-muted-foreground/50 hover:text-foreground hover:bg-subtle/50 transition-colors"
+          aria-label="Process actions"
         >
-          <DropdownItem onClick={() => handleAction('restart')}>Restart</DropdownItem>
-          <DropdownItem onClick={() => handleAction('reload')}>Reload</DropdownItem>
-          <DropdownItem onClick={() => handleAction('stop')}>Stop</DropdownItem>
-          <DropdownItem onClick={() => handleAction('start')}>Start</DropdownItem>
-          <DropdownSeparator />
-          <DropdownItem onClick={() => handleAction('delete')} danger>Delete</DropdownItem>
-        </Dropdown>
+          <MoreHorizontal size={14} />
+        </button>
+
+        {menuOpen && (
+          <div className="absolute right-5 top-full z-50 mt-1 min-w-[140px] bg-popover border border-border shadow-glow-md py-1">
+            <MenuRow icon={<RotateCw size={13} />} label="Restart" onClick={() => handleAction('restart')} />
+            <MenuRow icon={<Play size={13} />} label="Start" onClick={() => handleAction('start')} />
+            <MenuRow icon={<Square size={13} />} label="Stop" onClick={() => handleAction('stop')} />
+            <div className="border-t border-border/30 my-1" />
+            <MenuRow icon={<Trash2 size={13} />} label="Delete" onClick={() => handleAction('delete')} danger />
+          </div>
+        )}
       </div>
     </div>
   );
 });
+
+function MenuRow({ icon, label, onClick, danger }: { icon: React.ReactNode; label: string; onClick: () => void; danger?: boolean }) {
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left transition-colors ${
+        danger ? 'text-destructive hover:bg-destructive/10' : 'text-foreground/80 hover:bg-subtle/50'
+      }`}
+    >
+      <span className="text-muted-foreground/60">{icon}</span>
+      {label}
+    </button>
+  );
+}

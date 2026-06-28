@@ -75,8 +75,8 @@ export function ProcessDetail() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden flex flex-col">
-        <Tabs defaultValue="overview">
+      <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+        <Tabs defaultValue="overview" className="flex-1 flex flex-col min-h-0">
           <div className="px-5 border-b border-border/40 shrink-0">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -85,7 +85,7 @@ export function ProcessDetail() {
             </TabsList>
           </div>
 
-          <div className="flex-1 overflow-auto p-5">
+          <div className="flex-1 overflow-auto p-5 min-h-0">
             <TabsContent value="overview">
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
