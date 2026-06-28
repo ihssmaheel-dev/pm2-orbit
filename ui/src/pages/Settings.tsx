@@ -21,14 +21,25 @@ interface Settings {
 export function Settings() {
   const { theme: currentTheme, setTheme } = useTheme();
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    fetch('/api/settings')
-      .then((res) => res.json())
-      .then((data) => setSettings(data))
-      .catch(() => {});
+    let cancelled = false;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    fetch('/api/settings', { signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+        return res.json();
+      })
+      .then((data) => { if (!cancelled) setSettings(data); })
+      .catch((err) => { if (!cancelled) setError(err.message || 'Failed to load settings'); })
+      .finally(() => clearTimeout(timeout));
+
+    return () => { cancelled = true; controller.abort(); };
   }, []);
 
   const update = (key: keyof Settings, value: string | number) => {
@@ -55,6 +66,21 @@ export function Settings() {
     }
     setSaving(false);
   };
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
+        <span className="text-destructive text-sm">Failed to load settings</span>
+        <span className="text-xs opacity-60">{error}</span>
+        <button
+          onClick={() => window.location.reload()}
+          className="text-xs text-primary hover:text-primary-hover underline mt-2"
+        >
+          Reload page
+        </button>
+      </div>
+    );
+  }
 
   if (!settings) {
     return (
