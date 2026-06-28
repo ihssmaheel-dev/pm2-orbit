@@ -39,25 +39,24 @@ function Card({ icon, label, value, subtext, color, bgColor, progress, circular 
         style={{ background: `radial-gradient(ellipse 80% 60% at 50% 0%, ${bgColor}, transparent)` }}
       />
 
-      <div className="flex items-start justify-between relative z-0">
+      <div className="flex items-center justify-between relative z-0">
         <div className="flex items-center gap-2 min-w-0">
           <span className={`${color} shrink-0`}>{icon}</span>
           <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50 truncate">
             {label}
           </span>
         </div>
-        {circular && progress !== undefined ? (
-          <CircularProgress percent={progress} color={bgColor} />
-        ) : progress !== undefined ? (
+        {!circular && progress !== undefined && (
           <span className="text-[10px] font-mono tabular-nums text-muted-foreground/50 shrink-0 ml-2">
             {progress.toFixed(0)}%
           </span>
-        ) : (
+        )}
+        {progress === undefined && (
           <span className="h-1.5 w-1.5 rounded-full opacity-30 group-hover:opacity-60 transition-opacity shrink-0" style={{ background: bgColor }} />
         )}
       </div>
 
-      <div className="relative z-0 flex items-baseline gap-2">
+      <div className="relative z-0 flex items-center gap-2">
         <span className="text-lg font-semibold font-mono tracking-tight tabular-nums text-foreground/90">
           {value}
         </span>
@@ -66,6 +65,11 @@ function Card({ icon, label, value, subtext, color, bgColor, progress, circular 
             {subtext}
           </span>
         )}
+        <div className="ml-auto">
+          {circular && progress !== undefined && (
+            <CircularProgress percent={progress} color={bgColor} />
+          )}
+        </div>
       </div>
 
       {progress !== undefined && !circular && (
