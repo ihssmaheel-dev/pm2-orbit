@@ -25,7 +25,7 @@ export interface ProcessEvent {
 }
 
 const STALE_THRESHOLD_MS = 10_000;
-const BUS_HEARTBEAT_MS = 15_000;
+const BUS_HEARTBEAT_MS = 60_000;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function procToSnapshot(proc: any): ProcessSnapshot {
