@@ -7,7 +7,8 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Search, X } from "lucide-react";
+import { Search, X, Square, Play } from "lucide-react";
+import { toast } from "sonner";
 import { useProcessStore } from "@/store/processes";
 import { useUIStore } from "@/store/ui";
 import { ProcessRow } from "./ProcessRow";
@@ -104,7 +105,7 @@ export function ProcessTable() {
   return (
     <div className="flex flex-col h-full bg-card/30 border border-border/50">
       {/* Toolbar */}
-      <div className="flex items-center justify-between h-12 px-5 shrink-0 border-b border-border/50">
+        <div className="flex items-center justify-between h-12 px-5 shrink-0 border-b border-border/50">
         <div className="flex items-center gap-2.5">
           <span className="text-[12px] font-semibold text-foreground/85">
             Processes
@@ -113,27 +114,53 @@ export function ProcessTable() {
             {filteredData.length}
           </span>
         </div>
-        <div className="relative">
-          <Search
-            size={11}
-            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/30"
-          />
-          <input
-            placeholder="Search processes…"
-            value={sq}
-            onChange={(e) => setSq(e.target.value)}
-            aria-label="Search processes"
-            className="h-7 w-49 pl-7 pr-7 text-[12px] bg-background border border-border/80 text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/40 rounded-none"
-          />
-          {sq && (
-            <button
-              onClick={() => setSq("")}
-              aria-label="Clear search"
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground/30 hover:text-foreground"
-            >
-              <X size={10} />
-            </button>
-          )}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              const online = Array.from(processes.values()).filter((p) => p.status === 'online');
+              for (const p of online) {
+                fetch(`/api/processes/${p.id}/action`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'stop' }) }).catch(() => {});
+              }
+              toast.success(`Stopping ${online.length} process${online.length !== 1 ? 'es' : ''}`);
+            }}
+            className="flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-muted-foreground/70 hover:text-destructive border border-border/60 hover:border-destructive/40 transition-colors"
+          >
+            <Square size={10} /> Stop All
+          </button>
+          <button
+            onClick={() => {
+              const stopped = Array.from(processes.values()).filter((p) => p.status === 'stopped');
+              for (const p of stopped) {
+                fetch(`/api/processes/${p.id}/action`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'start' }) }).catch(() => {});
+              }
+              toast.success(`Starting ${stopped.length} process${stopped.length !== 1 ? 'es' : ''}`);
+            }}
+            className="flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-muted-foreground/70 hover:text-success border border-border/60 hover:border-success/40 transition-colors"
+          >
+            <Play size={10} /> Start All
+          </button>
+          <div className="relative">
+            <Search
+              size={11}
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/30"
+            />
+            <input
+              placeholder="Search processes…"
+              value={sq}
+              onChange={(e) => setSq(e.target.value)}
+              aria-label="Search processes"
+              className="h-7 w-49 pl-7 pr-7 text-[12px] bg-background border border-border/80 text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/40 rounded-none"
+            />
+            {sq && (
+              <button
+                onClick={() => setSq("")}
+                aria-label="Clear search"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground/30 hover:text-foreground"
+              >
+                <X size={10} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
