@@ -34,7 +34,9 @@ export const ProcessRow = memo(function ProcessRow({
   const select = useProcessStore((s) => s.select);
   const isSelected = selectedId === processId;
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
   const menuRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -157,7 +159,15 @@ export const ProcessRow = memo(function ProcessRow({
 
       <div role="cell" className={`${actionWidth} shrink-0 flex items-center justify-center`} ref={menuRef}>
         <button
-          onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
+          ref={btnRef}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!menuOpen && btnRef.current) {
+              const rect = btnRef.current.getBoundingClientRect();
+              setMenuPos({ top: rect.bottom + 4, left: rect.right - 160 });
+            }
+            setMenuOpen(!menuOpen);
+          }}
           className="h-7 w-7 flex items-center justify-center text-muted-foreground/50 hover:text-foreground hover:bg-subtle/50 transition-colors"
           aria-label="Process actions"
         >
@@ -165,7 +175,10 @@ export const ProcessRow = memo(function ProcessRow({
         </button>
 
         {menuOpen && (
-          <div className="absolute right-5 top-full z-50 mt-1 min-w-[140px] bg-popover border border-border shadow-glow-md py-1">
+          <div
+            className="fixed z-[100] min-w-[160px] bg-card border border-border py-1"
+            style={{ top: menuPos.top, left: menuPos.left }}
+          >
             <MenuRow icon={<RotateCw size={13} />} label="Restart" onClick={() => handleAction('restart')} />
             <MenuRow icon={<Play size={13} />} label="Start" onClick={() => handleAction('start')} />
             <MenuRow icon={<Square size={13} />} label="Stop" onClick={() => handleAction('stop')} />
