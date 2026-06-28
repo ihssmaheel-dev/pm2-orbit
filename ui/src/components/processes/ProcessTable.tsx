@@ -129,7 +129,9 @@ export function ProcessTable() {
               ));
               setBusy(false);
               const ok = results.filter((r) => r.status === 'fulfilled' && r.value.ok).length;
-              if (ok > 0) toast.success(`Stopped ${ok} of ${targets.length} process${targets.length !== 1 ? 'es' : ''}`);
+              if (ok === targets.length) toast.success(`Stopped ${ok} process${ok !== 1 ? 'es' : ''}`);
+              else if (ok > 0) toast.success(`Stopped ${ok} of ${targets.length}`);
+              else toast.error(`Failed to stop any process`);
             }}
             className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-muted-foreground/70 hover:text-destructive border border-border/60 hover:border-destructive/40 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
@@ -146,7 +148,9 @@ export function ProcessTable() {
               ));
               setBusy(false);
               const ok = results.filter((r) => r.status === 'fulfilled' && r.value.ok).length;
-              if (ok > 0) toast.success(`Started ${ok} of ${targets.length} process${targets.length !== 1 ? 'es' : ''}`);
+              if (ok === targets.length) toast.success(`Started ${ok} process${ok !== 1 ? 'es' : ''}`);
+              else if (ok > 0) toast.success(`Started ${ok} of ${targets.length}`);
+              else toast.error(`Failed to start any process`);
             }}
             className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-muted-foreground/70 hover:text-success border border-border/60 hover:border-success/40 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
