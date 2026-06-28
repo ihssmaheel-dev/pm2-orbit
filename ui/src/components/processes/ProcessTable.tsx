@@ -40,6 +40,7 @@ export function ProcessTable() {
   const sq = useUIStore((s) => s.searchQuery);
   const setSq = useUIStore((s) => s.setSearchQuery);
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [busy, setBusy] = useState(false);
   const parentRef = useRef<HTMLDivElement>(null);
 
   const data = useMemo(() => Array.from(processes.values()), [processes]);
@@ -105,7 +106,7 @@ export function ProcessTable() {
   return (
     <div className="flex flex-col h-full bg-card/30 border border-border/50">
       {/* Toolbar */}
-        <div className="flex items-center justify-between h-12 px-5 shrink-0 border-b border-border/50">
+      <div className="flex items-center justify-between h-12 px-5 shrink-0 border-b border-border/50">
         <div className="flex items-center gap-2.5">
           <span className="text-[12px] font-semibold text-foreground/85">
             Processes
@@ -116,26 +117,36 @@ export function ProcessTable() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => {
-              const online = Array.from(processes.values()).filter((p) => p.status === 'online');
-              for (const p of online) {
-                fetch(`/api/processes/${p.id}/action`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'stop' }) }).catch(() => {});
-              }
-              toast.success(`Stopping ${online.length} process${online.length !== 1 ? 'es' : ''}`);
+            disabled={busy}
+            onClick={async () => {
+              const targets = Array.from(processes.values()).filter((p) => p.status === 'online');
+              if (targets.length === 0) return;
+              setBusy(true);
+              const results = await Promise.allSettled(targets.map((p) =>
+                fetch(`/api/processes/${p.id}/action`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'stop' }) }),
+              ));
+              setBusy(false);
+              const ok = results.filter((r) => r.status === 'fulfilled' && r.value.ok).length;
+              toast.success(`Stopped ${ok}/${targets.length} process${targets.length !== 1 ? 'es' : ''}`);
             }}
-            className="flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-muted-foreground/70 hover:text-destructive border border-border/60 hover:border-destructive/40 transition-colors"
+            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-muted-foreground/70 hover:text-destructive border border-border/60 hover:border-destructive/40 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
             <Square size={10} /> Stop All
           </button>
           <button
-            onClick={() => {
-              const stopped = Array.from(processes.values()).filter((p) => p.status === 'stopped');
-              for (const p of stopped) {
-                fetch(`/api/processes/${p.id}/action`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'start' }) }).catch(() => {});
-              }
-              toast.success(`Starting ${stopped.length} process${stopped.length !== 1 ? 'es' : ''}`);
+            disabled={busy}
+            onClick={async () => {
+              const targets = Array.from(processes.values()).filter((p) => p.status === 'stopped');
+              if (targets.length === 0) return;
+              setBusy(true);
+              const results = await Promise.allSettled(targets.map((p) =>
+                fetch(`/api/processes/${p.id}/action`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'start' }) }),
+              ));
+              setBusy(false);
+              const ok = results.filter((r) => r.status === 'fulfilled' && r.value.ok).length;
+              toast.success(`Started ${ok}/${targets.length} process${targets.length !== 1 ? 'es' : ''}`);
             }}
-            className="flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-muted-foreground/70 hover:text-success border border-border/60 hover:border-success/40 transition-colors"
+            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-muted-foreground/70 hover:text-success border border-border/60 hover:border-success/40 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
             <Play size={10} /> Start All
           </button>
