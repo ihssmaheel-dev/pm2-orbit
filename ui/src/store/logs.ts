@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-interface LogEntry {
+export interface LogEntry {
   ts: number;
   processId: number;
   processName: string;
@@ -18,7 +18,7 @@ interface LogsStore {
   getLogs: (processId: number) => LogEntry[];
 }
 
-const DEFAULT_MAX_SIZE = 500;
+const DEFAULT_MAX_SIZE = 2000;
 
 export const useLogsStore = create<LogsStore>((set, get) => ({
   buffers: new Map(),
@@ -27,6 +27,7 @@ export const useLogsStore = create<LogsStore>((set, get) => ({
 
   addLog: (entry) => {
     set((state) => {
+      if (state.paused) return state;
       const next = new Map(state.buffers);
       const existing = next.get(entry.processId) || [];
       const updated = [...existing, entry];

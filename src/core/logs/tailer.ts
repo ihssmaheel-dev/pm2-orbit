@@ -1,7 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 
-const MAX_BUFFER_SIZE = parseInt(process.env.PM2_ORBIT_LOG_BUFFER || '500', 10);
+const MAX_BUFFER_SIZE = parseInt(process.env.PM2_ORBIT_LOG_BUFFER || '2000', 10);
+const POLL_INTERVAL = 2000;
 
 interface LogEntry {
   ts: number;
@@ -14,8 +15,9 @@ export function createLogTailer(processId: number, processName: string, logPaths
   let closed = false;
   const watchers: fs.FSWatcher[] = [];
   const filePositions: Record<string, number> = {};
+  let pollTimer: NodeJS.Timeout | null = null;
 
-  function getLogPath(type: 'out' | 'err'): string {
+  function resolveLogPath(type: 'out' | 'err'): string {
     if (logPaths) {
       if (type === 'out' && logPaths.out) return logPaths.out;
       if (type === 'err' && logPaths.err) return logPaths.err;
@@ -44,19 +46,25 @@ export function createLogTailer(processId: number, processName: string, logPaths
       const stat = fs.statSync(filePath);
       const lastPos = filePositions[filePath] || 0;
 
-      if (stat.size <= lastPos) return;
+      if (stat.size < lastPos) {
+        filePositions[filePath] = 0;
+      }
+
+      if (stat.size <= (filePositions[filePath] || 0)) return;
 
       const fd = fs.openSync(filePath, 'r');
-      const buf = Buffer.alloc(stat.size - lastPos);
-      fs.readSync(fd, buf, 0, buf.length, lastPos);
+      const buf = Buffer.alloc(stat.size - (filePositions[filePath] || 0));
+      fs.readSync(fd, buf, 0, buf.length, filePositions[filePath] || 0);
       fs.closeSync(fd);
 
       filePositions[filePath] = stat.size;
 
       const text = buf.toString('utf-8');
-      const lines = text.split('\n').filter((l) => l.length > 0);
+      const lines = text.split('\n');
 
       for (const line of lines) {
+        if (line.length === 0 && buffer.length > 0) continue;
+
         buffer.push({
           ts: Date.now(),
           stream,
@@ -72,9 +80,17 @@ export function createLogTailer(processId: number, processName: string, logPaths
     }
   }
 
+  function pollFiles() {
+    if (closed) return;
+    const outPath = resolveLogPath('out');
+    const errPath = resolveLogPath('err');
+    readNewLines(outPath, 'stdout');
+    readNewLines(errPath, 'stderr');
+  }
+
   function startWatching() {
-    const outPath = getLogPath('out');
-    const errPath = getLogPath('err');
+    const outPath = resolveLogPath('out');
+    const errPath = resolveLogPath('err');
 
     readNewLines(outPath, 'stdout');
     readNewLines(errPath, 'stderr');
@@ -93,6 +109,8 @@ export function createLogTailer(processId: number, processName: string, logPaths
         // ignore
       }
     }
+
+    pollTimer = setInterval(pollFiles, POLL_INTERVAL);
   }
 
   startWatching();
@@ -103,6 +121,10 @@ export function createLogTailer(processId: number, processName: string, logPaths
 
   function close(): void {
     closed = true;
+    if (pollTimer !== null) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
     for (const w of watchers) {
       try { w.close(); } catch { /* ignore */ }
     }

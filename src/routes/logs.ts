@@ -44,7 +44,10 @@ export async function registerLogRoutes(app: FastifyInstance, pipeline: Pipeline
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',
     });
+
+    reply.raw.write('retry: 2000\n\n');
 
     const { createLogTailer } = await import('../core/logs/tailer');
     const tailer = createLogTailer(processId, proc.name, { ...(outLog ? { out: outLog } : {}), ...(errLog ? { err: errLog } : {}) });
@@ -54,18 +57,31 @@ export async function registerLogRoutes(app: FastifyInstance, pipeline: Pipeline
     if (buffer.length > 0) {
       lastSentIndex = buffer.length;
       for (const entry of buffer) {
-        reply.raw.write(`data: ${JSON.stringify(entry)}\n\n`);
+        try { reply.raw.write(`data: ${JSON.stringify(entry)}\n\n`); } catch { break; }
       }
     }
 
     const interval = setInterval(() => {
-      const buffer = tailer.getBuffer();
-      if (buffer.length > lastSentIndex) {
-        const newEntries = buffer.slice(lastSentIndex);
-        lastSentIndex = buffer.length;
-        for (const entry of newEntries) {
-          reply.raw.write(`data: ${JSON.stringify(entry)}\n\n`);
+      try {
+        if (reply.raw.destroyed || reply.raw.writableEnded) {
+          clearInterval(interval);
+          tailer.close();
+          return;
         }
+
+        reply.raw.write(': keepalive\n\n');
+
+        const buf = tailer.getBuffer();
+        if (buf.length > lastSentIndex) {
+          const newEntries = buf.slice(lastSentIndex);
+          lastSentIndex = buf.length;
+          for (const entry of newEntries) {
+            reply.raw.write(`data: ${JSON.stringify(entry)}\n\n`);
+          }
+        }
+      } catch {
+        clearInterval(interval);
+        tailer.close();
       }
     }, 1000);
 
