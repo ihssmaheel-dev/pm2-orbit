@@ -7,7 +7,7 @@ let Database: any = null;
 try {
   Database = require('better-sqlite3');
 } catch {
-  // better-sqlite3 not installed — persistence disabled
+  // better-sqlite3 not installed — use in-memory fallback
 }
 
 const DB_DIR = path.join(
@@ -34,10 +34,53 @@ export interface SystemMetricRow {
   load15: number;
 }
 
+const MEMORY_RETENTION_MS = 30 * 60 * 1000;
+
+function createMemoryStore() {
+  const processHistory: ProcessMetricRow[] = [];
+  const systemHistory: SystemMetricRow[] = [];
+
+  function prune() {
+    const cutoff = Date.now() - MEMORY_RETENTION_MS;
+    while (processHistory.length > 0 && processHistory[0].ts < cutoff) {
+      processHistory.shift();
+    }
+    while (systemHistory.length > 0 && systemHistory[0].ts < cutoff) {
+      systemHistory.shift();
+    }
+  }
+
+  const pruneInterval = setInterval(prune, 60000);
+
+  return {
+    pushProcessMetrics(row: ProcessMetricRow) {
+      processHistory.push(row);
+      if (processHistory.length > 5000) processHistory.shift();
+    },
+    pushSystemMetrics(row: SystemMetricRow) {
+      systemHistory.push(row);
+      if (systemHistory.length > 2000) systemHistory.shift();
+    },
+    getProcessHistory(processId: number, hours = 24): ProcessMetricRow[] {
+      const cutoff = Date.now() - Math.min(hours, 1) * 60 * 60 * 1000;
+      return processHistory.filter((r) => r.processId === processId && r.ts > cutoff);
+    },
+    getSystemHistory(hours = 24): SystemMetricRow[] {
+      const cutoff = Date.now() - Math.min(hours, 1) * 60 * 60 * 1000;
+      return systemHistory.filter((r) => r.ts > cutoff);
+    },
+    close() {
+      clearInterval(pruneInterval);
+      processHistory.length = 0;
+      systemHistory.length = 0;
+    },
+  };
+}
+
 export function createStore() {
   if (!Database) {
-    console.log('  \x1b[33m⚠\x1b[0m better-sqlite3 not installed — history disabled');
-    return null;
+    console.log('  \x1b[33m⚠\x1b[0m better-sqlite3 not installed — using in-memory history');
+    return createMemoryStore();
   }
 
   if (!fs.existsSync(DB_DIR)) {
@@ -83,8 +126,8 @@ export function createStore() {
   const processBuffer: ProcessMetricRow[] = [];
   const systemBuffer: SystemMetricRow[] = [];
   const FLUSH_INTERVAL = 5000;
-  const CLEANUP_INTERVAL = 5 * 60 * 1000; // Cleanup every 5 minutes
-  const HISTORY_RETENTION_MS = 24 * 60 * 60 * 1000; // 24 hours
+  const CLEANUP_INTERVAL = 5 * 60 * 1000;
+  const HISTORY_RETENTION_MS = 24 * 60 * 60 * 1000;
   let lastCleanup = 0;
 
   function flush() {
@@ -108,7 +151,6 @@ export function createStore() {
       systemBuffer.length = 0;
     }
 
-    // Cleanup old data every 5 minutes
     const now = Date.now();
     if (now - lastCleanup > CLEANUP_INTERVAL) {
       lastCleanup = now;

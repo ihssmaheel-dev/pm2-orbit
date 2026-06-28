@@ -3,17 +3,17 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "react": "^19",
-    "react-dom": "^19",
-    "zustand": "^4",
     "@tanstack/react-table": "^8",
     "@tanstack/react-virtual": "^3",
-    "uplot": "^1.6",
-    "lucide-react": "^0.400",
-    "cmdk": "^0.2",
-    "sonner": "^1.4",
     "clsx": "^2",
-    "tailwind-merge": "^2"
+    "cmdk": "^0.2",
+    "lucide-react": "^0.400",
+    "react": "^19",
+    "react-dom": "^19",
+    "sonner": "^1.4",
+    "tailwind-merge": "^2",
+    "uplot": "^1.6",
+    "zustand": "^4"
   },
   "devDependencies": {
     "@types/react": "^19",
