@@ -1,3 +1,4 @@
+import { logger } from '../../utils/logger';
 import { createPm2Bridge, type ProcessEvent } from './bridge';
 import { BufferStore } from './buffer';
 import { readSystem, startMetricsCollector, stopMetricsCollector } from '../system/metrics';
@@ -79,7 +80,7 @@ export function createEventPipeline() {
       const fired = alerts.evaluate(proc.id, proc.name, metrics);
       if (fired.length > 0) {
         for (const alertEvent of fired) {
-          console.log(`  \x1b[33m⚠\x1b[0m Alert: ${alertEvent.message}`);
+          logger.warn(`Alert: ${alertEvent.message}`);
 
           const rule = allRules.find((r) => r.id === alertEvent.ruleId);
           const channels = rule?.channels?.length ? rule.channels : ['browser'];

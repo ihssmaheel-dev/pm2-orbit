@@ -1,3 +1,4 @@
+import { logger } from '../../utils/logger';
 import fs from 'fs';
 import path from 'path';
 
@@ -79,7 +80,7 @@ function createMemoryStore() {
 
 export function createStore() {
   if (!Database) {
-    console.log('  \x1b[33m⚠\x1b[0m better-sqlite3 not installed — using in-memory history');
+    logger.warn('better-sqlite3 not installed — using in-memory history');
     return createMemoryStore();
   }
 

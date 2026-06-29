@@ -1,4 +1,5 @@
 import type { ProcessSnapshot, ProcessStatus, ProcessMode } from '../../types';
+import { logger } from '../../utils/logger';
 
 let pm2Module: typeof import('pm2') | null = null;
 
@@ -73,7 +74,7 @@ export function createPm2Bridge() {
     lastEventTime = Date.now();
     heartbeatTimer = setInterval(() => {
       if (bus && lastEventTime > 0 && Date.now() - lastEventTime > BUS_HEARTBEAT_MS) {
-        console.log('  \x1b[33m⚠\x1b[0m PM2 bus heartbeat timeout — reconnecting...');
+        logger.warn('PM2 bus heartbeat timeout — reconnecting...');
         bus.close();
         bus = null;
         connect().catch(() => {});
@@ -136,7 +137,7 @@ export function createPm2Bridge() {
 
   async function connect(): Promise<void> {
     if (!pm2Module) {
-      console.log('  \x1b[33m⚠\x1b[0m PM2 not installed — running in demo mode');
+      logger.warn('PM2 not installed — running in demo mode');
       return;
     }
 

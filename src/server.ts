@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import fastifyHelmet from '@fastify/helmet';
 import fastifyRateLimit from '@fastify/rate-limit';
 import fastifyStatic from '@fastify/static';
+import crypto from 'crypto';
 import path from 'path';
 import fs from 'fs';
 import { createEventPipeline } from './core';
@@ -9,6 +10,7 @@ import { createAuthPlugin } from './plugins/auth';
 import { registerCors } from './plugins/cors';
 import { registerRoutes } from './routes';
 import { getSettings, applySettingsToEnv } from './core/persistence/settings';
+import { logger } from './utils/logger';
 
 export interface ServerOpts {
   port: number;
@@ -42,10 +44,25 @@ export async function createServer(_opts: ServerOpts) {
 
   await registerCors(app);
 
+  app.addHook('onRequest', (req, reply, done) => {
+    const reqId = (req.headers['x-request-id'] as string) || crypto.randomUUID();
+    (req as any)._reqId = reqId;
+    (req as any)._start = Date.now();
+    reply.header('X-Request-Id', reqId);
+    done();
+  });
+
+  app.addHook('onResponse', (req, reply, done) => {
+    const duration = Date.now() - ((req as any)._start || Date.now());
+    const reqId = (req as any)._reqId;
+    logger.info(`[${reqId}] ${req.method} ${req.url} ${reply.statusCode} ${duration}ms`);
+    done();
+  });
+
   const token = process.env.PM2_ORBIT_TOKEN;
   if (token) {
     app.addHook('onRequest', createAuthPlugin());
-    console.log('  \x1b[32m✓\x1b[0m Token authentication enabled');
+    logger.info('Token authentication enabled');
   }
 
   if (!isDev) {
@@ -70,13 +87,13 @@ export async function createServer(_opts: ServerOpts) {
     const addr = app.server.address();
     const port = typeof addr === 'string' ? 9823 : (addr?.port ?? 9823);
     const host = `http://127.0.0.1:${port}`;
-    console.log('');
-    console.log('  \x1b[36mPM2 Orbit\x1b[0m server started successfully');
-    console.log(`  \x1b[32m→\x1b[0m ${host}`);
-    console.log(`  \x1b[90m→\x1b[0m Health: ${host}/api/health`);
-    console.log(`  \x1b[90m→\x1b[0m Ping:   ${host}/api/ping`);
-    console.log(`  \x1b[90m→\x1b[0m WS:     ws://127.0.0.1:${port}/ws`);
-    console.log('');
+    logger.info('─'.repeat(40));
+    logger.info('PM2 Orbit server started successfully');
+    logger.info(`→ ${host}`);
+    logger.info(`Health: ${host}/api/health`);
+    logger.info(`Ping:   ${host}/api/ping`);
+    logger.info(`WS:     ws://127.0.0.1:${port}/ws`);
+    logger.info('─'.repeat(40));
   });
 
   await registerRoutes(app, pipeline);
@@ -123,11 +140,11 @@ export async function createServer(_opts: ServerOpts) {
   pipeline.start();
 
   await pipeline.bridge.connect().catch((err: Error) => {
-    console.log(`  \x1b[33m⚠\x1b[0m PM2 bridge: ${err.message}`);
+    logger.warn(`PM2 bridge: ${err.message}`);
   });
 
   async function shutdown(signal: string) {
-    console.log(`\n  Received ${signal}. Shutting down gracefully...`);
+    logger.info(`Received ${signal}. Shutting down gracefully...`);
     pipeline.stop();
     await app.close();
     process.exit(0);
@@ -137,12 +154,12 @@ export async function createServer(_opts: ServerOpts) {
   process.on('SIGINT', () => shutdown('SIGINT'));
 
   process.on('uncaughtException', (err) => {
-    console.error('Uncaught exception:', err);
+    logger.error('Uncaught exception:', err);
     process.exit(1);
   });
 
   process.on('unhandledRejection', (reason) => {
-    console.error('Unhandled rejection:', reason);
+    logger.error('Unhandled rejection:', reason);
     process.exit(1);
   });
 
@@ -154,7 +171,7 @@ if (require.main === module) {
   createServer({ port })
     .then((app) => app.listen({ port, host: '127.0.0.1' }))
     .catch((err) => {
-      console.error('Failed to start:', err.message);
+      logger.error('Failed to start:', err.message);
       process.exit(1);
     });
 }
