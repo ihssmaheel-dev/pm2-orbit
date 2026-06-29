@@ -9,6 +9,8 @@ const SETTINGS_DIR = path.join(
 const SETTINGS_FILE = path.join(SETTINGS_DIR, 'settings.json');
 const KEY_FILE = path.join(SETTINGS_DIR, '.key');
 
+export type NotificationChannel = 'browser' | 'slack' | 'discord' | 'webhook' | 'email';
+
 export interface Settings {
   theme: 'dark' | 'light' | 'system';
   port: number;
@@ -22,6 +24,7 @@ export interface Settings {
   smtpPass: string;
   smtpFrom: string;
   smtpTo: string;
+  enabledChannels: Record<NotificationChannel, boolean>;
 }
 
 const DEFAULTS: Settings = {
@@ -37,6 +40,7 @@ const DEFAULTS: Settings = {
   smtpPass: '',
   smtpFrom: '',
   smtpTo: '',
+  enabledChannels: { browser: true, slack: true, discord: true, webhook: true, email: true },
 };
 
 const SENSITIVE_KEYS = ['authToken', 'smtpPass', 'slackWebhookUrl', 'discordWebhookUrl', 'webhookUrl'];
@@ -165,4 +169,7 @@ export function applySettingsToEnv(settings: Settings): void {
   if (settings.smtpFrom) process.env.SMTP_FROM = settings.smtpFrom;
   if (settings.smtpTo) process.env.SMTP_TO = settings.smtpTo;
   if (settings.theme) process.env.PM2_ORBIT_THEME = settings.theme;
+  for (const ch of Object.keys(settings.enabledChannels)) {
+    process.env[`NOTIFY_${ch.toUpperCase()}_ENABLED`] = settings.enabledChannels[ch as NotificationChannel] ? '1' : '0';
+  }
 }

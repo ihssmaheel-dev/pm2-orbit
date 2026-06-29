@@ -58,10 +58,15 @@ export function createEventPipeline() {
   }
 
   function evaluateAlerts(tick: Tick) {
+    const allRules = alerts.getRules();
+
+    function isChannelEnabled(ch: string): boolean {
+      return process.env[`NOTIFY_${ch.toUpperCase()}_ENABLED`] !== '0';
+    }
+
     const webhookUrl = process.env.WEBHOOK_URL;
     const slackUrl = process.env.SLACK_WEBHOOK_URL;
     const discordUrl = process.env.DISCORD_WEBHOOK_URL;
-    const emailEnabled = !!process.env.SMTP_HOST && !!process.env.SMTP_FROM && !!process.env.SMTP_TO;
 
     for (const event of tick.events) {
       if (event.type === 'remove') continue;
@@ -76,6 +81,9 @@ export function createEventPipeline() {
         for (const alertEvent of fired) {
           console.log(`  \x1b[33m⚠\x1b[0m Alert: ${alertEvent.message}`);
 
+          const rule = allRules.find((r) => r.id === alertEvent.ruleId);
+          const channels = rule?.channels?.length ? rule.channels : ['browser'];
+
           const notificationPayload = {
             message: alertEvent.message,
             processName: alertEvent.processName,
@@ -84,17 +92,20 @@ export function createEventPipeline() {
             threshold: alertEvent.threshold,
           };
 
-          if (webhookUrl) {
+          if (channels.includes('webhook') && isChannelEnabled('webhook') && webhookUrl) {
             sendWebhook(webhookUrl, notificationPayload).catch(() => {});
           }
-          if (slackUrl) {
+          if (channels.includes('slack') && isChannelEnabled('slack') && slackUrl) {
             sendSlack(slackUrl, { message: alertEvent.message }).catch(() => {});
           }
-          if (discordUrl) {
+          if (channels.includes('discord') && isChannelEnabled('discord') && discordUrl) {
             sendDiscord(discordUrl, { message: alertEvent.message }).catch(() => {});
           }
-          if (emailEnabled) {
+          if (channels.includes('email') && isChannelEnabled('email') && !!process.env.SMTP_HOST && !!process.env.SMTP_FROM && !!process.env.SMTP_TO) {
             sendEmailNotification(`Alert: ${alertEvent.processName}`, alertEvent.message).catch(() => {});
+          }
+          if (channels.includes('browser') && isChannelEnabled('browser')) {
+            // browser notifications are handled client-side via WebSocket
           }
         }
       }

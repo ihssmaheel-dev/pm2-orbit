@@ -1,8 +1,19 @@
 import type { FastifyInstance } from 'fastify';
 import type { createEventPipeline } from '../core';
-import { getSettingsSafe, updateSettings, applySettingsToEnv } from '../core/persistence/settings';
+import { getSettingsSafe, getSettings, updateSettings, applySettingsToEnv } from '../core/persistence/settings';
+import type { NotificationChannel, Settings } from '../core/persistence/settings';
 
 type Pipeline = ReturnType<typeof createEventPipeline>;
+
+function channelConfigured(ch: NotificationChannel, settings: Settings): boolean {
+  switch (ch) {
+    case 'browser': return true;
+    case 'slack': return !!settings.slackWebhookUrl;
+    case 'discord': return !!settings.discordWebhookUrl;
+    case 'webhook': return !!settings.webhookUrl;
+    case 'email': return !!settings.smtpHost && !!settings.smtpFrom && !!settings.smtpTo;
+  }
+}
 
 export async function registerHealthRoutes(app: FastifyInstance, pipeline: Pipeline) {
   app.get('/api/health', async () => {
@@ -40,6 +51,20 @@ export async function registerHealthRoutes(app: FastifyInstance, pipeline: Pipel
     return getSettingsSafe();
   });
 
+  app.get('/api/channels', async () => {
+    const settings = getSettings();
+    const channels: NotificationChannel[] = ['browser', 'slack', 'discord', 'webhook', 'email'];
+    const result: Record<string, { configured: boolean; enabled: boolean }> = {};
+
+    for (const ch of channels) {
+      const configured = channelConfigured(ch, settings);
+      const enabled = settings.enabledChannels[ch] !== false;
+      result[ch] = { configured, enabled };
+    }
+
+    return result;
+  });
+
   app.put('/api/settings', async (req, reply) => {
     const body = req.body as Partial<import('../core/persistence/settings').Settings>;
 
@@ -50,7 +75,7 @@ export async function registerHealthRoutes(app: FastifyInstance, pipeline: Pipel
     const allowed = [
       'theme', 'authToken', 'slackWebhookUrl', 'discordWebhookUrl',
       'webhookUrl', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPass',
-      'smtpFrom', 'smtpTo',
+      'smtpFrom', 'smtpTo', 'enabledChannels',
     ];
 
     const filtered: Record<string, unknown> = {};
