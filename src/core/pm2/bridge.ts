@@ -62,6 +62,9 @@ export function createPm2Bridge() {
   let lastEventTime = 0;
   let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
+  const EMIT_DEDUP_MS = 300;
+  const lastEmitMap = new Map<number, number>();
+
   function emitToListeners(events: ProcessEvent[]) {
     lastEventTime = Date.now();
     for (const fn of listeners) {
@@ -150,21 +153,27 @@ export function createPm2Bridge() {
           startHeartbeat();
 
           bus.on('process:event', async (event: Pm2Event) => {
-            const events: ProcessEvent[] = [];
             const now = Date.now();
+            const pid = event.process.pm_id;
+
+            const lastEmit = lastEmitMap.get(pid);
+            if (lastEmit && now - lastEmit < EMIT_DEDUP_MS) return;
+            lastEmitMap.set(pid, now);
+
+            const events: ProcessEvent[] = [];
 
             if (event.event === 'exit' || event.event === 'stop') {
-              const cached = processCache.get(event.process.pm_id);
+              const cached = processCache.get(pid);
               if (cached) {
                 cached.status = 'stopped';
                 events.push({ type: 'update', process: { ...cached } });
               }
-              lastUpdateMap.set(event.process.pm_id, now);
+              lastUpdateMap.set(pid, now);
             }
 
             if (event.event === 'online' || event.event === 'start') {
-              await refreshSingleProcess(event.process.pm_id);
-              const snap = processCache.get(event.process.pm_id);
+              await refreshSingleProcess(pid);
+              const snap = processCache.get(pid);
               if (snap) {
                 events.push({ type: 'update', process: { ...snap } });
               }
