@@ -124,6 +124,29 @@ export function createStore() {
     'INSERT INTO system_history (ts, cpu, memory_used, memory_total, load1, load5, load15) VALUES (?, ?, ?, ?, ?, ?, ?)',
   );
 
+  const selectProcessHistory = db.prepare(
+    'SELECT ts, process_id as processId, process_name as processName, cpu, memory FROM process_history WHERE process_id = ? AND ts > ? ORDER BY ts ASC',
+  );
+
+  const selectSystemHistory = db.prepare(
+    'SELECT ts, cpu, memory_used as memoryUsed, memory_total as memoryTotal, load1, load5, load15 FROM system_history WHERE ts > ? ORDER BY ts ASC',
+  );
+
+  const deleteProcessBefore = db.prepare('DELETE FROM process_history WHERE ts < ?');
+  const deleteSystemBefore = db.prepare('DELETE FROM system_history WHERE ts < ?');
+
+  const flushProcessTx = db.transaction(() => {
+    for (const row of processBuffer) {
+      insertProcess.run(row.ts, row.processId, row.processName, row.cpu, row.memory);
+    }
+  });
+
+  const flushSystemTx = db.transaction(() => {
+    for (const row of systemBuffer) {
+      insertSystem.run(row.ts, row.cpu, row.memoryUsed, row.memoryTotal, row.load1, row.load5, row.load15);
+    }
+  });
+
   const processBuffer: ProcessMetricRow[] = [];
   const systemBuffer: SystemMetricRow[] = [];
   const FLUSH_INTERVAL = 5000;
@@ -132,32 +155,23 @@ export function createStore() {
   let lastCleanup = 0;
 
   function flush() {
+    const now = Date.now();
+
     if (processBuffer.length > 0) {
-      const tx = db.transaction(() => {
-        for (const row of processBuffer) {
-          insertProcess.run(row.ts, row.processId, row.processName, row.cpu, row.memory);
-        }
-      });
-      tx();
+      flushProcessTx();
       processBuffer.length = 0;
     }
 
     if (systemBuffer.length > 0) {
-      const tx = db.transaction(() => {
-        for (const row of systemBuffer) {
-          insertSystem.run(row.ts, row.cpu, row.memoryUsed, row.memoryTotal, row.load1, row.load5, row.load15);
-        }
-      });
-      tx();
+      flushSystemTx();
       systemBuffer.length = 0;
     }
 
-    const now = Date.now();
     if (now - lastCleanup > CLEANUP_INTERVAL) {
       lastCleanup = now;
       const cutoff = now - HISTORY_RETENTION_MS;
-      db.prepare('DELETE FROM process_history WHERE ts < ?').run(cutoff);
-      db.prepare('DELETE FROM system_history WHERE ts < ?').run(cutoff);
+      deleteProcessBefore.run(cutoff);
+      deleteSystemBefore.run(cutoff);
     }
   }
 
@@ -179,16 +193,12 @@ export function createStore() {
 
   function getProcessHistory(processId: number, hours = 24): ProcessMetricRow[] {
     const cutoff = Date.now() - hours * 60 * 60 * 1000;
-    return db.prepare(
-      'SELECT ts, process_id as processId, process_name as processName, cpu, memory FROM process_history WHERE process_id = ? AND ts > ? ORDER BY ts ASC',
-    ).all(processId, cutoff) as ProcessMetricRow[];
+    return selectProcessHistory.all(processId, cutoff) as ProcessMetricRow[];
   }
 
   function getSystemHistory(hours = 24): SystemMetricRow[] {
     const cutoff = Date.now() - hours * 60 * 60 * 1000;
-    return db.prepare(
-      'SELECT ts, cpu, memory_used as memoryUsed, memory_total as memoryTotal, load1, load5, load15 FROM system_history WHERE ts > ? ORDER BY ts ASC',
-    ).all(cutoff) as SystemMetricRow[];
+    return selectSystemHistory.all(cutoff) as SystemMetricRow[];
   }
 
   return {
