@@ -9,6 +9,7 @@ import {
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Search, X, Square, Play } from "lucide-react";
 import { toast } from "sonner";
+import { api } from "@/lib/api";
 import { useProcessStore } from "@/store/processes";
 import { useUIStore } from "@/store/ui";
 import { ProcessRow } from "./ProcessRow";
@@ -304,7 +305,7 @@ export function ProcessTable() {
           if (targets.length === 0) return;
           setBusy(true);
           const results = await Promise.allSettled(targets.map((p) =>
-            fetch(`/api/processes/${p.id}/action`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'stop' }) }),
+            api(`/api/processes/${p.id}/action`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'stop' }), silent: true }),
           ));
           setBusy(false);
           const ok = results.filter((r) => r.status === 'fulfilled' && r.value.ok).length;
@@ -325,7 +326,7 @@ export function ProcessTable() {
           if (targets.length === 0) return;
           setBusy(true);
           const results = await Promise.allSettled(targets.map((p) =>
-            fetch(`/api/processes/${p.id}/action`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'start' }) }),
+            api(`/api/processes/${p.id}/action`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'start' }), silent: true }),
           ));
           setBusy(false);
           const ok = results.filter((r) => r.status === 'fulfilled' && r.value.ok).length;

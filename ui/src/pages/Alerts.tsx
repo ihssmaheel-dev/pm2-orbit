@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/shared/Button';
 import { Badge } from '@/components/shared/Badge';
@@ -10,14 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/shared/Ta
 export function Alerts() {
   const rules = useAlertsStore((s) => s.rules);
   const removeRule = useAlertsStore((s) => s.removeRule);
-  const fetchRules = useAlertsStore((s) => s.fetchRules);
-  const fetchHistory = useAlertsStore((s) => s.fetchHistory);
   const [formOpen, setFormOpen] = useState(false);
-
-  useEffect(() => {
-    fetchRules();
-    fetchHistory();
-  }, [fetchRules, fetchHistory]);
 
   return (
     <div className="flex flex-col h-full">

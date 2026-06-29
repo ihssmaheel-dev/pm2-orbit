@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { api } from '@/lib/api';
 import { useProcessStore } from '@/store/processes';
 import { useUIStore } from '@/store/ui';
 import { useTheme } from '@/hooks/useTheme';
@@ -18,20 +19,22 @@ export function useKeyboardShortcuts() {
         case 'r':
         case 'R':
           if (selectedId !== null) {
-            fetch(`/api/processes/${selectedId}/action`, {
+            api(`/api/processes/${selectedId}/action`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ action: 'restart' }),
+              silent: true,
             });
           }
           break;
         case 's':
         case 'S':
           if (selectedId !== null) {
-            fetch(`/api/processes/${selectedId}/action`, {
+            api(`/api/processes/${selectedId}/action`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ action: 'stop' }),
+              silent: true,
             });
           }
           break;

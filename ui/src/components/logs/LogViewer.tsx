@@ -150,7 +150,7 @@ export function LogViewer() {
   }, [processes]);
 
   const processIds = useMemo(
-    () => processEntries.map((p) => p.id).join(","),
+    () => processEntries.map((p) => p.id).sort((a, b) => a - b).join(","),
     [processEntries],
   );
 

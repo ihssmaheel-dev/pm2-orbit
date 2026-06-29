@@ -1,15 +1,24 @@
+import { useEffect } from 'react';
 import { AppShell } from './components/layout/AppShell';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from './hooks/useTheme';
 import { useAlertNotifications } from './hooks/useAlertNotifications';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useAlertsStore } from '@/store/alerts';
 import { CommandPalette } from './components/command/CommandPalette';
 
 function AppInner() {
   const { status } = useWebSocket();
+  const fetchRules = useAlertsStore((s) => s.fetchRules);
+  const fetchHistory = useAlertsStore((s) => s.fetchHistory);
   useKeyboardShortcuts();
   useAlertNotifications();
+
+  useEffect(() => {
+    fetchRules();
+    fetchHistory();
+  }, [fetchRules, fetchHistory]);
   return (
     <>
       <AppShell wsStatus={status} />

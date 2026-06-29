@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Activity, BarChart3, AlertCircle } from 'lucide-react';
+import { api } from '@/lib/api';
 import { useProcessStore } from '@/store/processes';
 import { CpuChart, MemoryChart } from '@/components/charts/Charts';
 
@@ -25,19 +27,22 @@ export function History() {
   const [timeRange, setTimeRange] = useState<TimeRange>('24h');
   const [systemHistory, setSystemHistory] = useState<SystemHistory[]>([]);
   const [systemLoading, setSystemLoading] = useState(true);
+  const [systemError, setSystemError] = useState<string | null>(null);
   const [selectedProcessId, setSelectedProcessId] = useState<number | null>(null);
   const [processHistory, setProcessHistory] = useState<ProcessHistory[]>([]);
   const [processLoading, setProcessLoading] = useState(false);
+  const [processError, setProcessError] = useState<string | null>(null);
 
   const processList = useMemo(() => Array.from(processes.values()), [processes]);
 
   useEffect(() => {
     const hours = timeRange === '1h' ? 1 : timeRange === '6h' ? 6 : 24;
     setSystemLoading(true);
-    fetch(`/api/history/system?hours=${hours}`)
-      .then((res) => res.json())
+    setSystemError(null);
+    api(`/api/history/system?hours=${hours}`, { label: 'History', silent: true })
+      .then((res) => res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`)))
       .then((data) => { setSystemHistory(Array.isArray(data) ? data : []); setSystemLoading(false); })
-      .catch(() => { setSystemHistory([]); setSystemLoading(false); });
+      .catch((err) => { setSystemError(err.message || 'Failed to load history'); setSystemHistory([]); setSystemLoading(false); });
   }, [timeRange]);
 
   useEffect(() => {
@@ -47,10 +52,11 @@ export function History() {
     }
     const hours = timeRange === '1h' ? 1 : timeRange === '6h' ? 6 : 24;
     setProcessLoading(true);
-    fetch(`/api/history/${selectedProcessId}?hours=${hours}`)
-      .then((res) => res.json())
+    setProcessError(null);
+    api(`/api/history/${selectedProcessId}?hours=${hours}`, { label: 'Process history', silent: true })
+      .then((res) => res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`)))
       .then((data) => { setProcessHistory(Array.isArray(data) ? data : []); setProcessLoading(false); })
-      .catch(() => { setProcessHistory([]); setProcessLoading(false); });
+      .catch((err) => { setProcessError(err.message || 'Failed to load process history'); setProcessHistory([]); setProcessLoading(false); });
   }, [selectedProcessId, timeRange]);
 
   const cpuData = useMemo(() => ({
@@ -109,6 +115,16 @@ export function History() {
                 <span className="text-xs text-muted-foreground/50">Loading...</span>
               </div>
             </div>
+          ) : systemError ? (
+            <div className="flex items-center justify-center h-[160px] bg-card border border-destructive/20 text-muted-foreground gap-2">
+              <AlertCircle size={14} className="text-destructive" />
+              <span className="text-xs text-destructive">{systemError}</span>
+            </div>
+          ) : systemHistory.length === 0 ? (
+            <div className="flex items-center justify-center h-[160px] bg-card border border-border text-muted-foreground gap-2">
+              <BarChart3 size={14} className="opacity-30" />
+              <span className="text-xs opacity-60">No history data available</span>
+            </div>
           ) : (
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-card border border-border p-4">
@@ -146,6 +162,16 @@ export function History() {
                   <span className="text-xs text-muted-foreground/50">Loading...</span>
                 </div>
               </div>
+            ) : processError ? (
+              <div className="flex items-center justify-center h-[160px] bg-card border border-destructive/20 text-muted-foreground gap-2">
+                <AlertCircle size={14} className="text-destructive" />
+                <span className="text-xs text-destructive">{processError}</span>
+              </div>
+            ) : processHistory.length === 0 ? (
+              <div className="flex items-center justify-center h-[160px] bg-card border border-border text-muted-foreground gap-2">
+                <BarChart3 size={14} className="opacity-30" />
+                <span className="text-xs opacity-60">No history for this process</span>
+              </div>
             ) : (
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-card border border-border p-4">
@@ -157,8 +183,9 @@ export function History() {
               </div>
             )
           ) : (
-            <div className="text-center py-12 text-muted-foreground text-sm">
-              Select a process to view its history
+            <div className="flex flex-col items-center py-12 text-muted-foreground gap-2">
+              <Activity size={24} className="opacity-30" />
+              <span className="text-sm opacity-70">Select a process to view its history</span>
             </div>
           )}
         </div>

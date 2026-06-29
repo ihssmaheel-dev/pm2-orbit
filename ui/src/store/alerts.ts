@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { api } from '@/lib/api';
 import type { AlertRule, AlertEvent } from '@/types/alerts';
 
 interface AlertsStore {
@@ -22,7 +23,7 @@ export const useAlertsStore = create<AlertsStore>((set) => ({
   fetchRules: async () => {
     set({ loading: true });
     try {
-      const res = await fetch('/api/alerts');
+      const res = await api('/api/alerts', { label: 'Alerts' });
       if (res.ok) {
         const rules = await res.json();
         set({ rules, loading: false });
@@ -36,7 +37,7 @@ export const useAlertsStore = create<AlertsStore>((set) => ({
 
   fetchHistory: async () => {
     try {
-      const res = await fetch('/api/alerts/history');
+      const res = await api('/api/alerts/history', { silent: true });
       if (res.ok) {
         const history = await res.json();
         set({ history });
@@ -49,20 +50,27 @@ export const useAlertsStore = create<AlertsStore>((set) => ({
   addRule: async (rule) => {
     set((state) => ({ rules: [...state.rules, rule] }));
     try {
-      await fetch('/api/alerts', {
+      const res = await api('/api/alerts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(rule),
+        label: 'Add rule',
       });
+      if (!res.ok) {
+        set((state) => ({ rules: state.rules.filter((r) => r.id !== rule.id) }));
+      }
     } catch {
-      // Server failed, rule already in local state
+      set((state) => ({ rules: state.rules.filter((r) => r.id !== rule.id) }));
     }
   },
 
   removeRule: async (id) => {
     set((state) => ({ rules: state.rules.filter((r) => r.id !== id) }));
     try {
-      await fetch(`/api/alerts/${id}`, { method: 'DELETE' });
+      await api(`/api/alerts/${id}`, {
+        method: 'DELETE',
+        label: 'Remove rule',
+      });
     } catch {
       // Server failed, rule already removed locally
     }
