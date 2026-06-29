@@ -4,6 +4,7 @@ import { sanitizeFileName } from '../../utils/validate';
 
 const MAX_BUFFER_SIZE = parseInt(process.env.PM2_ORBIT_LOG_BUFFER || '2000', 10);
 const POLL_INTERVAL = 2000;
+const DEBOUNCE_MS = 150;
 
 interface LogEntry {
   ts: number;
@@ -16,6 +17,7 @@ export function createLogTailer(processId: number, processName: string, logPaths
   let closed = false;
   const watchers: fs.FSWatcher[] = [];
   const filePositions: Record<string, number> = {};
+  const debounceTimers: Record<string, NodeJS.Timeout | null> = {};
   let pollTimer: NodeJS.Timeout | null = null;
 
   function resolveLogPath(type: 'out' | 'err'): string {
@@ -100,9 +102,12 @@ export function createLogTailer(processId: number, processName: string, logPaths
       try {
         if (fs.existsSync(fp)) {
           const watcher = fs.watch(fp, () => {
-            if (!closed) {
+            if (closed) return;
+            if (debounceTimers[fp]) clearTimeout(debounceTimers[fp]!);
+            debounceTimers[fp] = setTimeout(() => {
+              debounceTimers[fp] = null;
               readNewLines(fp, fp === outPath ? 'stdout' : 'stderr');
-            }
+            }, DEBOUNCE_MS);
           });
           watchers.push(watcher);
         }
@@ -125,6 +130,9 @@ export function createLogTailer(processId: number, processName: string, logPaths
     if (pollTimer !== null) {
       clearInterval(pollTimer);
       pollTimer = null;
+    }
+    for (const fp of Object.keys(debounceTimers)) {
+      if (debounceTimers[fp]) clearTimeout(debounceTimers[fp]!);
     }
     for (const w of watchers) {
       try { w.close(); } catch { /* ignore */ }
