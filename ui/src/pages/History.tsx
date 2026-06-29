@@ -107,7 +107,7 @@ export function History() {
         <div className="mb-6">
           <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-3">System Metrics</h3>
           {systemLoading ? (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="bg-card border border-border p-4 h-[160px] flex items-center justify-center">
                 <span className="text-xs text-muted-foreground/50">Loading...</span>
               </div>
@@ -126,7 +126,7 @@ export function History() {
               <span className="text-xs opacity-60">No history data available</span>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="bg-card border border-border p-4">
                 <CpuChart data={cpuData} label="CPU %" />
               </div>
@@ -157,7 +157,7 @@ export function History() {
 
           {selectedProcessId !== null ? (
             processLoading ? (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-card border border-border p-4 h-[160px] flex items-center justify-center">
                   <span className="text-xs text-muted-foreground/50">Loading...</span>
                 </div>
@@ -176,7 +176,7 @@ export function History() {
                 <span className="text-xs opacity-60">No history for this process</span>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-card border border-border p-4">
                   <CpuChart data={processCpuData} label="CPU %" />
                 </div>

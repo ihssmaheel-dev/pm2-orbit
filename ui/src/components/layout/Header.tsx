@@ -30,19 +30,19 @@ export function Header({ wsStatus }: HeaderProps) {
   ];
 
   return (
-    <header className="h-14 border-b border-border flex items-center px-6 shrink-0">
-      <div className="w-[140px]">
+    <header className="h-14 border-b border-border flex items-center px-2 sm:px-6 shrink-0 overflow-x-auto">
+      <div className="hidden sm:block w-[140px] shrink-0">
         <div className="font-light text-lg tracking-[0.2em] text-primary select-none">
           PM2 ORBIT
         </div>
       </div>
 
-      <nav className="flex-1 flex justify-center gap-6">
+      <nav className="flex-1 flex justify-start sm:justify-center gap-1 sm:gap-6 min-w-0 px-2">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`text-sm uppercase tracking-wider transition-all cursor-pointer h-14 flex items-center border-b-2 ${
+            className={`text-[11px] sm:text-sm uppercase tracking-wider transition-all cursor-pointer h-14 flex items-center border-b-2 shrink-0 px-1.5 sm:px-0 ${
               activeTab === tab.id
                 ? "text-primary border-primary"
                 : "text-muted-foreground hover:text-foreground border-transparent hover:border-border"
@@ -53,7 +53,7 @@ export function Header({ wsStatus }: HeaderProps) {
         ))}
       </nav>
 
-      <div className="w-[140px] flex items-center justify-end gap-2">
+      <div className="w-auto sm:w-[140px] flex items-center justify-end gap-1 sm:gap-2 shrink-0">
         <button
           onClick={toggleTheme}
           className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"

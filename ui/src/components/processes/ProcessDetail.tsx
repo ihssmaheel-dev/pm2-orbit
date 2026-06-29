@@ -43,7 +43,7 @@ export function ProcessDetail() {
 
   if (!process) {
     return (
-      <div className="w-[420px] shrink-0 h-full bg-card border border-border/60 flex flex-col items-center justify-center">
+      <div className="w-full lg:w-[420px] shrink-0 h-full bg-card border border-border/60 flex flex-col items-center justify-center">
         <MousePointerClick size={32} className="text-muted-foreground/20 mb-4" />
         <p className="text-sm text-muted-foreground/40">Select a process to view details</p>
       </div>
@@ -67,7 +67,7 @@ export function ProcessDetail() {
   const appVars = envEntries.filter(([k]) => !PM2_PREFIX.test(k));
 
   return (
-    <div className="w-[420px] shrink-0 h-full bg-card border border-border/60 flex flex-col overflow-hidden">
+    <div className="w-full lg:w-[420px] shrink-0 h-full bg-card border border-border/60 flex flex-col overflow-hidden">
       <div className="flex items-center justify-between px-5 h-[52px] border-b border-border/60 shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <h2 className="text-sm font-semibold uppercase tracking-[0.1em] text-foreground truncate">
