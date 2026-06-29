@@ -6,6 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import { createEventPipeline } from './core';
 import { createAuthPlugin } from './plugins/auth';
+import { registerCors } from './plugins/cors';
 import { registerRoutes } from './routes';
 import { getSettings, applySettingsToEnv } from './core/persistence/settings';
 
@@ -38,6 +39,8 @@ export async function createServer(_opts: ServerOpts) {
   });
 
   await app.register(fastifyRateLimit, { max: 100, timeWindow: '1 minute' });
+
+  await registerCors(app);
 
   const token = process.env.PM2_ORBIT_TOKEN;
   if (token) {

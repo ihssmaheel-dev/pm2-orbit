@@ -1,7 +1,10 @@
 {
   "name": "pm2-orbit",
   "version": "0.1.0",
-  "files": ["dist/", "bin/"],
+  "files": [
+    "dist/",
+    "bin/"
+  ],
   "description": "High-performance PM2 monitoring dashboard — event-driven, 1000+ processes, < 150KB",
   "main": "dist/server.js",
   "bin": {
@@ -24,6 +27,7 @@
     "node": ">=18"
   },
   "dependencies": {
+    "@fastify/cors": "^11.2.0",
     "@fastify/helmet": "^11",
     "@fastify/rate-limit": "^9",
     "@fastify/static": "^7.0.4",
