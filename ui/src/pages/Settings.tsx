@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Download, Upload } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
 import { Button } from '@/components/shared/Button';
 import { Badge } from '@/components/shared/Badge';
@@ -27,6 +28,36 @@ export function Settings() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const importRef = useRef<HTMLInputElement>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+
+  const handleExport = () => {
+    if (!settings) return;
+    const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'pm2-orbit-settings.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportError(null);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target?.result as string);
+        setSettings(data);
+      } catch {
+        setImportError('Invalid JSON file');
+      }
+    };
+    reader.readAsText(file);
+    if (importRef.current) importRef.current.value = '';
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -105,8 +136,30 @@ export function Settings() {
             Settings
           </span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          {importError && <Badge variant="destructive">{importError}</Badge>}
           {saved && <Badge variant="success">Saved</Badge>}
+          <input
+            ref={importRef}
+            type="file"
+            accept=".json"
+            onChange={handleImport}
+            className="hidden"
+          />
+          <button
+            onClick={() => importRef.current?.click()}
+            className="h-7 px-2.5 flex items-center gap-1.5 text-[11px] text-muted-foreground/70 hover:text-foreground border border-border/60 hover:border-border transition-colors"
+            title="Import settings"
+          >
+            <Upload size={12} /> Import
+          </button>
+          <button
+            onClick={handleExport}
+            className="h-7 px-2.5 flex items-center gap-1.5 text-[11px] text-muted-foreground/70 hover:text-foreground border border-border/60 hover:border-border transition-colors"
+            title="Export settings"
+          >
+            <Download size={12} /> Export
+          </button>
           <Button size="sm" onClick={handleSave} disabled={saving}>
             {saving ? 'Saving...' : 'Save'}
           </Button>
