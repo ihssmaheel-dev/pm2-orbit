@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import fastifyHelmet from '@fastify/helmet';
 import fastifyRateLimit from '@fastify/rate-limit';
+import fastifyCompress from '@fastify/compress';
 import fastifyStatic from '@fastify/static';
 import crypto from 'crypto';
 import path from 'path';
@@ -41,6 +42,8 @@ export async function createServer(_opts: ServerOpts) {
   });
 
   await app.register(fastifyRateLimit, { max: 100, timeWindow: '1 minute' });
+
+  await app.register(fastifyCompress, { global: true });
 
   await registerCors(app);
 
