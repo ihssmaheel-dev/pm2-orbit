@@ -145,9 +145,12 @@ export function createEventPipeline() {
     if (pendingEvents.length === 0) return;
     const events = pendingEvents;
     pendingEvents = [];
-    const tick = buildTick(events, readSystem());
-    if (tick.events.length > 0) {
-      broadcast(tick);
+
+    if (clients.size > 0) {
+      const tick = buildTick(events, readSystem());
+      if (tick.events.length > 0) {
+        broadcast(tick);
+      }
     }
   }
 
