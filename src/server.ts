@@ -60,6 +60,9 @@ export async function createServer(_opts: ServerOpts) {
 
   const pipeline = createEventPipeline();
 
+  const wsConnPerIp = new Map<string, number>();
+  const MAX_WS_PER_IP = 5;
+
   app.addHook('onListen', () => {
     const addr = app.server.address();
     const port = typeof addr === 'string' ? 9823 : (addr?.port ?? 9823);
@@ -77,8 +80,18 @@ export async function createServer(_opts: ServerOpts) {
 
   app.server.on('upgrade', (req, socket, head) => {
     if (req.url === '/ws') {
+      const ip = req.socket.remoteAddress || 'unknown';
+      const count = wsConnPerIp.get(ip) || 0;
+      if (count >= MAX_WS_PER_IP) {
+        socket.write('HTTP/1.1 429 Too Many Requests\r\n\r\n');
+        socket.destroy();
+        return;
+      }
+
       pipeline.wss.handleUpgrade(req, socket, head, (ws) => {
+        wsConnPerIp.set(ip, (wsConnPerIp.get(ip) || 0) + 1);
         pipeline.clients.add(ws);
+
         pipeline.bridge.list().then((snapshots) => {
           ws.send(JSON.stringify({
             ts: Date.now(),
@@ -88,8 +101,16 @@ export async function createServer(_opts: ServerOpts) {
             system: require('./core/system/metrics').readSystem(),
           }));
         });
-        ws.on('close', () => pipeline.clients.delete(ws));
-        ws.on('error', () => pipeline.clients.delete(ws));
+
+        const decrement = () => {
+          pipeline.clients.delete(ws);
+          const c = wsConnPerIp.get(ip) || 1;
+          if (c <= 1) wsConnPerIp.delete(ip);
+          else wsConnPerIp.set(ip, c - 1);
+        };
+
+        ws.on('close', decrement);
+        ws.on('error', decrement);
       });
     } else {
       socket.destroy();
