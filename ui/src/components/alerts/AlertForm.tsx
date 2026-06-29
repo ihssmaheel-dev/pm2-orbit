@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, CheckCircle, XCircle, BellOff } from 'lucide-react';
+import { Plus, CheckCircle, XCircle, BellOff, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/shared/Button';
 import { Input } from '@/components/shared/Input';
 import { Dialog, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components/shared/Dialog';
@@ -76,31 +76,37 @@ export function AlertForm({ open, onClose }: AlertFormProps) {
         <div className="space-y-4">
           <div>
             <label className="text-xs text-muted-foreground uppercase tracking-wider mb-1 block">Metric</label>
-            <select
-              value={metric}
-              onChange={(e) => setMetric(e.target.value as AlertRule['metric'])}
-              className="h-10 w-full px-3 bg-input border border-border text-foreground text-sm rounded-none focus:outline-none focus:ring-1 focus:ring-ring"
-            >
-              <option value="cpu">CPU %</option>
-              <option value="memory">Memory (bytes)</option>
-              <option value="restarts">Restarts</option>
-            </select>
+            <div className="relative">
+              <select
+                value={metric}
+                onChange={(e) => setMetric(e.target.value as AlertRule['metric'])}
+                className="h-10 w-full appearance-none bg-input border border-border text-foreground text-sm rounded-none focus:outline-none focus:ring-1 focus:ring-ring pl-3 pr-9"
+              >
+                <option value="cpu">CPU %</option>
+                <option value="memory">Memory (bytes)</option>
+                <option value="restarts">Restarts</option>
+              </select>
+              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground/60" />
+            </div>
           </div>
 
           <div className="flex gap-2">
             <div className="flex-1">
               <label className="text-xs text-muted-foreground uppercase tracking-wider mb-1 block">Condition</label>
-              <select
-                value={operator}
-                onChange={(e) => setOperator(e.target.value as AlertRule['operator'])}
-                className="h-10 w-full px-3 bg-input border border-border text-foreground text-sm rounded-none focus:outline-none focus:ring-1 focus:ring-ring"
-              >
-                <option value=">"> Greater than</option>
-                <option value="<"> Less than</option>
-                <option value=">=">Greater or equal</option>
-                <option value="<=">Less or equal</option>
-                <option value="==">Equal to</option>
-              </select>
+              <div className="relative">
+                <select
+                  value={operator}
+                  onChange={(e) => setOperator(e.target.value as AlertRule['operator'])}
+                  className="h-10 w-full appearance-none bg-input border border-border text-foreground text-sm rounded-none focus:outline-none focus:ring-1 focus:ring-ring pl-3 pr-9"
+                >
+                  <option value=">"> Greater than</option>
+                  <option value="<"> Less than</option>
+                  <option value=">=">Greater or equal</option>
+                  <option value="<=">Less or equal</option>
+                  <option value="==">Equal to</option>
+                </select>
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground/60" />
+              </div>
             </div>
             <div className="flex-1">
               <label className="text-xs text-muted-foreground uppercase tracking-wider mb-1 block">Threshold</label>

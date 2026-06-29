@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Activity, BarChart3, AlertCircle } from 'lucide-react';
+import { Activity, BarChart3, AlertCircle, ChevronDown } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useProcessStore } from '@/store/processes';
 import { CpuChart, MemoryChart } from '@/components/charts/Charts';
@@ -140,16 +140,19 @@ export function History() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs uppercase tracking-wider text-muted-foreground">Process Metrics</h3>
-            <select
-              value={selectedProcessId ?? ''}
-              onChange={(e) => setSelectedProcessId(e.target.value ? parseInt(e.target.value, 10) : null)}
-              className="h-8 px-2 bg-input border border-border text-foreground text-xs rounded-none focus:outline-none focus:ring-1 focus:ring-ring"
-            >
-              <option value="">Select process...</option>
-              {processList.map((p) => (
-                <option key={p.id} value={p.id}>{p.name} (PID {p.pid})</option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={selectedProcessId ?? ''}
+                onChange={(e) => setSelectedProcessId(e.target.value ? parseInt(e.target.value, 10) : null)}
+                className="h-8 appearance-none bg-input border border-border text-foreground text-xs rounded-none focus:outline-none focus:ring-1 focus:ring-ring pl-2 pr-8"
+              >
+                <option value="">Select process...</option>
+                {processList.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name} (PID {p.pid})</option>
+                ))}
+              </select>
+              <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground/50" />
+            </div>
           </div>
 
           {selectedProcessId !== null ? (
