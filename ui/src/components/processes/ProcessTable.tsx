@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useProcessStore } from "@/store/processes";
 import { useUIStore } from "@/store/ui";
 import { ProcessRow } from "./ProcessRow";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import type { ProcessSnapshot } from "@/types/pm2";
 
 interface Col {
@@ -41,6 +42,8 @@ export function ProcessTable() {
   const setSq = useUIStore((s) => s.setSearchQuery);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [busy, setBusy] = useState(false);
+  const [stopConfirm, setStopConfirm] = useState(false);
+  const [startConfirm, setStartConfirm] = useState(false);
   const parentRef = useRef<HTMLDivElement>(null);
 
   const data = useMemo(() => Array.from(processes.values()), [processes]);
@@ -120,38 +123,14 @@ export function ProcessTable() {
         <div className="flex items-center gap-2">
           <button
             disabled={busy || onlineCount === 0}
-            onClick={async () => {
-              const targets = Array.from(processes.values()).filter((p) => p.status === 'online');
-              if (targets.length === 0) return;
-              setBusy(true);
-              const results = await Promise.allSettled(targets.map((p) =>
-                fetch(`/api/processes/${p.id}/action`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'stop' }) }),
-              ));
-              setBusy(false);
-              const ok = results.filter((r) => r.status === 'fulfilled' && r.value.ok).length;
-              if (ok === targets.length) toast.success(`Stopped ${ok} process${ok !== 1 ? 'es' : ''}`);
-              else if (ok > 0) toast.success(`Stopped ${ok} of ${targets.length}`);
-              else toast.error(`Failed to stop any process`);
-            }}
+            onClick={() => setStopConfirm(true)}
             className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-muted-foreground/70 hover:text-destructive border border-border/60 hover:border-destructive/40 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
             <Square size={10} /> Stop All
           </button>
           <button
             disabled={busy || stoppedCount === 0}
-            onClick={async () => {
-              const targets = Array.from(processes.values()).filter((p) => p.status === 'stopped');
-              if (targets.length === 0) return;
-              setBusy(true);
-              const results = await Promise.allSettled(targets.map((p) =>
-                fetch(`/api/processes/${p.id}/action`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'start' }) }),
-              ));
-              setBusy(false);
-              const ok = results.filter((r) => r.status === 'fulfilled' && r.value.ok).length;
-              if (ok === targets.length) toast.success(`Started ${ok} process${ok !== 1 ? 'es' : ''}`);
-              else if (ok > 0) toast.success(`Started ${ok} of ${targets.length}`);
-              else toast.error(`Failed to start any process`);
-            }}
+            onClick={() => setStartConfirm(true)}
             className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-muted-foreground/70 hover:text-success border border-border/60 hover:border-success/40 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
             <Play size={10} /> Start All
@@ -317,6 +296,48 @@ export function ProcessTable() {
           )}
         </div>
       </div>
+      <ConfirmDialog
+        open={stopConfirm}
+        onClose={() => setStopConfirm(false)}
+        onConfirm={async () => {
+          const targets = Array.from(processes.values()).filter((p) => p.status === 'online');
+          if (targets.length === 0) return;
+          setBusy(true);
+          const results = await Promise.allSettled(targets.map((p) =>
+            fetch(`/api/processes/${p.id}/action`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'stop' }) }),
+          ));
+          setBusy(false);
+          const ok = results.filter((r) => r.status === 'fulfilled' && r.value.ok).length;
+          if (ok === targets.length) toast.success(`Stopped ${ok} process${ok !== 1 ? 'es' : ''}`);
+          else if (ok > 0) toast.success(`Stopped ${ok} of ${targets.length}`);
+          else toast.error(`Failed to stop any process`);
+        }}
+        title="Stop All Processes"
+        message={`This will stop ${onlineCount} running process${onlineCount !== 1 ? 'es' : ''}. Are you sure?`}
+        confirmLabel="Stop All"
+        variant="destructive"
+      />
+      <ConfirmDialog
+        open={startConfirm}
+        onClose={() => setStartConfirm(false)}
+        onConfirm={async () => {
+          const targets = Array.from(processes.values()).filter((p) => p.status === 'stopped');
+          if (targets.length === 0) return;
+          setBusy(true);
+          const results = await Promise.allSettled(targets.map((p) =>
+            fetch(`/api/processes/${p.id}/action`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'start' }) }),
+          ));
+          setBusy(false);
+          const ok = results.filter((r) => r.status === 'fulfilled' && r.value.ok).length;
+          if (ok === targets.length) toast.success(`Started ${ok} process${ok !== 1 ? 'es' : ''}`);
+          else if (ok > 0) toast.success(`Started ${ok} of ${targets.length}`);
+          else toast.error(`Failed to start any process`);
+        }}
+        title="Start All Processes"
+        message={`This will start ${stoppedCount} stopped process${stoppedCount !== 1 ? 'es' : ''}. Are you sure?`}
+        confirmLabel="Start All"
+        variant="default"
+      />
     </div>
   );
 }
