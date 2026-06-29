@@ -92,7 +92,8 @@ export function ProcessTable() {
     count: rows.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 44,
-    overscan: 15,
+    overscan: 10,
+    paddingEnd: 12,
   });
 
   const toggleSort = useCallback((key: string) => {
@@ -284,11 +285,10 @@ export function ProcessTable() {
                     pid={p.id}
                     style={{
                       position: "absolute",
-                      top: 0,
+                      top: vr.start,
                       left: 0,
                       width: "100%",
-                      height: `${vr.size}px`,
-                      transform: `translateY(${vr.start}px)`,
+                      height: vr.size,
                     }}
                   />
                 );
