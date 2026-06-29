@@ -2,11 +2,11 @@ import { SystemCards } from '@/components/system/SystemCards';
 import { ProcessTable } from '@/components/processes/ProcessTable';
 import { ProcessDetail } from '@/components/processes/ProcessDetail';
 import { TableSkeleton } from '@/components/shared/Skeleton';
-import { useProcessStore } from '@/store/processes';
+import { useUIStore } from '@/store/ui';
 
 export function Dashboard() {
-  const processCount = useProcessStore((s) => s.processes.size);
-  const loading = processCount === 0;
+  const wsStatus = useUIStore((s) => s.wsStatus);
+  const loading = wsStatus === 'connecting';
 
   return (
     <div className="flex flex-col h-full gap-4 p-4">
