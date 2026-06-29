@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 type Tab = 'processes' | 'logs' | 'alerts' | 'history' | 'settings';
+type WSStatus = 'connecting' | 'connected' | 'disconnected';
 
 interface UIStore {
   activeTab: Tab;
@@ -11,6 +12,8 @@ interface UIStore {
   setSearchQuery: (query: string) => void;
   statusFilter: string | null;
   setStatusFilter: (filter: string | null) => void;
+  wsStatus: WSStatus;
+  setWsStatus: (status: WSStatus) => void;
 }
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -22,4 +25,6 @@ export const useUIStore = create<UIStore>((set) => ({
   setSearchQuery: (query) => set({ searchQuery: query }),
   statusFilter: null,
   setStatusFilter: (filter) => set({ statusFilter: filter }),
+  wsStatus: 'connecting',
+  setWsStatus: (status) => set({ wsStatus: status }),
 }));
