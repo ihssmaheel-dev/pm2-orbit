@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { sanitizeFileName } from '../../utils/validate';
 
 const MAX_BUFFER_SIZE = parseInt(process.env.PM2_ORBIT_LOG_BUFFER || '2000', 10);
 const POLL_INTERVAL = 2000;
@@ -24,7 +25,7 @@ export function createLogTailer(processId: number, processName: string, logPaths
     }
 
     const homeDir = process.env.HOME || process.env.USERPROFILE || '';
-    const base = path.join(homeDir, '.pm2', 'logs', processName);
+    const base = path.join(homeDir, '.pm2', 'logs', sanitizeFileName(processName));
 
     const patterns = [`${base}-${type}.log`];
     if (type === 'err') patterns.push(`${base}-error.log`);

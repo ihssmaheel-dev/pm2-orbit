@@ -1,16 +1,14 @@
 import type { FastifyInstance } from 'fastify';
 import type { createEventPipeline } from '../core';
+import { parseIdParam } from '../utils/validate';
 
 type Pipeline = ReturnType<typeof createEventPipeline>;
 
 export async function registerLogRoutes(app: FastifyInstance, pipeline: Pipeline) {
   app.get('/api/logs/:id', async (req, reply) => {
     const { id } = req.params as { id: string };
-    const processId = parseInt(id, 10);
-
-    if (isNaN(processId)) {
-      return reply.code(400).send({ error: 'Invalid process ID' });
-    }
+    const processId = parseIdParam(id);
+    if (processId === null) return reply.code(400).send({ error: 'Invalid process ID' });
 
     const processSnapshots = await pipeline.bridge.list();
     const proc = processSnapshots.find((p) => p.id === processId);

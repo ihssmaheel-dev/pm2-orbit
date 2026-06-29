@@ -1,7 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import type { createEventPipeline } from '../core';
+import { parseIdParam } from '../utils/validate';
 
 type Pipeline = ReturnType<typeof createEventPipeline>;
+
+const VALID_ACTIONS = ['restart', 'stop', 'start', 'reload', 'delete', 'scale', 'flush'];
 
 export async function registerProcessRoutes(app: FastifyInstance, pipeline: Pipeline) {
   app.get('/api/processes', async () => {
@@ -10,11 +13,8 @@ export async function registerProcessRoutes(app: FastifyInstance, pipeline: Pipe
 
   app.get('/api/processes/:id/env', async (req) => {
     const { id } = req.params as { id: string };
-    const processId = parseInt(id, 10);
-
-    if (isNaN(processId)) {
-      return {};
-    }
+    const processId = parseIdParam(id);
+    if (processId === null) return {};
 
     try {
       const pm2Module = require('pm2');
@@ -59,16 +59,15 @@ export async function registerProcessRoutes(app: FastifyInstance, pipeline: Pipe
 
   app.post('/api/processes/:id/action', async (req, reply) => {
     const { id } = req.params as { id: string };
-    const { action, instances } = req.body as { action: string; instances?: number };
-    const processId = parseInt(id, 10);
+    const processId = parseIdParam(id);
+    if (processId === null) return reply.code(400).send({ error: 'Invalid process ID' });
 
-    if (isNaN(processId)) {
-      return reply.code(400).send({ error: 'Invalid process ID' });
-    }
+    const body = req.body as Record<string, unknown>;
+    const action = typeof body?.action === 'string' ? body.action : '';
+    const instances = typeof body?.instances === 'number' ? body.instances : undefined;
 
-    const validActions = ['restart', 'stop', 'start', 'reload', 'delete', 'scale', 'flush'];
-    if (!action || !validActions.includes(action)) {
-      return reply.code(400).send({ error: `Invalid action. Must be one of: ${validActions.join(', ')}` });
+    if (!action || !VALID_ACTIONS.includes(action)) {
+      return reply.code(400).send({ error: `Invalid action. Must be one of: ${VALID_ACTIONS.join(', ')}` });
     }
 
     try {
@@ -84,7 +83,7 @@ export async function registerProcessRoutes(app: FastifyInstance, pipeline: Pipe
           });
         });
         await new Promise<void>((resolve, reject) => {
-          pm2Module.scale(name, instances || '+1', (err: Error | null) => {
+          pm2Module.scale(name, instances !== undefined ? String(instances) : '+1', (err: Error | null) => {
             if (err) reject(err);
             else resolve();
           });

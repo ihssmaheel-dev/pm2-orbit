@@ -1,5 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { createEventPipeline } from '../core';
+import { validateAlertRule } from '../utils/validate';
+import type { AlertRule } from '../core/alerts/engine';
 
 type Pipeline = ReturnType<typeof createEventPipeline>;
 
@@ -9,36 +11,20 @@ export async function registerAlertRoutes(app: FastifyInstance, pipeline: Pipeli
   });
 
   app.post('/api/alerts', async (req, reply) => {
-    const rule = req.body as { id?: string; metric?: string; operator?: string; threshold?: number; enabled?: boolean };
-
-    if (!rule || typeof rule !== 'object') {
-      return reply.code(400).send({ error: 'Invalid request body' });
+    const rule = validateAlertRule(req.body);
+    if (!rule) {
+      return reply.code(400).send({ error: 'Invalid alert rule. Required: id (string), metric (cpu|memory|restarts|status), operator (>|<|==|>=|<=), threshold (number)' });
     }
 
-    if (!rule.id || typeof rule.id !== 'string') {
-      return reply.code(400).send({ error: 'Missing or invalid id' });
-    }
-
-    const validMetrics = ['cpu', 'memory', 'restarts', 'status'];
-    if (!rule.metric || !validMetrics.includes(rule.metric)) {
-      return reply.code(400).send({ error: `Invalid metric. Must be one of: ${validMetrics.join(', ')}` });
-    }
-
-    const validOperators = ['>', '<', '==', '>=', '<='];
-    if (!rule.operator || !validOperators.includes(rule.operator)) {
-      return reply.code(400).send({ error: `Invalid operator. Must be one of: ${validOperators.join(', ')}` });
-    }
-
-    if (typeof rule.threshold !== 'number' || isNaN(rule.threshold)) {
-      return reply.code(400).send({ error: 'Invalid threshold' });
-    }
-
-    pipeline.alerts.addRule(rule as Parameters<typeof pipeline.alerts.addRule>[0]);
+    pipeline.alerts.addRule(rule as unknown as AlertRule);
     return { success: true };
   });
 
-  app.delete('/api/alerts/:id', async (req) => {
+  app.delete('/api/alerts/:id', async (req, reply) => {
     const { id } = req.params as { id: string };
+    if (!id || typeof id !== 'string' || id.length === 0) {
+      return reply.code(400).send({ error: 'Invalid rule ID' });
+    }
     pipeline.alerts.removeRule(id);
     return { success: true };
   });
