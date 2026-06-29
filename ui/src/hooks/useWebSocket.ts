@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { WSClient } from '@/lib/ws';
 import { useProcessStore } from '@/store/processes';
+import { useLogsStore } from '@/store/logs';
 import { useSystemStore } from '@/store/system';
 import type { Tick } from '@/types/api';
 
@@ -15,6 +16,7 @@ export function useWebSocket() {
   const applyDelta = useProcessStore((s) => s.applyDelta);
   const setAll = useProcessStore((s) => s.setAll);
   const updateSystem = useSystemStore((s) => s.update);
+  const clearLogs = useLogsStore((s) => s.clearLogs);
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -35,6 +37,11 @@ export function useWebSocket() {
       }
 
       if (tick.events.length > 0) {
+        for (const event of tick.events) {
+          if (event.type === 'remove') {
+            clearLogs(event.process.id);
+          }
+        }
         applyDelta(tick.events);
       }
 
