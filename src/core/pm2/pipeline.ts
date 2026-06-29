@@ -21,6 +21,8 @@ export function createEventPipeline() {
   let lastFullSync = 0;
   let fullSeq = 0;
   let tickInterval: ReturnType<typeof setInterval> | null = null;
+  let throttleTimer: ReturnType<typeof setTimeout> | null = null;
+  let pendingEvents: ProcessEvent[] = [];
 
   function broadcast(tick: Tick): void {
     const data = JSON.stringify(tick);
@@ -139,10 +141,21 @@ export function createEventPipeline() {
     return tick;
   }
 
+  function flushThrottled(): void {
+    if (pendingEvents.length === 0) return;
+    const events = pendingEvents;
+    pendingEvents = [];
+    const tick = buildTick(events, readSystem());
+    if (tick.events.length > 0) {
+      broadcast(tick);
+    }
+  }
+
   function start(): void {
     startMetricsCollector();
     bridge.subscribe((events) => {
       const now = Date.now();
+      let hasRemoves = false;
 
       for (const event of events) {
         if (event.type === 'update' || event.type === 'add') {
@@ -150,12 +163,19 @@ export function createEventPipeline() {
         }
         if (event.type === 'remove') {
           buffer.remove(event.process.id);
+          hasRemoves = true;
         }
       }
 
-      const tick = buildTick(events, readSystem());
-      if (tick.events.length > 0) {
-        broadcast(tick);
+      pendingEvents.push(...events);
+
+      if (hasRemoves) {
+        flushThrottled();
+      } else if (!throttleTimer) {
+        throttleTimer = setTimeout(() => {
+          throttleTimer = null;
+          flushThrottled();
+        }, 100);
       }
     });
 
@@ -185,6 +205,11 @@ export function createEventPipeline() {
       clearInterval(tickInterval);
       tickInterval = null;
     }
+    if (throttleTimer) {
+      clearTimeout(throttleTimer);
+      throttleTimer = null;
+    }
+    pendingEvents = [];
     for (const client of clients) client.close();
     clients.clear();
     stopMetricsCollector();
