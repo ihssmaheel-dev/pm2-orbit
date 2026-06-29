@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Wifi, WifiOff } from 'lucide-react';
 import { ConnectionDot } from '@/components/shared/ConnectionDot';
-
-interface StatusBarProps {
-  wsStatus?: 'connecting' | 'connected' | 'disconnected';
-}
+import { useUIStore } from '@/store/ui';
 
 interface HealthData {
   version?: string;
@@ -12,7 +9,8 @@ interface HealthData {
   pm2Version?: string;
 }
 
-export function StatusBar({ wsStatus = 'disconnected' }: StatusBarProps) {
+export function StatusBar() {
+  const wsStatus = useUIStore((s) => s.wsStatus);
   const connected = wsStatus === 'connected';
   const [health, setHealth] = useState<HealthData>({});
 

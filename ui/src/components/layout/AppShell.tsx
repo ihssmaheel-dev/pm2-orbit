@@ -8,16 +8,12 @@ import { History } from '@/pages/History';
 import { Settings } from '@/pages/Settings';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 
-interface AppShellProps {
-  wsStatus: 'connecting' | 'connected' | 'disconnected';
-}
-
-export function AppShell({ wsStatus }: AppShellProps) {
+export function AppShell() {
   const activeTab = useUIStore((s) => s.activeTab);
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
-      <Header wsStatus={wsStatus} />
+      <Header />
       <main className="flex-1 overflow-hidden">
         <ErrorBoundary key={activeTab}>
           {activeTab === 'processes' && <Dashboard />}
@@ -27,7 +23,7 @@ export function AppShell({ wsStatus }: AppShellProps) {
           {activeTab === 'settings' && <Settings />}
         </ErrorBoundary>
       </main>
-      <StatusBar wsStatus={wsStatus} />
+      <StatusBar />
     </div>
   );
 }

@@ -4,14 +4,11 @@ import { useUIStore } from "@/store/ui";
 import { ConnectionDot } from "@/components/shared/ConnectionDot";
 import { AlertBadge } from "@/components/alerts/AlertBadge";
 
-interface HeaderProps {
-  wsStatus: "connecting" | "connected" | "disconnected";
-}
-
-export function Header({ wsStatus }: HeaderProps) {
+export function Header() {
   const { theme, setTheme, resolved } = useTheme();
   const activeTab = useUIStore((s) => s.activeTab);
   const setActiveTab = useUIStore((s) => s.setActiveTab);
+  const wsStatus = useUIStore((s) => s.wsStatus);
 
   const toggleTheme = () => {
     if (theme === "dark") setTheme("light");

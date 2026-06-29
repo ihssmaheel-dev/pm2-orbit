@@ -6,14 +6,18 @@ import { useAlertNotifications } from './hooks/useAlertNotifications';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useAlertsStore } from '@/store/alerts';
+import { useUIStore } from '@/store/ui';
 import { CommandPalette } from './components/command/CommandPalette';
 
 function AppInner() {
   const { status } = useWebSocket();
+  const setWsStatus = useUIStore((s) => s.setWsStatus);
   const fetchRules = useAlertsStore((s) => s.fetchRules);
   const fetchHistory = useAlertsStore((s) => s.fetchHistory);
   useKeyboardShortcuts();
   useAlertNotifications();
+
+  useEffect(() => { setWsStatus(status); }, [status, setWsStatus]);
 
   useEffect(() => {
     fetchRules();
@@ -21,7 +25,7 @@ function AppInner() {
   }, [fetchRules, fetchHistory]);
   return (
     <>
-      <AppShell wsStatus={status} />
+      <AppShell />
       <CommandPalette />
       <Toaster
         position="bottom-right"

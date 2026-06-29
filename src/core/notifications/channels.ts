@@ -1,3 +1,5 @@
+import { logger } from '../../utils/logger';
+
 export async function sendWebhook(url: string, event: { message: string; processName: string; metric: string; value: number; threshold: number }): Promise<boolean> {
   try {
     const res = await fetch(url, {
@@ -13,7 +15,8 @@ export async function sendWebhook(url: string, event: { message: string; process
       }),
     });
     return res.ok;
-  } catch {
+  } catch (err) {
+    logger.warn(`Webhook notification failed: ${err instanceof Error ? err.message : err}`);
     return false;
   }
 }
@@ -34,7 +37,8 @@ export async function sendSlack(webhookUrl: string, event: { message: string }):
       }),
     });
     return res.ok;
-  } catch {
+  } catch (err) {
+    logger.warn(`Slack notification failed: ${err instanceof Error ? err.message : err}`);
     return false;
   }
 }
@@ -49,7 +53,8 @@ export async function sendDiscord(webhookUrl: string, event: { message: string }
       }),
     });
     return res.ok;
-  } catch {
+  } catch (err) {
+    logger.warn(`Discord notification failed: ${err instanceof Error ? err.message : err}`);
     return false;
   }
 }
@@ -58,7 +63,8 @@ export async function sendEmailNotification(subject: string, body: string): Prom
   try {
     const { sendEmail } = await import('./email');
     return sendEmail(subject, body);
-  } catch {
+  } catch (err) {
+    logger.warn(`Email notification failed: ${err instanceof Error ? err.message : err}`);
     return false;
   }
 }
