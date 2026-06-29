@@ -14,6 +14,8 @@ export class WSClient {
   private reconnectAttempts = 0;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private intentionalClose = false;
+  private pendingTicks: Tick[] = [];
+  private rafId: number | null = null;
 
   constructor(url: string) {
     this.url = url;
@@ -40,9 +42,8 @@ export class WSClient {
     this.ws.onmessage = (event) => {
       try {
         const tick: Tick = JSON.parse(event.data);
-        for (const listener of this.listeners) {
-          listener(tick);
-        }
+        this.pendingTicks.push(tick);
+        this.scheduleFlush();
       } catch {
         // Ignore malformed messages
       }
@@ -66,6 +67,11 @@ export class WSClient {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+    this.pendingTicks = [];
     this.ws?.close();
     this.ws = null;
     this.emitStatus('disconnected');
@@ -79,6 +85,24 @@ export class WSClient {
   onStatus(fn: StatusListener): () => void {
     this.statusListeners.add(fn);
     return () => this.statusListeners.delete(fn);
+  }
+
+  private flush() {
+    this.rafId = null;
+    const ticks = this.pendingTicks;
+    this.pendingTicks = [];
+
+    for (const tick of ticks) {
+      for (const listener of this.listeners) {
+        listener(tick);
+      }
+    }
+  }
+
+  private scheduleFlush() {
+    if (this.rafId === null) {
+      this.rafId = requestAnimationFrame(() => this.flush());
+    }
   }
 
   private emitStatus(status: 'connecting' | 'connected' | 'disconnected') {
