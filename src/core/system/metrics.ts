@@ -18,6 +18,8 @@ let networkCache = { rx: 0, tx: 0 };
 let loadCache: [number, number, number] | null = null;
 let collectorTimer: ReturnType<typeof setInterval> | null = null;
 
+let cachedSnapshot: SystemSnapshot | null = null;
+
 async function collectNetwork() {
   try {
     const netData = await si.networkStats();
@@ -95,10 +97,12 @@ async function collectLoad() {
 
 async function collect() {
   await Promise.all([collectNetwork(), collectDisk(), collectLoad()]);
+  cachedSnapshot = null;
 }
 
 export function startMetricsCollector(intervalMs = 2000) {
   if (collectorTimer) return;
+  cachedSnapshot = null;
   collect();
   collectorTimer = setInterval(collect, intervalMs);
 }
@@ -111,6 +115,13 @@ export function stopMetricsCollector() {
 }
 
 export function readSystem(): SystemSnapshot {
+  if (cachedSnapshot) return cachedSnapshot;
+
+  cachedSnapshot = computeSystemSnapshot();
+  return cachedSnapshot;
+}
+
+function computeSystemSnapshot(): SystemSnapshot {
   const cpus = os.cpus();
   let idle = 0;
   let total = 0;
