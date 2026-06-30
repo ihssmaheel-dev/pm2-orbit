@@ -22,11 +22,7 @@ export const useProcessStore = create<ProcessStore>((set, get) => ({
           next.delete(event.process.id);
         } else {
           const existing = next.get(event.process.id);
-          if (existing) {
-            next.set(event.process.id, { ...existing, ...event.process });
-          } else {
-            next.set(event.process.id, { ...event.process });
-          }
+          next.set(event.process.id, existing ? { ...existing, ...event.process } : { ...event.process });
         }
       }
       return { processes: next };
@@ -38,11 +34,7 @@ export const useProcessStore = create<ProcessStore>((set, get) => ({
       const next = new Map(state.processes);
       for (const snap of snapshots) {
         const existing = next.get(snap.id);
-        if (existing) {
-          next.set(snap.id, { ...existing, ...snap });
-        } else {
-          next.set(snap.id, { ...snap });
-        }
+        next.set(snap.id, existing ? { ...existing, ...snap } : { ...snap });
       }
       const incomingIds = new Set(snapshots.map((s) => s.id));
       for (const id of next.keys()) {

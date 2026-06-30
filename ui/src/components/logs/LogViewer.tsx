@@ -107,14 +107,21 @@ export function LogViewer() {
         const es = new EventSource(`/api/logs/${entry.id}`);
         es.onmessage = (event) => {
           try {
-            const data = JSON.parse(event.data);
-            useLogsStore.getState().addLog({
-              ts: data.ts,
-              processId: entry.id,
-              processName: entry.name,
-              stream: data.stream,
-              message: data.message,
-            });
+            const raw = event.data as string;
+            const addLog = useLogsStore.getState().addLog;
+            if (raw.startsWith('{')) {
+              const data = JSON.parse(raw);
+              addLog({ ts: data.ts, processId: entry.id, processName: entry.name, stream: data.stream, message: data.message });
+            } else {
+              const lines = raw.split('\n');
+              for (const line of lines) {
+                if (!line) continue;
+                try {
+                  const data = JSON.parse(line);
+                  addLog({ ts: data.ts, processId: entry.id, processName: entry.name, stream: data.stream, message: data.message });
+                } catch {}
+              }
+            }
           } catch {}
         };
         eventSourcesRef.current.set(entry.id, es);

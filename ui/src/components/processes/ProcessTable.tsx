@@ -47,7 +47,12 @@ export function ProcessTable() {
   const [startConfirm, setStartConfirm] = useState(false);
   const parentRef = useRef<HTMLDivElement>(null);
 
-  const data = useMemo(() => Array.from(processes.values()), [processes]);
+  const data = useMemo(() => {
+    const arr: ProcessSnapshot[] = new Array(processes.size);
+    let i = 0;
+    for (const p of processes.values()) arr[i++] = p;
+    return arr;
+  }, [processes]);
   const onlineCount = useMemo(() => data.filter((p) => p.status === 'online').length, [data]);
   const stoppedCount = useMemo(() => data.filter((p) => p.status === 'stopped').length, [data]);
 

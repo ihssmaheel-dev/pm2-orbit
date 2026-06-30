@@ -23,10 +23,8 @@ export async function registerLogRoutes(app: FastifyInstance, pipeline: Pipeline
       const pm2Module = require('pm2');
       await new Promise<void>((resolve) => {
         pm2Module.list((_err: Error | null, list: unknown[]) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const raw = list.find((p: any) => p.pm_id === processId);
           if (raw) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const env = (raw as any).pm2_env || {};
             outLog = env.pm_out_log_path;
             errLog = env.pm_err_log_path;
@@ -54,9 +52,8 @@ export async function registerLogRoutes(app: FastifyInstance, pipeline: Pipeline
     const buffer = tailer.getBuffer();
     if (buffer.length > 0) {
       lastSentIndex = buffer.length;
-      for (const entry of buffer) {
-        try { reply.raw.write(`data: ${JSON.stringify(entry)}\n\n`); } catch { break; }
-      }
+      const batch = buffer.map((e) => JSON.stringify(e)).join('\n');
+      try { reply.raw.write(`data: ${batch}\n\n`); } catch { /* */ }
     }
 
     const interval = setInterval(() => {
@@ -67,21 +64,20 @@ export async function registerLogRoutes(app: FastifyInstance, pipeline: Pipeline
           return;
         }
 
-        reply.raw.write(': keepalive\n\n');
-
         const buf = tailer.getBuffer();
         if (buf.length > lastSentIndex) {
           const newEntries = buf.slice(lastSentIndex);
           lastSentIndex = buf.length;
-          for (const entry of newEntries) {
-            reply.raw.write(`data: ${JSON.stringify(entry)}\n\n`);
-          }
+          const batch = newEntries.map((e) => JSON.stringify(e)).join('\n');
+          reply.raw.write(`data: ${batch}\n\n`);
+        } else {
+          reply.raw.write(': keepalive\n\n');
         }
       } catch {
         clearInterval(interval);
         tailer.close();
       }
-    }, 1000);
+    }, 500);
 
     req.raw.on('close', () => {
       clearInterval(interval);
