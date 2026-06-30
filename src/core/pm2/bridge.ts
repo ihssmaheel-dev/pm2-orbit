@@ -9,6 +9,12 @@ try {
   // pm2 not installed — bridge will use mock data
 }
 
+// systeminformation for per-process CPU/memory (more reliable than PM2 monit)
+let siModule: typeof import('systeminformation') | null = null;
+try {
+  siModule = require('systeminformation');
+} catch {}
+
 interface Pm2Event {
   event: 'start' | 'stop' | 'exit' | 'data' | 'online' | 'error';
   process: { pm_id: number; name: string };
@@ -27,6 +33,7 @@ export interface ProcessEvent {
 
 const STALE_THRESHOLD_MS = 10_000;
 const BUS_HEARTBEAT_MS = 60_000;
+const SI_CACHE_TTL = 1500;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function procToSnapshot(proc: any): ProcessSnapshot {
@@ -51,6 +58,38 @@ function procToSnapshot(proc: any): ProcessSnapshot {
     instances: env.instances || 1,
     history: { ts: [], cpu: [], memory: [] },
   };
+}
+
+let siCache: { data: Map<number, { cpu: number; memory: number }>; time: number } | null = null;
+
+async function fetchSiMetrics(): Promise<Map<number, { cpu: number; memory: number }>> {
+  const result = new Map<number, { cpu: number; memory: number }>();
+  if (!siModule) return result;
+  try {
+    const procs = await siModule.processes();
+    for (const p of procs.list || []) {
+      result.set(p.pid, { cpu: p.cpu || 0, memory: p.memRss || p.mem || 0 });
+    }
+  } catch {}
+  return result;
+}
+
+async function getSiMetrics(): Promise<Map<number, { cpu: number; memory: number }>> {
+  const now = Date.now();
+  if (siCache && now - siCache.time < SI_CACHE_TTL) return siCache.data;
+  const data = await fetchSiMetrics();
+  siCache = { data, time: now };
+  return data;
+}
+
+function enrichSnapshots(snapshots: ProcessSnapshot[], siMap: Map<number, { cpu: number; memory: number }>) {
+  for (const snap of snapshots) {
+    const siData = snap.pid > 0 ? siMap.get(snap.pid) : undefined;
+    if (siData) {
+      snap.cpu = siData.cpu;
+      snap.memory = siData.memory;
+    }
+  }
 }
 
 export function createPm2Bridge() {
@@ -121,9 +160,9 @@ export function createPm2Bridge() {
     }
   }
 
-  function refreshSingleProcess(id: number): Promise<void> {
-    if (!pm2Module) return Promise.resolve();
-    return new Promise((resolve) => {
+  async function refreshSingleProcess(id: number): Promise<void> {
+    if (!pm2Module) return;
+    await new Promise<void>((resolve) => {
       pm2Module!.list((err: Error | null, list: unknown[]) => {
         if (err) return resolve();
         const proc = list.find((p: any) => p.pm_id === id);
@@ -135,11 +174,20 @@ export function createPm2Bridge() {
         resolve();
       });
     });
+    const snap = processCache.get(id);
+    if (snap && snap.pid > 0) {
+      const siMap = await getSiMetrics();
+      const siData = siMap.get(snap.pid);
+      if (siData) {
+        snap.cpu = siData.cpu;
+        snap.memory = siData.memory;
+      }
+    }
   }
 
   async function refreshProcessList(): Promise<ProcessSnapshot[]> {
     if (!pm2Module) return Array.from(processCache.values());
-    return new Promise((resolve, reject) => {
+    const snapshots = await new Promise<ProcessSnapshot[]>((resolve, reject) => {
       pm2Module!.list((err: Error | null, list: unknown[]) => {
         if (err) return reject(err);
         const now = Date.now();
@@ -152,6 +200,9 @@ export function createPm2Bridge() {
         resolve(snapshots);
       });
     });
+    const siMap = await getSiMetrics();
+    enrichSnapshots(snapshots, siMap);
+    return snapshots;
   }
 
   async function reconcileStale(): Promise<void> {
@@ -228,7 +279,10 @@ export function createPm2Bridge() {
   }
 
   async function list(): Promise<ProcessSnapshot[]> {
-    return Array.from(processCache.values());
+    const snapshots = Array.from(processCache.values());
+    const siMap = await getSiMetrics();
+    enrichSnapshots(snapshots, siMap);
+    return snapshots;
   }
 
   function subscribe(fn: Listener): () => void {

@@ -201,11 +201,25 @@ export function createEventPipeline() {
 
       const system = readSystem();
 
-      persistTick({
+      persistence.pushSystemMetrics({
         ts: now,
-        events: [],
-        system,
+        cpu: system.cpu,
+        memoryUsed: system.memory.used,
+        memoryTotal: system.memory.total,
+        load1: system.loadAvg[0],
+        load5: system.loadAvg[1],
+        load15: system.loadAvg[2],
       });
+
+      for (const snap of snapshots) {
+        persistence.pushProcessMetrics({
+          ts: now,
+          processId: snap.id,
+          processName: snap.name,
+          cpu: snap.cpu,
+          memory: snap.memory,
+        });
+      }
 
       const tick: Tick = {
         ts: now,
