@@ -26,12 +26,14 @@ export class CircularBuffer {
       return { ts: [], cpu: [], memory: [] };
     }
 
+    const SEND_MAX = Math.min(this.count, 30);
     const start = this.count < this.ts.length ? 0 : this.ptr;
+    const skip = this.count - SEND_MAX;
     const tsArr: number[] = [];
     const cpuArr: number[] = [];
     const memArr: number[] = [];
 
-    for (let i = 0; i < this.count; i++) {
+    for (let i = skip; i < this.count; i++) {
       const idx = (start + i) % this.ts.length;
       tsArr.push(this.ts[idx]);
       cpuArr.push(this.cpu[idx]);

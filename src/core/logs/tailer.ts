@@ -3,8 +3,6 @@ import path from 'path';
 import { sanitizeFileName } from '../../utils/validate';
 
 const MAX_BUFFER_SIZE = parseInt(process.env.PM2_ORBIT_LOG_BUFFER || '2000', 10);
-const POLL_INTERVAL = 2000;
-const DEBOUNCE_MS = 150;
 
 interface LogEntry {
   ts: number;
@@ -15,11 +13,10 @@ interface LogEntry {
 export function createLogTailer(processId: number, processName: string, logPaths?: { out?: string; err?: string }) {
   const buffer: LogEntry[] = [];
   let closed = false;
-  const watchers: fs.FSWatcher[] = [];
+  let outPath = '';
+  let errPath = '';
   const filePositions: Record<string, number> = {};
   const fileVersions: Record<string, number> = {};
-  const debounceTimers: Record<string, NodeJS.Timeout | null> = {};
-  let pollTimer: NodeJS.Timeout | null = null;
 
   function resolveLogPath(type: 'out' | 'err'): string {
     if (logPaths) {
@@ -91,43 +88,18 @@ export function createLogTailer(processId: number, processName: string, logPaths
     }
   }
 
-  function pollFiles() {
+  function init() {
+    outPath = resolveLogPath('out');
+    errPath = resolveLogPath('err');
+    readNewLines(outPath, 'stdout');
+    readNewLines(errPath, 'stderr');
+  }
+
+  function poll() {
     if (closed) return;
-    const outPath = resolveLogPath('out');
-    const errPath = resolveLogPath('err');
     readNewLines(outPath, 'stdout');
     readNewLines(errPath, 'stderr');
   }
-
-  function startWatching() {
-    const outPath = resolveLogPath('out');
-    const errPath = resolveLogPath('err');
-
-    readNewLines(outPath, 'stdout');
-    readNewLines(errPath, 'stderr');
-
-    for (const fp of [outPath, errPath]) {
-      try {
-        if (fs.existsSync(fp)) {
-          const watcher = fs.watch(fp, () => {
-            if (closed) return;
-            if (debounceTimers[fp]) clearTimeout(debounceTimers[fp]!);
-            debounceTimers[fp] = setTimeout(() => {
-              debounceTimers[fp] = null;
-              readNewLines(fp, fp === outPath ? 'stdout' : 'stderr');
-            }, DEBOUNCE_MS);
-          });
-          watchers.push(watcher);
-        }
-      } catch {
-        // ignore
-      }
-    }
-
-    pollTimer = setInterval(pollFiles, POLL_INTERVAL);
-  }
-
-  startWatching();
 
   function getBuffer(): LogEntry[] {
     return buffer;
@@ -141,25 +113,18 @@ export function createLogTailer(processId: number, processName: string, logPaths
 
   function close(): void {
     closed = true;
-    if (pollTimer !== null) {
-      clearInterval(pollTimer);
-      pollTimer = null;
-    }
-    for (const fp of Object.keys(debounceTimers)) {
-      if (debounceTimers[fp]) clearTimeout(debounceTimers[fp]!);
-    }
-    for (const w of watchers) {
-      try { w.close(); } catch { /* ignore */ }
-    }
   }
 
   function isClosed(): boolean {
     return closed;
   }
 
+  init();
+
   return {
     processId,
     processName,
+    poll,
     getBuffer,
     getNewEntries,
     close,

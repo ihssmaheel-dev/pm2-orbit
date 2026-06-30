@@ -67,8 +67,6 @@ const LogLine = memo(function LogLine({
   );
 });
 
-const MAX_VISIBLE_LOGS = 50000;
-
 export function LogViewer() {
   const paused = useLogsStore((s) => s.paused);
   const setPaused = useLogsStore((s) => s.setPaused);
@@ -80,12 +78,38 @@ export function LogViewer() {
   const [streamFilter, setStreamFilter] = useState<StreamFilter>("all");
   const [selectedProcessId, setSelectedProcessId] = useState<number | "all">("all");
 
+  const maxVisible = selectedProcessId === "all" ? 5000 : 50000;
+  const MAX_VISIBLE_LOGS = maxVisible;
+
   const parentRef = useRef<HTMLDivElement>(null);
-  const eventSourcesRef = useRef<Map<number, EventSource>>(new Map());
-  const prevProcessCountRef = useRef(0);
   const autoScrollRef = useRef(true);
 
   autoScrollRef.current = autoScroll;
+
+  useEffect(() => {
+    const es = new EventSource('/api/logs/stream');
+    es.onmessage = (event) => {
+      try {
+        const raw = event.data as string;
+        if (!raw || raw.startsWith(':')) return;
+        const addLog = useLogsStore.getState().addLog;
+        if (raw.startsWith('{')) {
+          const data = JSON.parse(raw);
+          addLog({ ts: data.ts, processId: data.processId, processName: data.processName, stream: data.stream, message: data.message });
+        } else {
+          const lines = raw.split('\n');
+          for (const line of lines) {
+            if (!line) continue;
+            try {
+              const data = JSON.parse(line);
+              addLog({ ts: data.ts, processId: data.processId, processName: data.processName, stream: data.stream, message: data.message });
+            } catch {}
+          }
+        }
+      } catch {}
+    };
+    return () => { es.close(); };
+  }, []);
 
   const selectedBuffer = useLogsStore(
     (s) => selectedProcessId === "all" ? s.buffers : (s.buffers.get(selectedProcessId) ?? null),
@@ -98,57 +122,6 @@ export function LogViewer() {
     }
     return entries;
   }, [processes]);
-
-  const processIds = useMemo(
-    () => processEntries.map((p) => p.id).sort((a, b) => a - b).join(","),
-    [processEntries],
-  );
-
-  useEffect(() => {
-    for (const entry of processEntries) {
-      if (!eventSourcesRef.current.has(entry.id)) {
-        const es = new EventSource(`/api/logs/${entry.id}`);
-        es.onmessage = (event) => {
-          try {
-            const raw = event.data as string;
-            const addLog = useLogsStore.getState().addLog;
-            if (raw.startsWith('{')) {
-              const data = JSON.parse(raw);
-              addLog({ ts: data.ts, processId: entry.id, processName: entry.name, stream: data.stream, message: data.message });
-            } else {
-              const lines = raw.split('\n');
-              for (const line of lines) {
-                if (!line) continue;
-                try {
-                  const data = JSON.parse(line);
-                  addLog({ ts: data.ts, processId: entry.id, processName: entry.name, stream: data.stream, message: data.message });
-                } catch {}
-              }
-            }
-          } catch {}
-        };
-        eventSourcesRef.current.set(entry.id, es);
-      }
-    }
-
-    const prevCount = prevProcessCountRef.current;
-    prevProcessCountRef.current = processEntries.length;
-
-    return () => {
-      if (processEntries.length === 0) {
-        for (const es of eventSourcesRef.current.values()) es.close();
-        eventSourcesRef.current.clear();
-      } else if (prevCount !== processEntries.length) {
-        const currentIds = new Set(processEntries.map((p) => p.id));
-        for (const [id, es] of eventSourcesRef.current.entries()) {
-          if (!currentIds.has(id)) {
-            es.close();
-            eventSourcesRef.current.delete(id);
-          }
-        }
-      }
-    };
-  }, [processIds]);
 
   const totalBufferSizes = useMemo(() => {
     if (selectedBuffer === null) return 0;

@@ -23,5 +23,9 @@ export function useLiveUptime(process: ProcessSnapshot | undefined): number {
     return process?.uptime ?? 0;
   }
 
+  if (startedAtRef.current === 0) {
+    return process.uptime;
+  }
+
   return Date.now() - startedAtRef.current;
 }
