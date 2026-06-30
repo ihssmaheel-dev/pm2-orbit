@@ -3,7 +3,7 @@ import { createPm2Bridge, type ProcessEvent } from './bridge';
 import { BufferStore } from './buffer';
 import { readSystem, startMetricsCollector, stopMetricsCollector } from '../system/metrics';
 import { WebSocketServer, WebSocket } from 'ws';
-import type { Tick } from '../../types';
+import type { Tick, ProcessSnapshot } from '../../types';
 import { createStore } from '../persistence/store';
 import { createAlertEngine } from '../alerts/engine';
 import { sendWebhook, sendSlack, sendDiscord, sendEmailNotification } from '../notifications/channels';
@@ -119,6 +119,20 @@ export function createEventPipeline() {
     }
   }
 
+  function populateHistory(events: ProcessEvent[], snapshots?: ProcessSnapshot[]) {
+    for (const event of events) {
+      if (event.type === 'remove') continue;
+      const h = buffer.read(event.process.id);
+      event.process.history = h;
+    }
+    if (snapshots) {
+      for (const snap of snapshots) {
+        const h = buffer.read(snap.id);
+        snap.history = h;
+      }
+    }
+  }
+
   function buildTick(events: ProcessEvent[], system: ReturnType<typeof readSystem>): Tick | null {
     const now = Date.now();
     const needsFullSync = now - lastFullSync > FULL_SYNC_INTERVAL;
@@ -127,6 +141,7 @@ export function createEventPipeline() {
       lastFullSync = now;
       fullSeq++;
       bridge.list().then((snapshots) => {
+        populateHistory(events, snapshots);
         const tick: Tick = {
           ts: now,
           events,
@@ -141,6 +156,7 @@ export function createEventPipeline() {
       return null;
     }
 
+    populateHistory(events);
     const tick: Tick = { ts: now, events, system };
     persistTick(tick);
     evaluateAlerts(tick);
@@ -197,6 +213,11 @@ export function createEventPipeline() {
 
       for (const snap of snapshots) {
         buffer.push(snap.id, now, snap.cpu, snap.memory);
+      }
+
+      for (const snap of snapshots) {
+        const h = buffer.read(snap.id);
+        snap.history = h;
       }
 
       const system = readSystem();
