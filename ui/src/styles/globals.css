@@ -78,12 +78,13 @@
   --destructive: #ef4444;
   --destructive-subtle: rgba(239, 68, 68, 0.15);
 
-  --chart-cpu: #14b8a6;
-  --chart-memory: #8b5cf6;
+  --chart-cpu: #5eead4;
+  --chart-memory: #c4b5fd;
   --chart-network: #38bdf8;
   --chart-disk: #c084fc;
-  --chart-grid: #1e293b;
-  --chart-axis: #64748b;
+  --chart-grid: #475569;
+  --chart-axis: #94a3b8;
+  --chart-bg: rgba(30, 41, 59, 0.5);
 
   --shadow-glow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.03);
   --shadow-glow-md: 0 4px 12px 0 rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.03);
@@ -125,6 +126,7 @@
   --chart-disk: #9333ea;
   --chart-grid: #e2e8f0;
   --chart-axis: #94a3b8;
+  --chart-bg: transparent;
 
   --shadow-glow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-glow-md: 0 4px 12px 0 rgba(0, 0, 0, 0.08);

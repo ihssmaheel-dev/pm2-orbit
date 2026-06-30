@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/shared/Button';
 import { Badge } from '@/components/shared/Badge';
@@ -13,6 +14,9 @@ export function Alerts() {
   const loading = useAlertsStore((s) => s.loading);
   const removeRule = useAlertsStore((s) => s.removeRule);
   const [formOpen, setFormOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const tabFromUrl = location.pathname.endsWith('/history') ? 'history' : 'rules';
 
   return (
     <div className="flex flex-col h-full">
@@ -27,7 +31,7 @@ export function Alerts() {
       </div>
 
       <div className="flex-1 overflow-auto p-4">
-        <Tabs defaultValue="rules">
+        <Tabs value={tabFromUrl} onValueChange={(v) => navigate(v === 'rules' ? '/alerts/rules' : '/alerts/history', { replace: true })}>
           <TabsList>
             <TabsTrigger value="rules">Rules ({rules.length})</TabsTrigger>
             <TabsTrigger value="history">History</TabsTrigger>

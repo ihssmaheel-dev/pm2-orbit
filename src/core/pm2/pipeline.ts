@@ -199,12 +199,20 @@ export function createEventPipeline() {
         buffer.push(snap.id, now, snap.cpu, snap.memory);
       }
 
+      const system = readSystem();
+
+      persistTick({
+        ts: now,
+        events: [],
+        system,
+      });
+
       const tick: Tick = {
         ts: now,
         events: [],
         full: snapshots,
         fullSeq,
-        system: readSystem(),
+        system,
       };
 
       for (const snap of snapshots) {

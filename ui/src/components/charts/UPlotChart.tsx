@@ -2,14 +2,19 @@ import { useEffect, useRef, useState } from 'react';
 import uPlot from 'uplot';
 import 'uplot/dist/uPlot.min.css';
 
+function cssVar(name: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#666';
+}
+
 interface UPlotChartProps {
   data: uPlot.AlignedData;
   series: uPlot.Series[];
   height?: number;
   className?: string;
+  formatY?: (v: number) => string;
 }
 
-export function UPlotChart({ data, series, height = 150, className }: UPlotChartProps) {
+export function UPlotChart({ data, series, height = 160, className, formatY }: UPlotChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const plotRef = useRef<uPlot | null>(null);
   const [width, setWidth] = useState(0);
@@ -31,20 +36,31 @@ export function UPlotChart({ data, series, height = 150, className }: UPlotChart
   useEffect(() => {
     if (!containerRef.current || width === 0) return;
 
+    const axisColor = cssVar('--chart-axis');
+    const gridColor = cssVar('--chart-grid');
+
     const opts: uPlot.Options = {
       width,
       height,
       series,
-      cursor: { drag: { x: false, y: false } },
+      cursor: {
+        drag: { x: false, y: false },
+        show: true,
+      },
       scales: { x: { time: false } },
       axes: [
         {
-          stroke: 'var(--chart-axis)',
-          grid: { stroke: 'var(--chart-grid)' },
+          stroke: axisColor,
+          grid: { stroke: gridColor, width: 1 / devicePixelRatio },
+          size: 45,
+          font: '10px monospace',
         },
         {
-          stroke: 'var(--chart-axis)',
-          grid: { stroke: 'var(--chart-grid)' },
+          stroke: axisColor,
+          grid: { stroke: gridColor, width: 1 / devicePixelRatio },
+          size: 24,
+          font: '9px monospace',
+          values: (_self: uPlot, ticks: number[]) => ticks.map((v) => formatY ? formatY(v) : String(v)),
         },
       ],
     };
@@ -66,5 +82,5 @@ export function UPlotChart({ data, series, height = 150, className }: UPlotChart
     plotRef.current?.setData(data);
   }, [data]);
 
-  return <div ref={containerRef} className={className} />;
+  return <div ref={containerRef} className={className} style={{ background: 'var(--chart-bg)' }} />;
 }

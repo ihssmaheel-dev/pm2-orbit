@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { Activity, BarChart3, AlertCircle, ChevronDown } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useProcessStore } from '@/store/processes';
-import { CpuChart, MemoryChart } from '@/components/charts/Charts';
+import { CpuChart, MemoryChart, LoadChart } from '@/components/charts/Charts';
+import { formatBytes } from '@/lib/format';
 
 interface ProcessHistory {
   ts: number;
@@ -21,6 +22,8 @@ interface SystemHistory {
 }
 
 type TimeRange = '1h' | '6h' | '24h';
+
+function fmtPercent(v: number) { return v.toFixed(1) + '%'; }
 
 export function History() {
   const processes = useProcessStore((s) => s.processes);
@@ -66,7 +69,14 @@ export function History() {
 
   const memData = useMemo(() => ({
     ts: systemHistory.map((r) => r.ts),
-    values: systemHistory.map((r) => r.memoryUsed),
+    values: systemHistory.map((r) => r.memoryTotal > 0 ? Math.round((r.memoryUsed / r.memoryTotal) * 1000) / 10 : 0),
+  }), [systemHistory]);
+
+  const loadData = useMemo(() => ({
+    ts: systemHistory.map((r) => r.ts),
+    load1: systemHistory.map((r) => r.load1),
+    load5: systemHistory.map((r) => r.load5),
+    load15: systemHistory.map((r) => r.load15),
   }), [systemHistory]);
 
   const processCpuData = useMemo(() => ({
@@ -76,8 +86,12 @@ export function History() {
 
   const processMemData = useMemo(() => ({
     ts: processHistory.map((r) => r.ts),
-    values: processHistory.map((r) => r.memory),
+    values: processHistory.map((r) => r.memory ? Math.round(r.memory / (1024 * 1024) * 10) / 10 : 0),
   }), [processHistory]);
+
+  const lastSys = systemHistory.length > 0 ? systemHistory[systemHistory.length - 1] : null;
+  const maxMem = systemHistory.length > 0 ? Math.max(...systemHistory.map((r) => r.memoryTotal > 0 ? Math.round((r.memoryUsed / r.memoryTotal) * 1000) / 10 : 0)) : 0;
+  const maxCpu = systemHistory.length > 0 ? Math.max(...systemHistory.map((r) => r.cpu)) : 0;
 
   return (
     <div className="flex flex-col h-full">
@@ -103,17 +117,19 @@ export function History() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-4">
-        <div className="mb-6">
-          <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-3">System Metrics</h3>
+      <div className="flex-1 overflow-auto p-4 space-y-6">
+        {/* System Metrics */}
+        <div>
+          <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+            <Activity size={12} /> System Metrics
+          </h3>
           {systemLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-card border border-border p-4 h-[160px] flex items-center justify-center">
-                <span className="text-xs text-muted-foreground/50">Loading...</span>
-              </div>
-              <div className="bg-card border border-border p-4 h-[160px] flex items-center justify-center">
-                <span className="text-xs text-muted-foreground/50">Loading...</span>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="bg-card border border-border p-4 h-[180px] flex items-center justify-center">
+                  <span className="text-xs text-muted-foreground/50">Loading...</span>
+                </div>
+              ))}
             </div>
           ) : systemError ? (
             <div className="flex items-center justify-center h-[160px] bg-card border border-destructive/20 text-muted-foreground gap-2">
@@ -126,20 +142,46 @@ export function History() {
               <span className="text-xs opacity-60">No history data available</span>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-card border border-border p-4">
-                <CpuChart data={cpuData} label="CPU %" />
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="bg-card border border-border p-2">
+                  <CpuChart data={cpuData} label="CPU %" />
+                  {lastSys && (
+                    <div className="flex justify-between text-[10px] text-muted-foreground/60 mt-1 px-1">
+                      <span>Now: {fmtPercent(lastSys.cpu)}</span>
+                      <span>Peak: {fmtPercent(maxCpu)}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="bg-card border border-border p-3">
+                  <MemoryChart data={memData} label="Memory %" />
+                  {lastSys && (
+                    <div className="flex justify-between text-[10px] text-muted-foreground/60 mt-1 px-1">
+                      <span>Now: {fmtPercent(lastSys.memoryTotal > 0 ? Math.round((lastSys.memoryUsed / lastSys.memoryTotal) * 1000) / 10 : 0)}</span>
+                      <span>Peak: {fmtPercent(maxMem)}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="bg-card border border-border p-3">
+                  <LoadChart data={loadData} />
+                </div>
               </div>
-              <div className="bg-card border border-border p-4">
-                <MemoryChart data={memData} label="Memory" />
-              </div>
-            </div>
+              {lastSys && (
+                <div className="flex gap-4 mt-2 text-[11px] text-muted-foreground/70 px-1">
+                  <span>Memory: {formatBytes(lastSys.memoryUsed)} / {formatBytes(lastSys.memoryTotal)}</span>
+                  <span>Cores: {lastSys.load1 !== undefined ? '—' : ''}</span>
+                </div>
+              )}
+            </>
           )}
         </div>
 
+        {/* Process Metrics */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs uppercase tracking-wider text-muted-foreground">Process Metrics</h3>
+            <h3 className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+              <BarChart3 size={12} /> Process Metrics
+            </h3>
             <div className="relative">
               <select
                 value={selectedProcessId ?? ''}
@@ -158,12 +200,11 @@ export function History() {
           {selectedProcessId !== null ? (
             processLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-card border border-border p-4 h-[160px] flex items-center justify-center">
-                  <span className="text-xs text-muted-foreground/50">Loading...</span>
-                </div>
-                <div className="bg-card border border-border p-4 h-[160px] flex items-center justify-center">
-                  <span className="text-xs text-muted-foreground/50">Loading...</span>
-                </div>
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <div key={i} className="bg-card border border-border p-4 h-[180px] flex items-center justify-center">
+                    <span className="text-xs text-muted-foreground/50">Loading...</span>
+                  </div>
+                ))}
               </div>
             ) : processError ? (
               <div className="flex items-center justify-center h-[160px] bg-card border border-destructive/20 text-muted-foreground gap-2">
@@ -176,12 +217,24 @@ export function History() {
                 <span className="text-xs opacity-60">No history for this process</span>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-card border border-border p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="bg-card border border-border p-2">
                   <CpuChart data={processCpuData} label="CPU %" />
+                  {processHistory.length > 0 && (
+                    <div className="flex justify-between text-[10px] text-muted-foreground/60 mt-1 px-1">
+                      <span>Now: {fmtPercent(processHistory[processHistory.length - 1].cpu)}</span>
+                      <span>Peak: {fmtPercent(Math.max(...processHistory.map((r) => r.cpu)))}</span>
+                    </div>
+                  )}
                 </div>
-                <div className="bg-card border border-border p-4">
-                  <MemoryChart data={processMemData} label="Memory" />
+                <div className="bg-card border border-border p-3">
+                  <MemoryChart data={processMemData} label="Memory (MB)" />
+                  {processHistory.length > 0 && (
+                    <div className="flex justify-between text-[10px] text-muted-foreground/60 mt-1 px-1">
+                      <span>Now: {processHistory[processHistory.length - 1].memory} bytes</span>
+                      <span>Peak: {formatBytes(Math.max(...processHistory.map((r) => r.memory)))}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             )

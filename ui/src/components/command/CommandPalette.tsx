@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Command } from 'cmdk';
 import { Search, RotateCw, Square, Play, Terminal, Bell, Settings, LayoutGrid, RefreshCw, Moon, Sun } from 'lucide-react';
 import { toast } from 'sonner';
 import { useProcessStore } from '@/store/processes';
-import { useUIStore } from '@/store/ui';
 import { useTheme } from '@/hooks/useTheme';
 import type { ProcessStatus } from '@/types/pm2';
 
@@ -20,9 +20,9 @@ export function CommandPalette() {
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const processes = useProcessStore((s) => s.processes);
-  const setActiveTab = useUIStore((s) => s.setActiveTab);
   const select = useProcessStore((s) => s.select);
   const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
 
   const processList = useMemo(() => Array.from(processes.values()), [processes]);
 
@@ -108,35 +108,35 @@ export function CommandPalette() {
               icon={<LayoutGrid size={14} />}
               label="Processes"
               shortcut="1"
-              onSelect={() => { setActiveTab('processes'); close(); }}
+              onSelect={() => { navigate('/processes'); close(); }}
             />
             <CommandItem
               value="Logs navigate"
               icon={<Terminal size={14} />}
               label="Logs"
               shortcut="2"
-              onSelect={() => { setActiveTab('logs'); close(); }}
+              onSelect={() => { navigate('/logs'); close(); }}
             />
             <CommandItem
               value="Alerts navigate"
               icon={<Bell size={14} />}
               label="Alerts"
               shortcut="3"
-              onSelect={() => { setActiveTab('alerts'); close(); }}
+              onSelect={() => { navigate('/alerts'); close(); }}
             />
             <CommandItem
               value="History navigate"
               icon={<LayoutGrid size={14} />}
               label="History"
               shortcut="4"
-              onSelect={() => { setActiveTab('history'); close(); }}
+              onSelect={() => { navigate('/history'); close(); }}
             />
             <CommandItem
               value="Settings navigate"
               icon={<Settings size={14} />}
               label="Settings"
               shortcut="5"
-              onSelect={() => { setActiveTab('settings'); close(); }}
+              onSelect={() => { navigate('/settings'); close(); }}
             />
           </CommandGroup>
 
@@ -167,7 +167,7 @@ export function CommandPalette() {
                   }
                   label={proc.name}
                   hint={`PID ${proc.pid}`}
-                  onSelect={() => { select(proc.id); setActiveTab('processes'); close(); }}
+                  onSelect={() => { select(proc.id); navigate('/processes'); close(); }}
                 />
               ))}
             </CommandGroup>

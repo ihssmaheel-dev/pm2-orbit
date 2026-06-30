@@ -100,12 +100,12 @@ function createMemoryStore() {
   }
 
   function getProcessHistory(processId: number, hours = 24): ProcessMetricRow[] {
-    const cutoff = Date.now() - Math.min(hours, 1) * 60 * 60 * 1000;
+    const cutoff = Date.now() - hours * 60 * 60 * 1000;
     return processHistory.filter((r) => r.processId === processId && r.ts > cutoff);
   }
 
   function getSystemHistory(hours = 24): SystemMetricRow[] {
-    const cutoff = Date.now() - Math.min(hours, 1) * 60 * 60 * 1000;
+    const cutoff = Date.now() - hours * 60 * 60 * 1000;
     return systemHistory.filter((r) => r.ts > cutoff);
   }
 

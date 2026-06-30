@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
 interface TabsContextValue {
   activeTab: string;
@@ -15,13 +15,28 @@ function useTabs() {
 }
 
 interface TabsProps {
-  defaultValue: string;
+  value?: string;
+  defaultValue?: string;
+  onValueChange?: (value: string) => void;
   children: ReactNode;
   className?: string;
 }
 
-export function Tabs({ defaultValue, children, className }: TabsProps) {
-  const [activeTab, setActiveTab] = useState(defaultValue);
+export function Tabs({ value, defaultValue, onValueChange, children, className }: TabsProps) {
+  const [internalTab, setInternalTab] = useState(defaultValue || '');
+  const activeTab = value !== undefined ? value : internalTab;
+
+  const setActiveTab = (id: string) => {
+    if (value === undefined) setInternalTab(id);
+    onValueChange?.(id);
+  };
+
+  useEffect(() => {
+    if (value !== undefined) {
+      setInternalTab(value);
+    }
+  }, [value]);
+
   return (
     <TabsContext.Provider value={{ activeTab, setActiveTab }}>
       <div className={cn('flex flex-col', className)}>{children}</div>

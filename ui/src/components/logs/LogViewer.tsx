@@ -13,6 +13,7 @@ import { useLogsStore, type LogEntry } from "@/store/logs";
 import { useProcessStore } from "@/store/processes";
 import { Button } from "@/components/shared/Button";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 type StreamFilter = "all" | "stdout" | "stderr";
 
@@ -67,7 +68,7 @@ const LogLine = memo(function LogLine({
   );
 });
 
-export function LogViewer() {
+export function LogViewer({ initialProcessName = "" }: { initialProcessName?: string }) {
   const paused = useLogsStore((s) => s.paused);
   const setPaused = useLogsStore((s) => s.setPaused);
   const clearLogs = useLogsStore((s) => s.clearLogs);
@@ -83,8 +84,23 @@ export function LogViewer() {
 
   const parentRef = useRef<HTMLDivElement>(null);
   const autoScrollRef = useRef(true);
+  const navigate = useNavigate();
 
   autoScrollRef.current = autoScroll;
+
+  useEffect(() => {
+    if (!initialProcessName) {
+      setSelectedProcessId("all");
+      return;
+    }
+    for (const proc of processes.values()) {
+      if (proc.name === initialProcessName) {
+        setSelectedProcessId(proc.id);
+        return;
+      }
+    }
+    setSelectedProcessId("all");
+  }, [initialProcessName, processes]);
 
   useEffect(() => {
     const es = new EventSource('/api/logs/stream');
@@ -280,7 +296,7 @@ export function LogViewer() {
       <div className="flex items-center gap-1 px-4 py-1.5 border-b border-border/50 bg-muted/30 shrink-0 overflow-x-auto">
         <span className="text-[10px] text-muted-foreground uppercase tracking-wider mr-2 font-semibold shrink-0">Process:</span>
         <button
-          onClick={() => setSelectedProcessId("all")}
+          onClick={() => navigate('/logs')}
           className={cn("px-2 py-0.5 text-[11px] rounded-sm transition-colors cursor-pointer shrink-0", selectedProcessId === "all" ? "bg-primary/15 text-primary font-semibold" : "text-muted-foreground hover:text-foreground hover:bg-subtle")}
         >
           All ({totalBufferSizes.toLocaleString()})
@@ -290,7 +306,7 @@ export function LogViewer() {
           return (
             <button
               key={p.id}
-              onClick={() => setSelectedProcessId(p.id)}
+              onClick={() => navigate(`/logs/${encodeURIComponent(p.name)}`)}
               className={cn("px-2 py-0.5 text-[11px] rounded-sm transition-colors max-w-[120px] truncate cursor-pointer shrink-0", selectedProcessId === p.id ? "bg-primary/15 text-primary font-semibold" : "text-muted-foreground hover:text-foreground hover:bg-subtle")}
             >
               {p.name}

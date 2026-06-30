@@ -1,13 +1,14 @@
 import { Sun, Moon, Monitor } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { useUIStore } from "@/store/ui";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ConnectionDot } from "@/components/shared/ConnectionDot";
 import { AlertBadge } from "@/components/alerts/AlertBadge";
 
 export function Header() {
   const { theme, setTheme, resolved } = useTheme();
-  const activeTab = useUIStore((s) => s.activeTab);
-  const setActiveTab = useUIStore((s) => s.setActiveTab);
+  const location = useLocation();
+  const navigate = useNavigate();
   const wsStatus = useUIStore((s) => s.wsStatus);
 
   const themeLabels: Record<string, string> = { dark: "Dark", light: "Light", system: "System" };
@@ -21,11 +22,11 @@ export function Header() {
   const ThemeIcon = resolved === "dark" ? Moon : Sun;
 
   const tabs = [
-    { id: "processes" as const, label: "Processes" },
-    { id: "logs" as const, label: "Logs" },
-    { id: "alerts" as const, label: "Alerts" },
-    { id: "history" as const, label: "History" },
-    { id: "settings" as const, label: "Settings" },
+    { path: "/processes", label: "Processes" },
+    { path: "/logs", label: "Logs" },
+    { path: "/alerts", label: "Alerts" },
+    { path: "/history", label: "History" },
+    { path: "/settings", label: "Settings" },
   ];
 
   return (
@@ -37,19 +38,22 @@ export function Header() {
       </div>
 
       <nav className="flex-1 flex justify-start sm:justify-center gap-1 sm:gap-6 min-w-0 px-2">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`text-[11px] sm:text-sm uppercase tracking-wider transition-all cursor-pointer h-14 flex items-center border-b-2 shrink-0 px-1.5 sm:px-0 ${
-              activeTab === tab.id
-                ? "text-primary border-primary"
-                : "text-muted-foreground hover:text-foreground border-transparent hover:border-border"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+        {tabs.map((tab) => {
+          const isActive = location.pathname === tab.path || location.pathname.startsWith(tab.path + "/");
+          return (
+            <button
+              key={tab.path}
+              onClick={() => navigate(tab.path)}
+              className={`text-[11px] sm:text-sm uppercase tracking-wider transition-all cursor-pointer h-14 flex items-center border-b-2 shrink-0 px-1.5 sm:px-0 ${
+                isActive
+                  ? "text-primary border-primary"
+                  : "text-muted-foreground hover:text-foreground border-transparent hover:border-border"
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </nav>
 
       <div className="w-auto sm:w-[140px] flex items-center justify-end gap-1 sm:gap-2 shrink-0">
@@ -61,7 +65,7 @@ export function Header() {
           {theme === "system" ? <Monitor size={16} /> : <ThemeIcon size={16} />}
         </button>
 
-        <AlertBadge onClick={() => setActiveTab("alerts")} />
+        <AlertBadge onClick={() => navigate("/alerts")} />
 
         <ConnectionDot connected={wsStatus === "connected"} />
       </div>

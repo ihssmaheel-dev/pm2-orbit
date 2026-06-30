@@ -1,11 +1,8 @@
 import { create } from 'zustand';
 
-type Tab = 'processes' | 'logs' | 'alerts' | 'history' | 'settings';
 type WSStatus = 'connecting' | 'connected' | 'disconnected';
 
 interface UIStore {
-  activeTab: Tab;
-  setActiveTab: (tab: Tab) => void;
   detailOpen: boolean;
   setDetailOpen: (open: boolean) => void;
   searchQuery: string;
@@ -17,8 +14,6 @@ interface UIStore {
 }
 
 export const useUIStore = create<UIStore>((set) => ({
-  activeTab: 'processes',
-  setActiveTab: (tab) => set({ activeTab: tab }),
   detailOpen: false,
   setDetailOpen: (open) => set({ detailOpen: open }),
   searchQuery: '',
