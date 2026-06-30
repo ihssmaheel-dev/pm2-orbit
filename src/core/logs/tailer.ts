@@ -122,7 +122,13 @@ export function createLogTailer(processId: number, processName: string, logPaths
   startWatching();
 
   function getBuffer(): LogEntry[] {
-    return [...buffer];
+    return buffer;
+  }
+
+  function getNewEntries(sinceIndex: number): { entries: LogEntry[]; total: number } {
+    if (sinceIndex >= buffer.length) return { entries: [], total: buffer.length };
+    if (sinceIndex <= 0) return { entries: buffer.slice(), total: buffer.length };
+    return { entries: buffer.slice(sinceIndex), total: buffer.length };
   }
 
   function close(): void {
@@ -147,6 +153,7 @@ export function createLogTailer(processId: number, processName: string, logPaths
     processId,
     processName,
     getBuffer,
+    getNewEntries,
     close,
     isClosed,
   };

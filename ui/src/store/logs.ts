@@ -35,26 +35,35 @@ function getBuf(map: Map<number, LogEntry[]>, pid: number): LogEntry[] {
   return buf;
 }
 
+function flushToStore(set: (partial: Partial<LogsStore>) => void) {
+  if (pending.size === 0) return;
+
+  const snap = new Map(pending);
+  pending.clear();
+
+  for (const [pid, entries] of snap) {
+    const buf = getBuf(working, pid);
+    for (const e of entries) {
+      buf.push(e);
+      if (buf.length > DEFAULT_MAX_SIZE) {
+        buf.shift();
+      }
+    }
+  }
+
+  const result = new Map<number, LogEntry[]>();
+  for (const [pid, buf] of working) {
+    result.set(pid, buf.slice());
+  }
+
+  set({ buffers: result });
+}
+
 function scheduleFlush(set: (partial: Partial<LogsStore>) => void) {
   if (flushTimer !== null) return;
   flushTimer = setTimeout(() => {
     flushTimer = null;
-    if (pending.size === 0) return;
-
-    const snap = new Map(pending);
-    pending.clear();
-
-    for (const [pid, entries] of snap) {
-      const buf = getBuf(working, pid);
-      for (const e of entries) {
-        buf.push(e);
-        if (buf.length > DEFAULT_MAX_SIZE) {
-          buf.shift();
-        }
-      }
-    }
-
-    set({ buffers: new Map(working) });
+    flushToStore(set);
   }, FLUSH_MS);
 }
 
@@ -68,18 +77,7 @@ export const useLogsStore = create<LogsStore>((set, get) => ({
     getBuf(pending, entry.processId).push(entry);
     if (pending.size >= BATCH_LIMIT) {
       if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
-      const snap = new Map(pending);
-      pending.clear();
-      for (const [pid, entries] of snap) {
-        const buf = getBuf(working, pid);
-        for (const e of entries) {
-          buf.push(e);
-          if (buf.length > DEFAULT_MAX_SIZE) {
-            buf.shift();
-          }
-        }
-      }
-      set({ buffers: new Map(working) });
+      flushToStore(set);
     } else {
       scheduleFlush(set);
     }
@@ -89,33 +87,22 @@ export const useLogsStore = create<LogsStore>((set, get) => ({
     if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
     pending.clear();
     if (processId !== undefined) {
-      const buf = working.get(processId);
-      if (buf) buf.length = 0;
       working.delete(processId);
+      set((state) => {
+        const next = new Map(state.buffers);
+        next.delete(processId);
+        return { buffers: next };
+      });
     } else {
       working.clear();
+      set({ buffers: new Map() });
     }
-    set({ buffers: new Map(working) });
   },
 
   setPaused: (paused) => {
     if (!paused) {
       if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
-      const snap = new Map(pending);
-      pending.clear();
-      if (snap.size > 0) {
-        for (const [pid, entries] of snap) {
-          const buf = getBuf(working, pid);
-          for (const e of entries) {
-            buf.push(e);
-            if (buf.length > DEFAULT_MAX_SIZE) {
-              buf.shift();
-            }
-          }
-        }
-        set({ buffers: new Map(working), paused });
-        return;
-      }
+      flushToStore(set);
     }
     set({ paused });
   },

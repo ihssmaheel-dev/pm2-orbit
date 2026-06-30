@@ -20,7 +20,12 @@ let collectorTimer: ReturnType<typeof setInterval> | null = null;
 
 let cachedSnapshot: SystemSnapshot | null = null;
 
+let lastNetCollection = 0;
+
 async function collectNetwork() {
+  const now = Date.now();
+  if (now - lastNetCollection < 2000) return;
+  lastNetCollection = now;
   try {
     const netData = await si.networkStats();
     let rx = 0;
@@ -59,25 +64,29 @@ async function collectDisk() {
     }
   } catch {}
 
-  // Method 3: PowerShell CIM query on Windows
+  // Method 3: PowerShell CIM query on Windows (cached, max one attempt per 30s)
   if (os.platform() === 'win32') {
-    try {
-      const { execSync } = require('child_process');
-      const output = execSync(
-        'powershell -NoProfile -Command "Get-CimInstance Win32_PerfFormattedData_PerfDisk_PhysicalDisk -Filter \'Name LIKE \\\"%Total%\\\"\' | Select-Object DiskReadBytesPerSec, DiskWriteBytesPerSec | ConvertTo-Json"',
-        { encoding: 'utf-8', timeout: 5000 },
-      );
-      const data = JSON.parse(output.trim());
-      const items = Array.isArray(data) ? data : [data];
-      if (items.length > 0) {
-        const read = parseFloat(items[0].DiskReadBytesPerSec) || 0;
-        const write = parseFloat(items[0].DiskWriteBytesPerSec) || 0;
-        if (read || write) {
-          diskCache = { read, write };
-          return;
+    const lastPsQuery = (global as any).__lastDiskPsQuery || 0;
+    if (Date.now() - lastPsQuery > 30000) {
+      (global as any).__lastDiskPsQuery = Date.now();
+      try {
+        const { execSync } = require('child_process');
+        const output = execSync(
+          'powershell -NoProfile -Command "Get-CimInstance Win32_PerfFormattedData_PerfDisk_PhysicalDisk -Filter \'Name LIKE \\\"%Total%\\\"\' | Select-Object DiskReadBytesPerSec, DiskWriteBytesPerSec | ConvertTo-Json"',
+          { encoding: 'utf-8', timeout: 3000 },
+        );
+        const data = JSON.parse(output.trim());
+        const items = Array.isArray(data) ? data : [data];
+        if (items.length > 0) {
+          const read = parseFloat(items[0].DiskReadBytesPerSec) || 0;
+          const write = parseFloat(items[0].DiskWriteBytesPerSec) || 0;
+          if (read || write) {
+            diskCache = { read, write };
+            return;
+          }
         }
-      }
-    } catch {}
+      } catch {}
+    }
   }
 }
 

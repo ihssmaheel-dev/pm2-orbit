@@ -49,11 +49,13 @@ export async function registerLogRoutes(app: FastifyInstance, pipeline: Pipeline
     const tailer = createLogTailer(processId, proc.name, { ...(outLog ? { out: outLog } : {}), ...(errLog ? { err: errLog } : {}) });
     let lastSentIndex = 0;
 
-    const buffer = tailer.getBuffer();
-    if (buffer.length > 0) {
-      lastSentIndex = buffer.length;
-      const batch = buffer.map((e) => JSON.stringify(e)).join('\n');
-      try { reply.raw.write(`data: ${batch}\n\n`); } catch { /* */ }
+    {
+      const { entries } = tailer.getNewEntries(0);
+      if (entries.length > 0) {
+        lastSentIndex = entries.length;
+        const batch = entries.map((e) => JSON.stringify(e)).join('\n');
+        try { reply.raw.write(`data: ${batch}\n\n`); } catch { /* */ }
+      }
     }
 
     const interval = setInterval(() => {
@@ -64,11 +66,10 @@ export async function registerLogRoutes(app: FastifyInstance, pipeline: Pipeline
           return;
         }
 
-        const buf = tailer.getBuffer();
-        if (buf.length > lastSentIndex) {
-          const newEntries = buf.slice(lastSentIndex);
-          lastSentIndex = buf.length;
-          const batch = newEntries.map((e) => JSON.stringify(e)).join('\n');
+        const { entries, total } = tailer.getNewEntries(lastSentIndex);
+        if (entries.length > 0) {
+          lastSentIndex = total;
+          const batch = entries.map((e) => JSON.stringify(e)).join('\n');
           reply.raw.write(`data: ${batch}\n\n`);
         } else {
           reply.raw.write(': keepalive\n\n');

@@ -166,15 +166,17 @@ export function LogViewer() {
 
     if (source.length === 0) return result;
 
+    const nameByPid = new Map(processEntries.map((p) => [p.id, p.name]));
+
     let collected = 0;
 
     for (const [pid, entries] of source) {
-      const name = processEntries.find((p) => p.id === pid)?.name || `PID ${pid}`;
+      const name = nameByPid.get(pid) || `PID ${pid}`;
       const limit = Math.min(entries.length, maxBeforeFilter - collected);
       const start = entries.length - limit;
       for (let i = start; i < entries.length; i++) {
         const e = entries[i];
-        result.push({ ...e, processName: name });
+        result.push(e.processName === name ? e : { ...e, processName: name });
       }
       collected += limit;
       if (collected >= maxBeforeFilter) break;
