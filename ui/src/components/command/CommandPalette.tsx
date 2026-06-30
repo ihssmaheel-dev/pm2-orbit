@@ -1,9 +1,19 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Command } from 'cmdk';
 import { Search, RotateCw, Square, Play, Terminal, Bell, Settings, LayoutGrid, RefreshCw, Moon, Sun } from 'lucide-react';
+import { toast } from 'sonner';
 import { useProcessStore } from '@/store/processes';
 import { useUIStore } from '@/store/ui';
 import { useTheme } from '@/hooks/useTheme';
+import type { ProcessStatus } from '@/types/pm2';
+
+const STATUS_ACTIONS: Record<ProcessStatus, string[]> = {
+  online: ['restart', 'reload', 'stop'],
+  stopped: ['start'],
+  errored: ['restart'],
+  launching: [],
+  stopping: [],
+};
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
@@ -21,15 +31,16 @@ export function CommandPalette() {
     setQuery('');
   }, []);
 
-  const runAction = useCallback(async (processId: number, action: string) => {
+  const runAction = useCallback(async (processId: number, action: string): Promise<boolean> => {
     try {
-      await fetch(`/api/processes/${processId}/action`, {
+      const res = await fetch(`/api/processes/${processId}/action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),
       });
+      return res.ok;
     } catch {
-      // Action failed
+      return false;
     }
   }, []);
 
@@ -165,34 +176,27 @@ export function CommandPalette() {
           {/* Process Actions */}
           {processList.length > 0 && (
             <CommandGroup heading="Process Actions">
-              {processList.map((proc) => (
-                <CommandItem
-                  key={`restart-${proc.id}`}
-                  value={`Restart ${proc.name} process action`}
-                  icon={<RotateCw size={14} />}
-                  label={`Restart ${proc.name}`}
-                  onSelect={() => { runAction(proc.id, 'restart'); close(); }}
-                />
-              ))}
-              {processList.map((proc) => (
-                <CommandItem
-                  key={`stop-${proc.id}`}
-                  value={`Stop ${proc.name} process action`}
-                  icon={<Square size={14} />}
-                  label={`Stop ${proc.name}`}
-                  destructive
-                  onSelect={() => { runAction(proc.id, 'stop'); close(); }}
-                />
-              ))}
-              {processList.map((proc) => (
-                <CommandItem
-                  key={`start-${proc.id}`}
-                  value={`Start ${proc.name} process action`}
-                  icon={<Play size={14} />}
-                  label={`Start ${proc.name}`}
-                  onSelect={() => { runAction(proc.id, 'start'); close(); }}
-                />
-              ))}
+              {processList.map((proc) => {
+                const allowed = STATUS_ACTIONS[proc.status] || [];
+                return allowed.map((action) => {
+                  const icons: Record<string, React.ReactNode> = {
+                    restart: <RotateCw size={14} />,
+                    stop: <Square size={14} />,
+                    start: <Play size={14} />,
+                    reload: <RefreshCw size={14} />,
+                  };
+                  return (
+                    <CommandItem
+                      key={`${action}-${proc.id}`}
+                      value={`${action} ${proc.name} process action`}
+                      icon={icons[action]}
+                      label={`${action.charAt(0).toUpperCase() + action.slice(1)} ${proc.name}`}
+                      destructive={action === 'stop'}
+                      onSelect={() => { runAction(proc.id, action); close(); }}
+                    />
+                  );
+                });
+              })}
             </CommandGroup>
           )}
 
@@ -204,7 +208,15 @@ export function CommandPalette() {
                 icon={<RotateCw size={14} />}
                 label="Restart All"
                 hint={`${processList.length} processes`}
-                onSelect={() => { processList.forEach((p) => runAction(p.id, 'restart')); close(); }}
+                onSelect={async () => {
+                  close();
+                  const targets = processList;
+                  const results = await Promise.allSettled(targets.map((p) => runAction(p.id, 'restart')));
+                  const ok = results.filter((r) => r.status === 'fulfilled' && r.value).length;
+                  if (ok === targets.length) toast.success(`Restarted ${ok} process${ok !== 1 ? 'es' : ''}`);
+                  else if (ok > 0) toast.success(`Restarted ${ok} of ${targets.length}`);
+                  else toast.error(`Failed to restart any process`);
+                }}
               />
               <CommandItem
                 value="Stop all processes bulk"
@@ -212,14 +224,31 @@ export function CommandPalette() {
                 label="Stop All"
                 hint={`${processList.length} processes`}
                 destructive
-                onSelect={() => { processList.forEach((p) => runAction(p.id, 'stop')); close(); }}
+                onSelect={async () => {
+                  close();
+                  const targets = processList.filter((p) => p.status === 'online');
+                  if (targets.length === 0) return;
+                  const results = await Promise.allSettled(targets.map((p) => runAction(p.id, 'stop')));
+                  const ok = results.filter((r) => r.status === 'fulfilled' && r.value).length;
+                  if (ok === targets.length) toast.success(`Stopped ${ok} process${ok !== 1 ? 'es' : ''}`);
+                  else if (ok > 0) toast.success(`Stopped ${ok} of ${targets.length}`);
+                  else toast.error(`Failed to stop any process`);
+                }}
               />
               <CommandItem
                 value="Reload all processes bulk"
                 icon={<RefreshCw size={14} />}
                 label="Reload All"
                 hint={`${processList.length} processes`}
-                onSelect={() => { processList.forEach((p) => runAction(p.id, 'reload')); close(); }}
+                onSelect={async () => {
+                  close();
+                  const targets = processList;
+                  const results = await Promise.allSettled(targets.map((p) => runAction(p.id, 'reload')));
+                  const ok = results.filter((r) => r.status === 'fulfilled' && r.value).length;
+                  if (ok === targets.length) toast.success(`Reloaded ${ok} process${ok !== 1 ? 'es' : ''}`);
+                  else if (ok > 0) toast.success(`Reloaded ${ok} of ${targets.length}`);
+                  else toast.error(`Failed to reload any process`);
+                }}
               />
             </CommandGroup>
           )}

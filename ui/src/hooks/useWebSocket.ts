@@ -16,7 +16,8 @@ export function useWebSocket() {
   const applyDelta = useProcessStore((s) => s.applyDelta);
   const setAll = useProcessStore((s) => s.setAll);
   const updateSystem = useSystemStore((s) => s.update);
-  const clearLogs = useLogsStore((s) => s.clearLogs);
+  const clearLogsRef = useRef(useLogsStore.getState().clearLogs);
+  clearLogsRef.current = useLogsStore((s) => s.clearLogs);
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -39,7 +40,7 @@ export function useWebSocket() {
       if (tick.events.length > 0) {
         for (const event of tick.events) {
           if (event.type === 'remove') {
-            clearLogs(event.process.id);
+            clearLogsRef.current(event.process.id);
           }
         }
         applyDelta(tick.events);

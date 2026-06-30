@@ -126,8 +126,8 @@ export function SystemCards() {
       <Card
         icon={<Activity size={13} />}
         label="Load"
-        value={system.loadAvg[0] > 0 ? system.loadAvg[0].toFixed(2) : '—'}
-        subtext={system.loadAvg[0] > 0 ? `${system.loadAvg[1].toFixed(2)} / ${system.loadAvg[2].toFixed(2)}` : ''}
+        value={system.loadAvg[0].toFixed(2)}
+        subtext={`${system.loadAvg[1].toFixed(2)} / ${system.loadAvg[2].toFixed(2)}`}
         color="text-success"
         bgColor="#10b981"
       />

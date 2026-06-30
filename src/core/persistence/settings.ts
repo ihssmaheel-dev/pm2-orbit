@@ -93,7 +93,10 @@ function decrypt(value: string): string {
   }
 }
 
+let settingsCache: Settings | null = null;
+
 function loadSettings(): Settings {
+  if (settingsCache) return settingsCache;
   try {
     if (fs.existsSync(SETTINGS_FILE)) {
       const raw = fs.readFileSync(SETTINGS_FILE, 'utf-8');
@@ -104,12 +107,18 @@ function loadSettings(): Settings {
           merged[key as keyof Settings] = decrypt(merged[key as keyof Settings] as string) as never;
         }
       }
+      settingsCache = merged;
       return merged;
     }
   } catch {
     // ignore
   }
-  return { ...DEFAULTS };
+  settingsCache = { ...DEFAULTS };
+  return settingsCache;
+}
+
+function invalidateCache() {
+  settingsCache = null;
 }
 
 function saveSettings(settings: Settings): void {
@@ -124,6 +133,7 @@ function saveSettings(settings: Settings): void {
       }
     }
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify(toSave, null, 2), { mode: 0o600 });
+    invalidateCache();
   } catch {
     // ignore
   }

@@ -155,9 +155,9 @@ export function ProcessDetail() {
                   </button>
                 </div>
 
-                {pm2Vars.length === 0 && appVars.length === 0 ? (
+                {appVars.length === 0 && pm2Vars.length === 0 ? (
                   <div className="text-xs text-muted-foreground/40 py-8 text-center">
-                    {envSearch ? 'No matching variables' : 'No environment variables available'}
+                    {envSearch ? 'No environment variables match your search' : 'No environment variables available'}
                   </div>
                 ) : (
                   <div className="space-y-0.5">

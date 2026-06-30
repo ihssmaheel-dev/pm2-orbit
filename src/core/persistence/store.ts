@@ -37,43 +37,85 @@ export interface SystemMetricRow {
 
 const MEMORY_RETENTION_MS = 30 * 60 * 1000;
 
+function createRingBuffer<T>(maxSize: number) {
+  const arr: T[] = new Array(maxSize);
+  let head = 0;
+  let count = 0;
+
+  return {
+    push(item: T) {
+      arr[head] = item;
+      head = (head + 1) % maxSize;
+      if (count < maxSize) count++;
+    },
+    toArray(): T[] {
+      if (count === 0) return [];
+      const result = new Array(count);
+      const start = count < maxSize ? 0 : head;
+      for (let i = 0; i < count; i++) {
+        result[i] = arr[(start + i) % maxSize];
+      }
+      return result;
+    },
+    filter(pred: (item: T) => boolean): T[] {
+      const result: T[] = [];
+      if (count === 0) return result;
+      const start = count < maxSize ? 0 : head;
+      for (let i = 0; i < count; i++) {
+        const item = arr[(start + i) % maxSize];
+        if (pred(item)) result.push(item);
+      }
+      return result;
+    },
+    clear() {
+      head = 0;
+      count = 0;
+    },
+  };
+}
+
 function createMemoryStore() {
-  const processHistory: ProcessMetricRow[] = [];
-  const systemHistory: SystemMetricRow[] = [];
+  const processHistory = createRingBuffer<ProcessMetricRow>(5000);
+  const systemHistory = createRingBuffer<SystemMetricRow>(2000);
 
   function prune() {
     const cutoff = Date.now() - MEMORY_RETENTION_MS;
-    while (processHistory.length > 0 && processHistory[0].ts < cutoff) {
-      processHistory.shift();
-    }
-    while (systemHistory.length > 0 && systemHistory[0].ts < cutoff) {
-      systemHistory.shift();
-    }
+    // Rebuild with only recent entries
+    const recentProcesses = processHistory.filter((r) => r.ts >= cutoff);
+    const recentSystem = systemHistory.filter((r) => r.ts >= cutoff);
+    processHistory.clear();
+    for (const r of recentProcesses) processHistory.push(r);
+    systemHistory.clear();
+    for (const r of recentSystem) systemHistory.push(r);
   }
 
   const pruneInterval = setInterval(prune, 60000);
 
+  function pushProcessMetrics(row: ProcessMetricRow) {
+    processHistory.push(row);
+  }
+
+  function pushSystemMetrics(row: SystemMetricRow) {
+    systemHistory.push(row);
+  }
+
+  function getProcessHistory(processId: number, hours = 24): ProcessMetricRow[] {
+    const cutoff = Date.now() - Math.min(hours, 1) * 60 * 60 * 1000;
+    return processHistory.filter((r) => r.processId === processId && r.ts > cutoff);
+  }
+
+  function getSystemHistory(hours = 24): SystemMetricRow[] {
+    const cutoff = Date.now() - Math.min(hours, 1) * 60 * 60 * 1000;
+    return systemHistory.filter((r) => r.ts > cutoff);
+  }
+
   return {
-    pushProcessMetrics(row: ProcessMetricRow) {
-      processHistory.push(row);
-      if (processHistory.length > 5000) processHistory.shift();
-    },
-    pushSystemMetrics(row: SystemMetricRow) {
-      systemHistory.push(row);
-      if (systemHistory.length > 2000) systemHistory.shift();
-    },
-    getProcessHistory(processId: number, hours = 24): ProcessMetricRow[] {
-      const cutoff = Date.now() - Math.min(hours, 1) * 60 * 60 * 1000;
-      return processHistory.filter((r) => r.processId === processId && r.ts > cutoff);
-    },
-    getSystemHistory(hours = 24): SystemMetricRow[] {
-      const cutoff = Date.now() - Math.min(hours, 1) * 60 * 60 * 1000;
-      return systemHistory.filter((r) => r.ts > cutoff);
-    },
+    pushProcessMetrics,
+    pushSystemMetrics,
+    getProcessHistory,
+    getSystemHistory,
     close() {
       clearInterval(pruneInterval);
-      processHistory.length = 0;
-      systemHistory.length = 0;
     },
   };
 }

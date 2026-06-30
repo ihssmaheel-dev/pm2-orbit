@@ -60,16 +60,49 @@ export function createEventPipeline() {
     }
   }
 
-  function evaluateAlerts(tick: Tick) {
-    const allRules = alerts.getRules();
+  function isChannelEnabled(ch: string): boolean {
+    return process.env[`NOTIFY_${ch.toUpperCase()}_ENABLED`] !== '0';
+  }
 
-    function isChannelEnabled(ch: string): boolean {
-      return process.env[`NOTIFY_${ch.toUpperCase()}_ENABLED`] !== '0';
-    }
-
+  function notifyAlerts(fired: import('../alerts/engine').AlertEvent[], allRules: import('../alerts/engine').AlertRule[]) {
     const webhookUrl = process.env.WEBHOOK_URL;
     const slackUrl = process.env.SLACK_WEBHOOK_URL;
     const discordUrl = process.env.DISCORD_WEBHOOK_URL;
+
+    for (const alertEvent of fired) {
+      logger.warn(`Alert: ${alertEvent.message}`);
+
+      const rule = allRules.find((r) => r.id === alertEvent.ruleId);
+      const channels = rule?.channels?.length ? rule.channels : ['browser'];
+
+      const notificationPayload = {
+        message: alertEvent.message,
+        processName: alertEvent.processName,
+        metric: alertEvent.metric,
+        value: alertEvent.value,
+        threshold: alertEvent.threshold,
+      };
+
+      if (channels.includes('webhook') && isChannelEnabled('webhook') && webhookUrl) {
+        sendWebhook(webhookUrl, notificationPayload).catch(() => {});
+      }
+      if (channels.includes('slack') && isChannelEnabled('slack') && slackUrl) {
+        sendSlack(slackUrl, { message: alertEvent.message }).catch(() => {});
+      }
+      if (channels.includes('discord') && isChannelEnabled('discord') && discordUrl) {
+        sendDiscord(discordUrl, { message: alertEvent.message }).catch(() => {});
+      }
+      if (channels.includes('email') && isChannelEnabled('email') && !!process.env.SMTP_HOST && !!process.env.SMTP_FROM && !!process.env.SMTP_TO) {
+        sendEmailNotification(`Alert: ${alertEvent.processName}`, alertEvent.message).catch(() => {});
+      }
+      if (channels.includes('browser') && isChannelEnabled('browser')) {
+        // browser notifications are handled client-side via WebSocket
+      }
+    }
+  }
+
+  function evaluateAlerts(tick: Tick) {
+    const allRules = alerts.getRules();
 
     for (const event of tick.events) {
       if (event.type === 'remove') continue;
@@ -81,61 +114,34 @@ export function createEventPipeline() {
       };
       const fired = alerts.evaluate(proc.id, proc.name, metrics);
       if (fired.length > 0) {
-        for (const alertEvent of fired) {
-          logger.warn(`Alert: ${alertEvent.message}`);
-
-          const rule = allRules.find((r) => r.id === alertEvent.ruleId);
-          const channels = rule?.channels?.length ? rule.channels : ['browser'];
-
-          const notificationPayload = {
-            message: alertEvent.message,
-            processName: alertEvent.processName,
-            metric: alertEvent.metric,
-            value: alertEvent.value,
-            threshold: alertEvent.threshold,
-          };
-
-          if (channels.includes('webhook') && isChannelEnabled('webhook') && webhookUrl) {
-            sendWebhook(webhookUrl, notificationPayload).catch(() => {});
-          }
-          if (channels.includes('slack') && isChannelEnabled('slack') && slackUrl) {
-            sendSlack(slackUrl, { message: alertEvent.message }).catch(() => {});
-          }
-          if (channels.includes('discord') && isChannelEnabled('discord') && discordUrl) {
-            sendDiscord(discordUrl, { message: alertEvent.message }).catch(() => {});
-          }
-          if (channels.includes('email') && isChannelEnabled('email') && !!process.env.SMTP_HOST && !!process.env.SMTP_FROM && !!process.env.SMTP_TO) {
-            sendEmailNotification(`Alert: ${alertEvent.processName}`, alertEvent.message).catch(() => {});
-          }
-          if (channels.includes('browser') && isChannelEnabled('browser')) {
-            // browser notifications are handled client-side via WebSocket
-          }
-        }
+        notifyAlerts(fired, allRules);
       }
     }
   }
 
-  function buildTick(events: ProcessEvent[], system: ReturnType<typeof readSystem>): Tick {
+  function buildTick(events: ProcessEvent[], system: ReturnType<typeof readSystem>): Tick | null {
     const now = Date.now();
     const needsFullSync = now - lastFullSync > FULL_SYNC_INTERVAL;
-    const tick: Tick = {
-      ts: now,
-      events,
-      system,
-    };
 
     if (needsFullSync) {
       lastFullSync = now;
       fullSeq++;
       bridge.list().then((snapshots) => {
-        tick.full = snapshots;
-        tick.fullSeq = fullSeq;
+        const tick: Tick = {
+          ts: now,
+          events,
+          system,
+          full: snapshots,
+          fullSeq,
+        };
         persistTick(tick);
+        evaluateAlerts(tick);
         broadcast(tick);
       });
-      return tick;
+      return null;
     }
 
+    const tick: Tick = { ts: now, events, system };
     persistTick(tick);
     evaluateAlerts(tick);
     return tick;
@@ -148,7 +154,7 @@ export function createEventPipeline() {
 
     if (clients.size > 0) {
       const tick = buildTick(events, readSystem());
-      if (tick.events.length > 0) {
+      if (tick && tick.events.length > 0) {
         broadcast(tick);
       }
     }
@@ -187,6 +193,7 @@ export function createEventPipeline() {
 
       const now = Date.now();
       const snapshots = await bridge.list();
+      fullSeq++;
 
       for (const snap of snapshots) {
         buffer.push(snap.id, now, snap.cpu, snap.memory);
@@ -196,9 +203,22 @@ export function createEventPipeline() {
         ts: now,
         events: [],
         full: snapshots,
-        fullSeq: fullSeq,
+        fullSeq,
         system: readSystem(),
       };
+
+      for (const snap of snapshots) {
+        const metrics: Record<string, number> = {
+          cpu: snap.cpu,
+          memory: snap.memory,
+          restarts: snap.restarts,
+        };
+        const fired = alerts.evaluate(snap.id, snap.name, metrics);
+        if (fired.length > 0) {
+          notifyAlerts(fired, alerts.getRules());
+        }
+      }
+
       broadcast(tick);
     }, 2000);
   }

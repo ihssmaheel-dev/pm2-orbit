@@ -10,6 +10,8 @@ export function Header() {
   const setActiveTab = useUIStore((s) => s.setActiveTab);
   const wsStatus = useUIStore((s) => s.wsStatus);
 
+  const themeLabels: Record<string, string> = { dark: "Dark", light: "Light", system: "System" };
+
   const toggleTheme = () => {
     if (theme === "dark") setTheme("light");
     else if (theme === "light") setTheme("system");
@@ -54,7 +56,7 @@ export function Header() {
         <button
           onClick={toggleTheme}
           className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-          title={`Theme: ${theme}`}
+          title={`Theme: ${themeLabels[theme] || theme}`}
         >
           {theme === "system" ? <Monitor size={16} /> : <ThemeIcon size={16} />}
         </button>

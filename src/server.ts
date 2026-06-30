@@ -142,7 +142,10 @@ export async function createServer(_opts: ServerOpts) {
 
   pipeline.start();
 
-  await pipeline.bridge.connect().catch((err: Error) => {
+  await Promise.race([
+    pipeline.bridge.connect(),
+    new Promise<void>((_, reject) => setTimeout(() => reject(new Error('PM2 connection timed out after 10s')), 10_000)),
+  ]).catch((err: Error) => {
     logger.warn(`PM2 bridge: ${err.message}`);
   });
 

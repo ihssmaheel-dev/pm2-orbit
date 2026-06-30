@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Download, Upload } from 'lucide-react';
+import { toast } from 'sonner';
 import { useTheme } from '@/hooks/useTheme';
 import { Button } from '@/components/shared/Button';
 import { Badge } from '@/components/shared/Badge';
@@ -95,8 +96,8 @@ export function Settings() {
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
       }
-    } catch {
-      // ignore
+    } catch (e) {
+      toast.error('Failed to save settings', { description: e instanceof Error ? e.message : 'Unknown error' });
     }
     setSaving(false);
   };

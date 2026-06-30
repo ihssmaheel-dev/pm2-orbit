@@ -73,7 +73,6 @@ export function LogViewer() {
   const paused = useLogsStore((s) => s.paused);
   const setPaused = useLogsStore((s) => s.setPaused);
   const clearLogs = useLogsStore((s) => s.clearLogs);
-  const buffers = useLogsStore((s) => s.buffers);
   const processes = useProcessStore((s) => s.processes);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -87,6 +86,10 @@ export function LogViewer() {
   const autoScrollRef = useRef(true);
 
   autoScrollRef.current = autoScroll;
+
+  const selectedBuffer = useLogsStore(
+    (s) => selectedProcessId === "all" ? s.buffers : (s.buffers.get(selectedProcessId) ?? null),
+  );
 
   const processEntries = useMemo(() => {
     const entries: { id: number; name: string }[] = [];
@@ -148,20 +151,28 @@ export function LogViewer() {
   }, [processIds]);
 
   const totalBufferSizes = useMemo(() => {
+    if (selectedBuffer === null) return 0;
+    if (Array.isArray(selectedBuffer)) return selectedBuffer.length;
     let total = 0;
-    for (const entries of buffers.values()) total += entries.length;
+    for (const entries of selectedBuffer.values()) total += entries.length;
     return total;
-  }, [buffers]);
+  }, [selectedBuffer]);
 
   const filteredLogs = useMemo(() => {
     const maxBeforeFilter = MAX_VISIBLE_LOGS + 10000;
     const result: LogEntry[] = [];
     const source: [number, LogEntry[]][] = [];
 
-    for (const [pid, entries] of buffers) {
-      if (selectedProcessId !== "all" && pid !== selectedProcessId) continue;
-      if (entries.length === 0) continue;
-      source.push([pid, entries]);
+    if (selectedBuffer === null) return result;
+
+    if (Array.isArray(selectedBuffer)) {
+      source.push([selectedProcessId as number, selectedBuffer]);
+    } else {
+      for (const [pid, entries] of selectedBuffer) {
+        if (selectedProcessId !== "all" && pid !== selectedProcessId) continue;
+        if (entries.length === 0) continue;
+        source.push([pid, entries]);
+      }
     }
 
     if (source.length === 0) return result;
@@ -202,7 +213,7 @@ export function LogViewer() {
     }
 
     return filtered;
-  }, [buffers, processEntries, selectedProcessId, streamFilter, searchQuery]);
+  }, [selectedBuffer, processEntries, selectedProcessId, streamFilter, searchQuery]);
 
   const showProcessColumn = selectedProcessId === "all" && processEntries.length > 1;
 
@@ -302,7 +313,7 @@ export function LogViewer() {
           All ({totalBufferSizes.toLocaleString()})
         </button>
         {processEntries.map((p) => {
-          const count = buffers.get(p.id)?.length || 0;
+          const count = useLogsStore.getState().buffers.get(p.id)?.length || 0;
           return (
             <button
               key={p.id}
@@ -325,7 +336,7 @@ export function LogViewer() {
           </div>
         ) : filteredLogs.length === 0 ? (
           <div className="flex items-center justify-center h-full text-muted-foreground text-xs">
-            {totalBufferSizes > 0 ? "No logs match the current filters" : "Waiting for log output..."}
+            {paused ? "Stream paused" : totalBufferSizes > 0 ? "No logs match the current filters" : "Waiting for log output..."}
           </div>
         ) : (
           <div style={{ height: `${virtualizer.getTotalSize()}px`, position: "relative" }}>

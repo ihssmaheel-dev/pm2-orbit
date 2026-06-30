@@ -61,6 +61,7 @@ export function createPm2Bridge() {
 
   let lastEventTime = 0;
   let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  let staleTimer: ReturnType<typeof setInterval> | null = null;
 
   const EMIT_DEDUP_MS = 300;
   const lastEmitMap = new Map<number, number>();
@@ -85,10 +86,38 @@ export function createPm2Bridge() {
     }, BUS_HEARTBEAT_MS);
   }
 
+  async function pruneCache() {
+    if (!pm2Module) return;
+    return new Promise<void>((resolve) => {
+      pm2Module!.list((err: Error | null, list: unknown[]) => {
+        if (err) return resolve();
+        const activeIds = new Set(list.map((p: any) => p.pm_id as number));
+        for (const id of processCache.keys()) {
+          if (!activeIds.has(id)) {
+            processCache.delete(id);
+            lastUpdateMap.delete(id);
+          }
+        }
+        resolve();
+      });
+    });
+  }
+
+  function startStaleTimer() {
+    staleTimer = setInterval(() => {
+      reconcileStale();
+      pruneCache();
+    }, STALE_THRESHOLD_MS);
+  }
+
   function stopHeartbeat() {
     if (heartbeatTimer) {
       clearInterval(heartbeatTimer);
       heartbeatTimer = null;
+    }
+    if (staleTimer) {
+      clearInterval(staleTimer);
+      staleTimer = null;
     }
   }
 
@@ -152,6 +181,8 @@ export function createPm2Bridge() {
           bus = _bus;
           startHeartbeat();
 
+          startStaleTimer();
+
           bus.on('process:event', async (event: Pm2Event) => {
             const now = Date.now();
             const pid = event.process.pm_id;
@@ -197,7 +228,6 @@ export function createPm2Bridge() {
   }
 
   async function list(): Promise<ProcessSnapshot[]> {
-    await reconcileStale();
     return Array.from(processCache.values());
   }
 

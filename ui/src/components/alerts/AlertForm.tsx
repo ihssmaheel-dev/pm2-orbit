@@ -50,18 +50,16 @@ export function AlertForm({ open, onClose }: AlertFormProps) {
   };
 
   const handleSubmit = () => {
-    if (!threshold) return;
+    if (threshold.trim() === '' || isNaN(parseFloat(threshold))) return;
 
-    const rule = {
+    const rule: AlertRule = {
       id: `rule-${Date.now()}`,
       metric,
       operator,
       threshold: parseFloat(threshold),
       enabled: true,
-      channels: Array.from(channels),
-    } as unknown as AlertRule;
-
-    addRule(rule);
+      channels: Array.from(channels) as AlertRule['channels'],
+    };
 
     addRule(rule);
     onClose();

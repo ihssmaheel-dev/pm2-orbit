@@ -102,9 +102,12 @@ export function createAlertEngine() {
 
   function evaluate(processId: number, processName: string, metrics: Record<string, number>): AlertEvent[] {
     const fired: AlertEvent[] = [];
-    const procRules = pendingEvals.get(processId) || [];
+    const rulesToCheck = [
+      ...(pendingEvals.get(processId) || []),
+      ...globalRules,
+    ];
 
-    for (const rule of procRules) {
+    for (const rule of rulesToCheck) {
       const value = metrics[rule.metric];
       if (value === undefined) continue;
 
@@ -141,8 +144,10 @@ export function createAlertEngine() {
     return [...rules];
   }
 
-  function getHistory(): AlertEvent[] {
-    return [...history];
+  const MAX_HISTORY = 50;
+
+  function getHistory(): { events: AlertEvent[]; truncated: boolean } {
+    return { events: [...history], truncated: history.length > MAX_HISTORY };
   }
 
   return {
@@ -152,5 +157,6 @@ export function createAlertEngine() {
     evaluate,
     getRules,
     getHistory,
+    MAX_HISTORY,
   };
 }

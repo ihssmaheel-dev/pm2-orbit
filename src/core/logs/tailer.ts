@@ -17,6 +17,7 @@ export function createLogTailer(processId: number, processName: string, logPaths
   let closed = false;
   const watchers: fs.FSWatcher[] = [];
   const filePositions: Record<string, number> = {};
+  const fileVersions: Record<string, number> = {};
   const debounceTimers: Record<string, NodeJS.Timeout | null> = {};
   let pollTimer: NodeJS.Timeout | null = null;
 
@@ -48,6 +49,13 @@ export function createLogTailer(processId: number, processName: string, logPaths
 
       const stat = fs.statSync(filePath);
       const lastPos = filePositions[filePath] || 0;
+      const lastVer = fileVersions[filePath] || 0;
+      const currentVer = stat.ino || stat.size + stat.mtimeMs;
+
+      if (currentVer !== lastVer) {
+        filePositions[filePath] = 0;
+        fileVersions[filePath] = currentVer;
+      }
 
       if (stat.size < lastPos) {
         filePositions[filePath] = 0;

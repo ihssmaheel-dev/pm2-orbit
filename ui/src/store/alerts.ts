@@ -5,6 +5,7 @@ import type { AlertRule, AlertEvent } from '@/types/alerts';
 interface AlertsStore {
   rules: AlertRule[];
   history: AlertEvent[];
+  historyTruncated: boolean;
   loading: boolean;
   fetchRules: () => Promise<void>;
   fetchHistory: () => Promise<void>;
@@ -18,6 +19,7 @@ interface AlertsStore {
 export const useAlertsStore = create<AlertsStore>((set) => ({
   rules: [],
   history: [],
+  historyTruncated: false,
   loading: false,
 
   fetchRules: async () => {
@@ -39,8 +41,8 @@ export const useAlertsStore = create<AlertsStore>((set) => ({
     try {
       const res = await api('/api/alerts/history', { silent: true });
       if (res.ok) {
-        const history = await res.json();
-        set({ history });
+        const data = await res.json();
+        set({ history: data.events || data, historyTruncated: data.truncated || false });
       }
     } catch {
       // ignore

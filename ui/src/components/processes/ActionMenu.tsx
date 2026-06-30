@@ -21,6 +21,7 @@ const STATUS_ACTIONS: Record<ProcessStatus, string[]> = {
 
 export function ActionMenu({ processId, processName }: ActionMenuProps) {
   const [open, setOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const status = useProcessStore((s) => s.processes.get(processId)?.status || 'stopped');
 
@@ -47,11 +48,14 @@ export function ActionMenu({ processId, processName }: ActionMenuProps) {
       });
     }
     setOpen(false);
+    setConfirmAction(null);
   };
 
   const actions = STATUS_ACTIONS[status] || [];
 
   if (actions.length === 0) return null;
+
+  const destructiveActions = ['stop'];
 
   return (
     <>
@@ -71,32 +75,32 @@ export function ActionMenu({ processId, processName }: ActionMenuProps) {
         }
       >
         {actions.includes('start') && (
-          <DropdownItem onClick={() => handleAction('start')}>
+          <DropdownItem onClick={() => { setConfirmAction('start'); }}>
             <Play size={14} /> Start
           </DropdownItem>
         )}
         {actions.includes('restart') && (
-          <DropdownItem onClick={() => handleAction('restart')}>
+          <DropdownItem onClick={() => { setConfirmAction('restart'); }}>
             <RotateCw size={14} /> Restart
           </DropdownItem>
         )}
         {actions.includes('reload') && (
-          <DropdownItem onClick={() => handleAction('reload')}>
+          <DropdownItem onClick={() => { setConfirmAction('reload'); }}>
             <RefreshCw size={14} /> Reload
           </DropdownItem>
         )}
         {actions.includes('stop') && (
-          <DropdownItem onClick={() => handleAction('stop')}>
+          <DropdownItem onClick={() => { setConfirmAction('stop'); }}>
             <Square size={14} /> Stop
           </DropdownItem>
         )}
 
         {actions.length > 0 && <DropdownSeparator />}
 
-        <DropdownItem onClick={() => handleAction('scale')}>
+        <DropdownItem onClick={() => { setConfirmAction('scale'); }}>
           Scale
         </DropdownItem>
-        <DropdownItem onClick={() => handleAction('flush')}>
+        <DropdownItem onClick={() => { setConfirmAction('flush'); }}>
           Flush Logs
         </DropdownItem>
 
@@ -106,6 +110,15 @@ export function ActionMenu({ processId, processName }: ActionMenuProps) {
         </DropdownItem>
       </Dropdown>
 
+      <ConfirmDialog
+        open={confirmAction !== null}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={() => confirmAction && handleAction(confirmAction)}
+        title={`${confirmAction ? confirmAction.charAt(0).toUpperCase() + confirmAction.slice(1) : ''} Process`}
+        message={`Are you sure you want to ${confirmAction} "${processName}"?`}
+        confirmLabel={confirmAction ? confirmAction.charAt(0).toUpperCase() + confirmAction.slice(1) : ''}
+        variant={confirmAction && destructiveActions.includes(confirmAction) ? 'destructive' : 'default'}
+      />
       <ConfirmDialog
         open={deleteConfirm}
         onClose={() => setDeleteConfirm(false)}

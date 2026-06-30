@@ -14,7 +14,7 @@ export function sanitizeFileName(name: string): string {
 export function parseIdParam(id: string): number | null {
   if (!id || typeof id !== 'string') return null;
   const num = parseInt(id, 10);
-  if (isNaN(num) || num <= 0) return null;
+  if (isNaN(num) || num < 0) return null;
   if (!Number.isSafeInteger(num)) return null;
   return num;
 }

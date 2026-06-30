@@ -6,12 +6,16 @@ import { useUIStore } from '@/store/ui';
 
 export function Dashboard() {
   const wsStatus = useUIStore((s) => s.wsStatus);
-  const loading = wsStatus === 'connecting';
 
   return (
     <div className="flex flex-col h-full gap-4 p-4">
+      {wsStatus === 'disconnected' && (
+        <div className="h-8 flex items-center justify-center bg-destructive/10 border border-destructive/30 text-destructive text-xs uppercase tracking-wider">
+          Disconnected — showing stale data
+        </div>
+      )}
       <SystemCards />
-      {loading ? (
+      {wsStatus === 'connecting' ? (
         <div className="flex-1 bg-card border border-border/50 overflow-hidden">
           <TableSkeleton rows={10} />
         </div>

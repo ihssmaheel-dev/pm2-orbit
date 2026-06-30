@@ -17,10 +17,11 @@ async function buildServer() {
     entryPoints: ['src/server.ts'],
     bundle: true,
     platform: 'node',
-    target: 'node20',
+    target: 'node18',
     outfile: 'dist/server.js',
     external: ['pm2', 'better-sqlite3'],
     minify: true,
+    sourcemap: true,
   });
 }
 

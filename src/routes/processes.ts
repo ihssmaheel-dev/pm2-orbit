@@ -4,6 +4,10 @@ import { parseIdParam } from '../utils/validate';
 
 type Pipeline = ReturnType<typeof createEventPipeline>;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let pm2Module: any = null;
+try { pm2Module = require('pm2'); } catch { /* pm2 not installed */ }
+
 const VALID_ACTIONS = ['restart', 'stop', 'start', 'reload', 'delete', 'scale', 'flush'];
 
 export async function registerProcessRoutes(app: FastifyInstance, pipeline: Pipeline) {
@@ -17,7 +21,7 @@ export async function registerProcessRoutes(app: FastifyInstance, pipeline: Pipe
     if (processId === null) return {};
 
     try {
-      const pm2Module = require('pm2');
+      if (!pm2Module) return {};
       return new Promise((resolve) => {
         pm2Module.list((err: Error | null, list: unknown[]) => {
           if (err) return resolve({});
@@ -71,7 +75,7 @@ export async function registerProcessRoutes(app: FastifyInstance, pipeline: Pipe
     }
 
     try {
-      const pm2Module = require('pm2');
+      if (!pm2Module) return reply.code(500).send({ error: 'PM2 not available' });
 
       if (action === 'scale') {
         const name = await new Promise<string>((resolve, reject) => {
@@ -94,7 +98,7 @@ export async function registerProcessRoutes(app: FastifyInstance, pipeline: Pipe
       const actionFn = {
         restart: (cb: (err: Error | null) => void) => pm2Module.restart(processId, cb),
         stop: (cb: (err: Error | null) => void) => pm2Module.stop(processId, cb),
-        start: (cb: (err: Error | null) => void) => pm2Module.restart(processId, cb),
+        start: (cb: (err: Error | null) => void) => pm2Module.start(processId, cb),
         reload: (cb: (err: Error | null) => void) => pm2Module.reload(processId, cb),
         delete: (cb: (err: Error | null) => void) => pm2Module.delete(processId, cb),
         flush: (cb: (err: Error | null) => void) => pm2Module.flush(processId, cb),
