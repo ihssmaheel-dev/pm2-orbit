@@ -131,7 +131,7 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
         role="cell"
         className="w-26 shrink-0 px-3 flex items-center overflow-hidden"
       >
-        {p.history.cpu.length >= 2 ? (
+        {p.status === 'online' && p.history.cpu.length >= 2 ? (
           <Sparkline
             data={p.history.cpu}
             color="var(--chart-cpu)"
