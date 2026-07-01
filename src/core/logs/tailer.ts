@@ -27,6 +27,17 @@ export function createLogTailer(processId: number, processName: string, logPaths
     const homeDir = process.env.HOME || process.env.USERPROFILE || '';
     const base = path.join(homeDir, '.pm2', 'logs', sanitizeFileName(processName));
 
+    // Check PM2-specific numbered file first — PM2 often creates
+    // {name}-{type}-{id}.log for the current instance. The non-numbered
+    // {name}-{type}.log may exist as a copy/symlink but could be empty
+    // or only have the current session's output.
+    const numberedPath = `${base}-${type}-${processId}.log`;
+    if (fs.existsSync(numberedPath)) return numberedPath;
+    if (type === 'err') {
+      const errNumberedPath = `${base}-error-${processId}.log`;
+      if (fs.existsSync(errNumberedPath)) return errNumberedPath;
+    }
+
     const patterns = [`${base}-${type}.log`];
     if (type === 'err') patterns.push(`${base}-error.log`);
     for (let i = 0; i < 16; i++) {
@@ -62,6 +73,7 @@ export function createLogTailer(processId: number, processName: string, logPaths
       filePositions[filePath] = stat.size;
 
       let text = buf.toString('utf-8');
+      console.log(`[tailer] read ${filePath}: ${buf.length} bytes, firstLine=${text.slice(0, 80).replace(/\n/g, '\\n')}`);
       if (partial !== null) {
         text = partial + text;
         partial = null;
@@ -109,8 +121,10 @@ export function createLogTailer(processId: number, processName: string, logPaths
   function init() {
     outPath = resolveLogPath('out');
     errPath = resolveLogPath('err');
+    console.log(`[tailer] processId=${processId} name=${processName} out=${outPath} err=${errPath} outExists=${fs.existsSync(outPath)} errExists=${fs.existsSync(errPath)}`);
     readNewLines(outPath, 'stdout');
     readNewLines(errPath, 'stderr');
+    console.log(`[tailer] buffer after init: ${buffer.length} entries`);
   }
 
   function poll() {
