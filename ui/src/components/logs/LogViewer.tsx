@@ -118,7 +118,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
             }
           } catch (e) { console.warn('[logs] parse error:', line.slice(0, 100), e); }
         }
-        if (parsed > 0) console.log(`[logs] +${parsed} entries`);
+        if (parsed > 0) console.log(`[logs] +${parsed} entries`, lines.map(l => { try { const d=JSON.parse(l); return `${d.stream||'?'}|${(d.message||'').slice(0,60)}`; } catch { return '?'; } }).join('  '));
       } catch (e) { console.warn('[logs] event error:', e); }
     };
     es.onerror = (e) => console.warn('[logs] EventSource error:', e);
