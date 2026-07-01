@@ -16,6 +16,7 @@ export function createLogTailer(processId: number, processName: string, logPaths
   let outPath = '';
   let errPath = '';
   const filePositions: Record<string, number> = {};
+  let partial: string | null = null;
 
   function resolveLogPath(type: 'out' | 'err'): string {
     if (logPaths) {
@@ -48,6 +49,7 @@ export function createLogTailer(processId: number, processName: string, logPaths
 
       if (stat.size < lastPos) {
         filePositions[filePath] = 0;
+        partial = null;
       }
 
       if (stat.size <= (filePositions[filePath] || 0)) return;
@@ -59,18 +61,39 @@ export function createLogTailer(processId: number, processName: string, logPaths
 
       filePositions[filePath] = stat.size;
 
-      const text = buf.toString('utf-8');
+      let text = buf.toString('utf-8');
+      if (partial !== null) {
+        text = partial + text;
+        partial = null;
+      }
+
+      if (!text.endsWith('\n')) {
+        const idx = text.lastIndexOf('\n');
+        if (idx >= 0) {
+          partial = text.slice(idx + 1);
+          text = text.slice(0, idx + 1);
+        } else {
+          partial = text;
+          return;
+        }
+      }
+
       const lines = text.split('\n');
+      lines.pop();
 
       for (const raw of lines) {
         const line = raw.replace(/\r$/, '');
         if (line.length === 0) continue;
 
-        buffer.push({
-          ts: Date.now(),
-          stream,
-          message: line,
-        });
+        const ch = line[0];
+        if (ch === ' ' || ch === '\t' || ch === '}' || ch === ']' || ch === ')') {
+          if (buffer.length > 0) {
+            buffer[buffer.length - 1].message += '\n' + line;
+            continue;
+          }
+        }
+
+        buffer.push({ ts: Date.now(), stream, message: line });
       }
 
       if (buffer.length > MAX_BUFFER_SIZE) {
