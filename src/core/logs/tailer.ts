@@ -81,8 +81,10 @@ export function createLogTailer(processId: number, processName: string, logPaths
       const lines = text.split('\n');
       lines.pop();
 
+      const ansiRe = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORa-z]/g;
+
       for (const raw of lines) {
-        const line = raw.replace(/\r$/, '');
+        const line = raw.replace(/\r$/, '').replace(ansiRe, '');
         if (line.length === 0) continue;
 
         const ch = line[0];
