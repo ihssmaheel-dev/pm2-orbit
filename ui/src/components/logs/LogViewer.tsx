@@ -58,7 +58,7 @@ const LogLine = memo(function LogLine({
       )}
       <span
         className={cn(
-          "flex-1 min-w-0 truncate",
+          "flex-1 min-w-0 whitespace-pre-wrap break-all",
           isStdErr ? "text-destructive" : "text-foreground",
         )}
       >
