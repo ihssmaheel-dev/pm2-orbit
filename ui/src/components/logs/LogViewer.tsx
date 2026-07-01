@@ -25,18 +25,15 @@ function formatTime(ts: number): string {
 const LogLine = memo(function LogLine({
   log,
   showProcess,
-  style,
 }: {
   log: LogEntry;
   showProcess: boolean;
-  style?: React.CSSProperties;
 }) {
   const isStdErr = log.stream === "stderr";
   return (
     <div
-      style={style}
       className={cn(
-        "flex gap-2 px-4 py-0.5 hover:bg-subtle leading-5 truncate",
+        "flex gap-2 px-4 py-0.5 hover:bg-subtle leading-5",
         isStdErr && "bg-destructive/5",
       )}
     >
@@ -206,6 +203,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
     getScrollElement: () => parentRef.current,
     estimateSize: () => 24,
     overscan: 20,
+    measureElement: (element) => element.getBoundingClientRect().height,
   });
 
   useEffect(() => {
@@ -325,18 +323,17 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
         ) : (
           <div style={{ height: `${virtualizer.getTotalSize()}px`, position: "relative" }}>
             {virtualizer.getVirtualItems().map((vr) => (
-              <LogLine
+              <div
                 key={vr.index}
-                log={filteredLogs[vr.index]}
-                showProcess={showProcessColumn}
-                style={{
-                  position: "absolute",
-                  top: vr.start,
-                  left: 0,
-                  width: "100%",
-                  height: vr.size,
-                }}
-              />
+                ref={virtualizer.measureElement}
+                data-index={vr.index}
+                style={{ position: "absolute", top: vr.start, left: 0, width: "100%" }}
+              >
+                <LogLine
+                  log={filteredLogs[vr.index]}
+                  showProcess={showProcessColumn}
+                />
+              </div>
             ))}
           </div>
         )}
