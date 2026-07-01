@@ -109,20 +109,15 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
         const raw = event.data as string;
         if (!raw || raw.startsWith(':')) return;
         const addLog = useLogsStore.getState().addLog;
-        if (raw.startsWith('{')) {
-          const data = JSON.parse(raw);
-          addLog({ ts: data.ts, processId: data.processId, processName: data.processName, stream: data.stream, message: data.message });
-        } else {
-          const lines = raw.split('\n');
-          for (const line of lines) {
-            if (!line) continue;
-            try {
-              const data = JSON.parse(line);
-              addLog({ ts: data.ts, processId: data.processId, processName: data.processName, stream: data.stream, message: data.message });
-            } catch {}
-          }
+        const lines = raw.split('\n');
+        for (const line of lines) {
+          if (!line) continue;
+          try {
+            const data = JSON.parse(line);
+            addLog({ ts: data.ts, processId: data.processId, processName: data.processName, stream: data.stream, message: data.message });
+          } catch { /* skip malformed line */ }
         }
-      } catch {}
+      } catch { /* skip malformed event */ }
     };
     return () => { es.close(); };
   }, []);
