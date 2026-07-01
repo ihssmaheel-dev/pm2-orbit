@@ -24,6 +24,7 @@ const BATCH_LIMIT = 100;
 
 const working = new Map<number, LogEntry[]>();
 const pending = new Map<number, LogEntry[]>();
+let pendingCount = 0;
 const lastSeen = new Map<number, number>();
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
 let gcTimer: ReturnType<typeof setInterval> | null = null;
@@ -41,8 +42,12 @@ function gcStaleEntries() {
   const cutoff = Date.now() - 120_000;
   for (const [pid, ts] of lastSeen) {
     if (ts < cutoff) {
+      const pendingEntry = pending.get(pid);
+      if (pendingEntry) {
+        pendingCount -= pendingEntry.length;
+        pending.delete(pid);
+      }
       working.delete(pid);
-      pending.delete(pid);
       lastSeen.delete(pid);
     }
   }
@@ -60,6 +65,7 @@ function flushToStore(set: (partial: Partial<LogsStore>) => void) {
 
   const snap = new Map(pending);
   pending.clear();
+  pendingCount = 0;
 
   for (const [pid, entries] of snap) {
     const buf = getBuf(working, pid);
@@ -96,7 +102,8 @@ export const useLogsStore = create<LogsStore>((set, get) => ({
     if (get().paused) return;
     lastSeen.set(entry.processId, Date.now());
     getBuf(pending, entry.processId).push(entry);
-    if (pending.size >= BATCH_LIMIT) {
+    pendingCount++;
+    if (pendingCount >= BATCH_LIMIT) {
       if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
       flushToStore(set);
     } else {
@@ -107,6 +114,7 @@ export const useLogsStore = create<LogsStore>((set, get) => ({
   clearLogs: (processId) => {
     if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
     pending.clear();
+    pendingCount = 0;
     if (processId !== undefined) {
       working.delete(processId);
       set((state) => {

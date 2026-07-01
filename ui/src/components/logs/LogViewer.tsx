@@ -182,7 +182,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
       if (collected >= maxBeforeFilter) break;
     }
 
-    if (selectedProcessId === "all" && result.length > 10000) {
+    if (selectedProcessId === "all") {
       result.sort((a, b) => a.ts - b.ts);
     }
 

@@ -16,7 +16,6 @@ export function createLogTailer(processId: number, processName: string, logPaths
   let outPath = '';
   let errPath = '';
   const filePositions: Record<string, number> = {};
-  const fileVersions: Record<string, number> = {};
 
   function resolveLogPath(type: 'out' | 'err'): string {
     if (logPaths) {
@@ -46,13 +45,6 @@ export function createLogTailer(processId: number, processName: string, logPaths
 
       const stat = fs.statSync(filePath);
       const lastPos = filePositions[filePath] || 0;
-      const lastVer = fileVersions[filePath] || 0;
-      const currentVer = stat.ino || stat.size + stat.mtimeMs;
-
-      if (currentVer !== lastVer) {
-        filePositions[filePath] = 0;
-        fileVersions[filePath] = currentVer;
-      }
 
       if (stat.size < lastPos) {
         filePositions[filePath] = 0;
@@ -70,8 +62,9 @@ export function createLogTailer(processId: number, processName: string, logPaths
       const text = buf.toString('utf-8');
       const lines = text.split('\n');
 
-      for (const line of lines) {
-        if (line.length === 0 && buffer.length > 0) continue;
+      for (const raw of lines) {
+        const line = raw.replace(/\r$/, '');
+        if (line.length === 0) continue;
 
         buffer.push({
           ts: Date.now(),
