@@ -107,15 +107,21 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
         if (!raw || raw.startsWith(':')) return;
         const addLog = useLogsStore.getState().addLog;
         const lines = raw.split('\n');
+        let parsed = 0;
         for (const line of lines) {
           if (!line) continue;
           try {
             const data = JSON.parse(line);
-            addLog({ ts: data.ts, processId: data.processId, processName: data.processName, stream: data.stream, message: data.message });
-          } catch { /* skip malformed line */ }
+            if (data && typeof data.ts === 'number' && data.processId != null) {
+              addLog({ ts: data.ts, processId: data.processId, processName: data.processName || `PID ${data.processId}`, stream: data.stream || 'stdout', message: data.message || '' });
+              parsed++;
+            }
+          } catch (e) { console.warn('[logs] parse error:', line.slice(0, 100), e); }
         }
-      } catch { /* skip malformed event */ }
+        if (parsed > 0) console.log(`[logs] +${parsed} entries`);
+      } catch (e) { console.warn('[logs] event error:', e); }
     };
+    es.onerror = (e) => console.warn('[logs] EventSource error:', e);
     return () => { es.close(); };
   }, []);
 
