@@ -7,7 +7,7 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Search, X, Square, Play } from "lucide-react";
+import { Search, X, Square, Play, RotateCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { useProcessStore } from "@/store/processes";
@@ -45,6 +45,8 @@ export function ProcessTable() {
   const [busy, setBusy] = useState(false);
   const [stopConfirm, setStopConfirm] = useState(false);
   const [startConfirm, setStartConfirm] = useState(false);
+  const [restartConfirm, setRestartConfirm] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
   const parentRef = useRef<HTMLDivElement>(null);
 
   const data = useMemo(() => {
@@ -130,17 +132,31 @@ export function ProcessTable() {
         <div className="flex items-center gap-2">
           <button
             disabled={busy || onlineCount === 0}
+            onClick={() => setRestartConfirm(true)}
+            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-foreground/80 hover:text-primary border border-border/60 hover:border-primary/40 transition-colors disabled:opacity-25 disabled:pointer-events-none"
+          >
+            <RotateCw size={10} /> Restart All
+          </button>
+          <button
+            disabled={busy || onlineCount === 0}
             onClick={() => setStopConfirm(true)}
-            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-muted-foreground/70 hover:text-destructive border border-border/60 hover:border-destructive/40 transition-colors disabled:opacity-25 disabled:pointer-events-none"
+            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-foreground/80 hover:text-destructive border border-border/60 hover:border-destructive/40 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
             <Square size={10} /> Stop All
           </button>
           <button
             disabled={busy || stoppedCount === 0}
             onClick={() => setStartConfirm(true)}
-            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-muted-foreground/70 hover:text-success border border-border/60 hover:border-success/40 transition-colors disabled:opacity-25 disabled:pointer-events-none"
+            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-foreground/80 hover:text-success border border-border/60 hover:border-success/40 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
             <Play size={10} /> Start All
+          </button>
+          <button
+            disabled={busy || filteredData.length === 0}
+            onClick={() => setDeleteConfirm(true)}
+            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-foreground/80 hover:text-destructive border border-destructive/30 hover:border-destructive/60 hover:bg-destructive/10 transition-colors disabled:opacity-25 disabled:pointer-events-none"
+          >
+            <Trash2 size={10} /> Delete All
           </button>
           <div className="relative">
             <Search
@@ -343,6 +359,48 @@ export function ProcessTable() {
         message={`This will start ${stoppedCount} stopped process${stoppedCount !== 1 ? 'es' : ''}. Are you sure?`}
         confirmLabel="Start All"
         variant="default"
+      />
+      <ConfirmDialog
+        open={restartConfirm}
+        onClose={() => setRestartConfirm(false)}
+        onConfirm={async () => {
+          const targets = Array.from(processes.values()).filter((p) => p.status === 'online');
+          if (targets.length === 0) return;
+          setBusy(true);
+          const results = await Promise.allSettled(targets.map((p) =>
+            api(`/api/processes/${p.id}/action`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'restart' }), silent: true }),
+          ));
+          setBusy(false);
+          const ok = results.filter((r) => r.status === 'fulfilled' && r.value.ok).length;
+          if (ok === targets.length) toast.success(`Restarted ${ok} process${ok !== 1 ? 'es' : ''}`);
+          else if (ok > 0) toast.success(`Restarted ${ok} of ${targets.length}`);
+          else toast.error(`Failed to restart any process`);
+        }}
+        title="Restart All Processes"
+        message={`This will restart ${onlineCount} running process${onlineCount !== 1 ? 'es' : ''}. Are you sure?`}
+        confirmLabel="Restart All"
+        variant="default"
+      />
+      <ConfirmDialog
+        open={deleteConfirm}
+        onClose={() => setDeleteConfirm(false)}
+        onConfirm={async () => {
+          const targets = Array.from(processes.values());
+          if (targets.length === 0) return;
+          setBusy(true);
+          const results = await Promise.allSettled(targets.map((p) =>
+            api(`/api/processes/${p.id}/action`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete' }), silent: true }),
+          ));
+          setBusy(false);
+          const ok = results.filter((r) => r.status === 'fulfilled' && r.value.ok).length;
+          if (ok === targets.length) toast.success(`Deleted ${ok} process${ok !== 1 ? 'es' : ''}`);
+          else if (ok > 0) toast.success(`Deleted ${ok} of ${targets.length}`);
+          else toast.error(`Failed to delete any process`);
+        }}
+        title="Delete All Processes"
+        message={`This will permanently delete all ${filteredData.length} process${filteredData.length !== 1 ? 'es' : ''} from PM2. This cannot be undone. Are you sure?`}
+        confirmLabel="Delete All"
+        variant="destructive"
       />
     </div>
   );
