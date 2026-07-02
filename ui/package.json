@@ -6,7 +6,7 @@
     "@tanstack/react-table": "^8",
     "@tanstack/react-virtual": "^3",
     "clsx": "^2",
-    "cmdk": "^0.2",
+    "cmdk": "^1.0.4",
     "lucide-react": "^0.400",
     "react": "^19",
     "react-dom": "^19",
