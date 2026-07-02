@@ -112,7 +112,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [autoScroll, setAutoScroll] = useState(true);
   const [streamFilter, setStreamFilter] = useState<StreamFilter>("all");
-  const [selectedProcessId, setSelectedProcessId] = useState<number | "all">("all");
+  const [selectedProcessId, setSelectedProcessId] = useState<number | null>(null);
   const [isDark, setIsDark] = useState(true);
 
   const parentRef = useRef<HTMLDivElement>(null);
@@ -132,7 +132,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
 
   useEffect(() => {
     if (!initialProcessName) {
-      setSelectedProcessId("all");
+      setSelectedProcessId(null);
       return;
     }
     for (const proc of processes.values()) {
@@ -141,7 +141,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
         return;
       }
     }
-    setSelectedProcessId("all");
+    setSelectedProcessId(null);
   }, [initialProcessName, processes]);
 
   useEffect(() => {
@@ -187,11 +187,14 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
 
   const filteredLogs = useMemo(() => {
     const result: LogEntry[] = [];
-    const MAX = selectedProcessId === "all" ? 5000 : 50000;
+
+    if (selectedProcessId === null) return result;
+
+    const MAX = 50000;
     const sourceBufs: [number, LogEntry[]][] = [];
 
     for (const [pid, entries] of buffers) {
-      if (selectedProcessId !== "all" && pid !== selectedProcessId) continue;
+      if (pid !== selectedProcessId) continue;
       if (entries.length === 0) continue;
       sourceBufs.push([pid, entries]);
     }
@@ -200,26 +203,13 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
 
     const nameByPid = new Map(processEntries.map((p) => [p.id, p.name]));
 
-    if (selectedProcessId === "all") {
-      for (const [pid, entries] of sourceBufs) {
-        const name = nameByPid.get(pid) || `PID ${pid}`;
-        const limit = Math.min(entries.length, Math.ceil(MAX / sourceBufs.length));
-        const start = Math.max(0, entries.length - limit);
-        for (let i = start; i < entries.length; i++) {
-          const e = entries[i];
-          result.push(e.processName === name ? e : { ...e, processName: name });
-        }
-      }
-      result.sort((a, b) => a.ts - b.ts);
-    } else {
-      const entries = sourceBufs[0][1];
-      const name = nameByPid.get(selectedProcessId!) || `PID ${selectedProcessId!}`;
-      const limit = Math.min(entries.length, MAX);
-      const start = entries.length - limit;
-      for (let i = start; i < entries.length; i++) {
-        const e = entries[i];
-        result.push(e.processName === name ? e : { ...e, processName: name });
-      }
+    const entries = sourceBufs[0][1];
+    const name = nameByPid.get(selectedProcessId) || `PID ${selectedProcessId}`;
+    const limit = Math.min(entries.length, MAX);
+    const start = entries.length - limit;
+    for (let i = start; i < entries.length; i++) {
+      const e = entries[i];
+      result.push(e.processName === name ? e : { ...e, processName: name });
     }
 
     if (result.length > MAX) result.splice(0, result.length - MAX);
@@ -289,7 +279,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
   }, [clearLogs]);
 
   const selectProcess = useCallback(
-    (id: number | "all") => {
+    (id: number | null) => {
       setSelectedProcessId(id);
       setAutoScroll(true);
       autoScrollRef.current = true;
@@ -400,36 +390,37 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
       </div>
 
       {/* Process tabs */}
-      <div className="flex items-center gap-1 px-3 py-1.5 border-b border-border/30 bg-[#0c1219] dark:bg-[#0c1219] bg-muted/20 shrink-0 overflow-x-auto">
-        <span className="text-[10px] text-muted-foreground uppercase tracking-wider mr-1 font-semibold shrink-0 font-mono">
-          Process:
-        </span>
-        <button
-          onClick={() => { navigate('/logs'); selectProcess('all'); }}
-          className={cn(
-            "px-2 py-0.5 text-[11px] font-mono transition-colors cursor-pointer shrink-0 border",
-            selectedProcessId === "all"
-              ? "bg-primary/10 border-primary/40 text-primary font-semibold"
-              : "border-transparent text-muted-foreground hover:text-foreground hover:bg-subtle/30",
-          )}
-        >
-          All
-        </button>
-        {processEntries.map((p) => (
-          <button
-            key={p.id}
-            onClick={() => { navigate(`/logs/${encodeURIComponent(p.name)}`); selectProcess(p.id); }}
-            className={cn(
-              "px-2 py-0.5 text-[11px] font-mono transition-colors max-w-[120px] truncate cursor-pointer shrink-0 border",
-              selectedProcessId === p.id
-                ? "bg-primary/10 border-primary/40 text-primary font-semibold"
-                : "border-transparent text-muted-foreground hover:text-foreground hover:bg-subtle/30",
-            )}
-          >
-            <span className={cn("inline-block w-1.5 h-1.5 rounded-full mr-1.5 align-middle", getAppColor(p.name, isDark).replace("text-", "bg-"))} />
-            {p.name}
-          </button>
-        ))}
+      <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border/30 bg-[#0c1219] dark:bg-[#0c1219] shrink-0 overflow-x-auto">
+        {processEntries.map((p) => {
+          const isSelected = selectedProcessId === p.id;
+          const hasLogs = (buffers.get(p.id)?.length ?? 0) > 0;
+          return (
+            <button
+              key={p.id}
+              onClick={() => { navigate(`/logs/${encodeURIComponent(p.name)}`); selectProcess(p.id); }}
+              className={cn(
+                "flex items-center gap-2 px-3 py-1.5 text-[12px] font-mono transition-all cursor-pointer shrink-0 rounded-sm border",
+                isSelected
+                  ? "bg-primary/15 border-primary/50 text-primary shadow-sm shadow-primary/10"
+                  : "border-border/30 text-muted-foreground/70 hover:text-foreground hover:border-border/60 hover:bg-subtle/20",
+              )}
+            >
+              <span className={cn(
+                "w-2 h-2 rounded-full shrink-0 transition-colors",
+                isSelected ? "bg-primary" : hasLogs ? "bg-success/60" : "bg-muted-foreground/30",
+              )} />
+              <span className="truncate max-w-[100px]">{p.name}</span>
+              {hasLogs && (
+                <span className={cn(
+                  "text-[9px] font-mono tabular-nums px-1 leading-3",
+                  isSelected ? "bg-primary/20 text-primary" : "bg-subtle/60 text-muted-foreground/50",
+                )}>
+                  {buffers.get(p.id)?.length ?? 0}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Log content */}
@@ -444,6 +435,16 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
             <Terminal size="36" className="opacity-20" />
             <p className="text-sm font-semibold uppercase tracking-wider">No processes running</p>
             <p className="text-xs opacity-40">Start a PM2 process to see logs here</p>
+          </div>
+        ) : selectedProcessId === null ? (
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-4 select-none">
+            <div className="w-16 h-16 rounded-lg bg-subtle/30 border border-border/30 flex items-center justify-center">
+              <Terminal size="28" className="text-primary/30" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-foreground/60 font-medium">Select a process to view logs</p>
+              <p className="text-xs text-muted-foreground/40 mt-1">Click any process tab above to start tailing</p>
+            </div>
           </div>
         ) : filteredLogs.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2 select-none">
