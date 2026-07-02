@@ -394,6 +394,9 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
         {processEntries.map((p) => {
           const isSelected = selectedProcessId === p.id;
           const hasLogs = (buffers.get(p.id)?.length ?? 0) > 0;
+          const proc = processes.get(p.id);
+          const isOnline = proc?.status === 'online';
+          const isStopped = proc?.status === 'stopped';
           return (
             <button
               key={p.id}
@@ -407,7 +410,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
             >
               <span className={cn(
                 "w-2 h-2 rounded-full shrink-0 transition-colors",
-                isSelected ? "bg-primary" : hasLogs ? "bg-success/60" : "bg-muted-foreground/30",
+                isSelected ? "bg-primary" : isOnline ? "bg-success" : isStopped ? "bg-warning/70" : "bg-muted-foreground/30",
               )} />
               <span className="truncate max-w-[100px]">{p.name}</span>
               {hasLogs && (
@@ -417,6 +420,9 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
                 )}>
                   {buffers.get(p.id)?.length ?? 0}
                 </span>
+              )}
+              {isStopped && !hasLogs && (
+                <span className="text-[9px] text-muted-foreground/40">stopped</span>
               )}
             </button>
           );
