@@ -446,13 +446,15 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
         })}
       </div>
 
-      {/* Log content */}
-      <div
-        ref={parentRef}
-        onScroll={handleScroll}
-        className="flex-1 overflow-auto font-mono text-[13px] leading-[1.55] bg-[#0a0e14] dark:bg-[#0a0e14] relative"
-        style={{ fontFamily: "'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace" }}
-      >
+      {/* Log content wrapper */}
+      <div className="flex-1 relative overflow-hidden">
+        {/* Log content */}
+        <div
+          ref={parentRef}
+          onScroll={handleScroll}
+          className="absolute inset-0 overflow-auto font-mono text-[13px] leading-[1.55] bg-[#0a0e14] dark:bg-[#0a0e14]"
+          style={{ fontFamily: "'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace" }}
+        >
         {processEntries.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3 select-none">
             <Terminal size="36" className="opacity-20" />
@@ -568,32 +570,33 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
             })}
           </div>
         )}
-      </div>
-
-      {/* Floating scroll-to-bottom button */}
-      {!autoScroll && selectedProcessId !== null && (
-        <button
-          onClick={scrollToBottom}
-          className={cn(
-            "absolute bottom-4 right-4 z-40",
-            "w-10 h-10 flex items-center justify-center",
-            "bg-primary/90 hover:bg-primary text-primary-foreground",
-            "shadow-lg shadow-primary/20 transition-all duration-200",
-            "hover:scale-110 active:scale-95",
-          )}
-          title="Scroll to bottom (End)"
-        >
-          <ArrowDown size={16} />
-        </button>
-      )}
-
-      {/* Paused indicator */}
-      {paused && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-3 py-1.5 bg-warning/90 text-black shadow-lg text-[11px] font-semibold uppercase tracking-wider">
-          <Pause size={11} />
-          Paused
         </div>
-      )}
+
+        {/* Floating scroll-to-bottom button */}
+        {!autoScroll && selectedProcessId !== null && (
+          <button
+            onClick={scrollToBottom}
+            className={cn(
+              "absolute bottom-4 right-4 z-40",
+              "w-10 h-10 flex items-center justify-center",
+              "bg-primary/90 hover:bg-primary text-primary-foreground",
+              "shadow-lg shadow-primary/20 transition-all duration-200",
+              "hover:scale-110 active:scale-95",
+            )}
+            title="Scroll to bottom (End)"
+          >
+            <ArrowDown size={16} />
+          </button>
+        )}
+
+        {/* Paused indicator */}
+        {paused && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-3 py-1.5 bg-warning/90 text-black shadow-lg text-[11px] font-semibold uppercase tracking-wider">
+            <Pause size={11} />
+            Paused
+          </div>
+        )}
+      </div>
     </div>
   );
 }
