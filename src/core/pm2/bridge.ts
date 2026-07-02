@@ -31,6 +31,16 @@ export interface ProcessEvent {
   process: ProcessSnapshot;
 }
 
+export interface LogEntry {
+  ts: number;
+  processId: number;
+  processName: string;
+  stream: 'stdout' | 'stderr';
+  message: string;
+}
+
+type LogListener = (entry: LogEntry) => void;
+
 const STALE_THRESHOLD_MS = 10_000;
 const BUS_HEARTBEAT_MS = 60_000;
 const SI_CACHE_TTL = 1500;
@@ -92,11 +102,16 @@ function enrichSnapshots(snapshots: ProcessSnapshot[], siMap: Map<number, { cpu:
   }
 }
 
+const MAX_LOG_LINES = parseInt(process.env.PM2_ORBIT_LOG_BUFFER || '2000', 10);
+
 export function createPm2Bridge() {
   let bus: Pm2Bus | null = null;
   const processCache = new Map<number, ProcessSnapshot>();
   const lastUpdateMap = new Map<number, number>();
   const listeners = new Set<Listener>();
+
+  const logBuffers = new Map<number, LogEntry[]>();
+  const logListeners = new Set<LogListener>();
 
   let lastEventTime = 0;
   let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
@@ -104,6 +119,19 @@ export function createPm2Bridge() {
 
   const EMIT_DEDUP_MS = 300;
   const lastEmitMap = new Map<number, number>();
+
+  function pushLog(entry: LogEntry) {
+    let buf = logBuffers.get(entry.processId);
+    if (!buf) {
+      buf = [];
+      logBuffers.set(entry.processId, buf);
+    }
+    buf.push(entry);
+    if (buf.length > MAX_LOG_LINES) {
+      buf.splice(0, buf.length - MAX_LOG_LINES);
+    }
+    for (const fn of logListeners) fn(entry);
+  }
 
   function emitToListeners(events: ProcessEvent[]) {
     lastEventTime = Date.now();
@@ -266,10 +294,34 @@ export function createPm2Bridge() {
             }
           });
 
-          bus.on('*', (eventName: string, data: unknown) => {
-            if (eventName.startsWith('data:')) {
-              void data;
-            }
+          const ansiRe = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORa-z]/g;
+
+          function stripAnsi(str: string): string {
+            return str.replace(ansiRe, '');
+          }
+
+          function handleLogEvent(stream: 'stdout' | 'stderr', data: any) {
+            if (!data) return;
+            const processId = data.process?.pm_id ?? data.pm_id;
+            if (processId == null) return;
+            const processName = data.process?.name ?? data.name ?? `PID ${processId}`;
+            const raw = data.data;
+            const msg = raw != null ? (typeof raw === 'string' ? raw.replace(/\n$/, '') : String(raw)) : '';
+            pushLog({
+              ts: Date.now(),
+              processId,
+              processName,
+              stream,
+              message: stripAnsi(msg),
+            });
+          }
+
+          bus.on('log:out', (data: any) => { handleLogEvent('stdout', data); });
+          bus.on('log:err', (data: any) => { handleLogEvent('stderr', data); });
+
+          bus.on('*', (eventName: string, data: any) => {
+            if (eventName === 'log:out') handleLogEvent('stdout', data);
+            else if (eventName === 'log:err') handleLogEvent('stderr', data);
           });
 
           refreshProcessList().then(() => resolve()).catch(reject);
@@ -297,10 +349,26 @@ export function createPm2Bridge() {
     pm2Module?.disconnect();
   }
 
+  function subscribeLogs(fn: LogListener): () => void {
+    logListeners.add(fn);
+    return () => logListeners.delete(fn);
+  }
+
+  function getLogBuffer(processId: number): LogEntry[] {
+    return logBuffers.get(processId) || [];
+  }
+
+  function getAllLogBuffers(): Map<number, LogEntry[]> {
+    return logBuffers;
+  }
+
   return {
     connect,
     list,
     subscribe,
+    subscribeLogs,
+    getLogBuffer,
+    getAllLogBuffers,
     disconnect,
     isConnected: () => bus !== null,
   };
