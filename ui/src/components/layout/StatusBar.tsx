@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Wifi, WifiOff } from 'lucide-react';
-import { ConnectionDot } from '@/components/shared/ConnectionDot';
 import { useUIStore } from '@/store/ui';
 
 interface HealthData {
@@ -22,14 +21,13 @@ export function StatusBar() {
   }, []);
 
   return (
-    <footer className="h-7 border-t border-border flex items-center px-4 text-xs text-muted-foreground gap-3 shrink-0 select-none">
-      <ConnectionDot connected={connected} />
+    <footer className="h-8 border-t border-border flex items-center px-4 text-xs text-muted-foreground gap-3 shrink-0 bg-background select-none">
       {connected ? (
         <Wifi size={12} className="text-success" />
       ) : (
         <WifiOff size={12} className="text-destructive" />
       )}
-      <span className="uppercase tracking-wider">
+      <span>
         {connected ? 'Connected' : wsStatus === 'connecting' ? 'Connecting...' : 'Disconnected'}
       </span>
       {health.pm2Version && health.pm2Version !== 'unknown' && (

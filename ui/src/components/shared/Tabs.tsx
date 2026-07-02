@@ -76,10 +76,10 @@ export function TabsTrigger({ value, children, className }: TabsTriggerProps) {
     <button
       onClick={() => setActiveTab(value)}
       className={cn(
-        'px-4 py-2 text-sm uppercase tracking-wider font-normal transition-colors cursor-pointer',
+        'px-4 py-2 text-sm font-medium transition-colors cursor-pointer',
         'border-b-2 -mb-px',
         isActive
-          ? 'border-primary text-primary'
+          ? 'border-foreground text-foreground'
           : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border',
         className,
       )}

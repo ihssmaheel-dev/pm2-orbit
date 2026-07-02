@@ -1,14 +1,18 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'Exo', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'Geist Mono', 'JetBrains Mono', 'IBM Plex Mono', monospace;
 
-  --radius: 0px;
-  --radius-sm: 0px;
-  --radius-md: 2px;
-  --radius-lg: 2px;
+  /* Border Radius */
+  --radius: 6px;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 100px;
+  --radius-full: 9999px;
 
+  /* Semantic Colors */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -46,92 +50,92 @@
   --color-chart-axis: var(--chart-axis);
 }
 
-/* Dark Mode — Slate + Teal */
-.dark {
-  --background: #0b0f1a;
-  --background-deep: #070a12;
-  --foreground: #e2e8f0;
-  --card: #111827;
-  --card-foreground: #e2e8f0;
-  --popover: #111827;
-  --popover-foreground: #e2e8f0;
-  --muted: #1e293b;
-  --muted-foreground: #64748b;
-  --subtle: #1e293b;
-  --input: #1e293b;
-  --border: #1e293b;
-  --ring: #14b8a6;
+/* Light Mode — Vercel Geist (Default) */
+:root, .light {
+  --background: #fafafa;
+  --foreground: #171717;
+  --card: #ffffff;
+  --card-foreground: #171717;
+  --popover: #ffffff;
+  --popover-foreground: #171717;
+  --muted: #f2f2f2;
+  --muted-foreground: #666666;
+  --subtle: #f5f5f5;
+  --input: #ffffff;
+  --border: #eaeaea;
+  --ring: #171717;
 
-  --primary: #14b8a6;
+  --primary: #171717;
   --primary-foreground: #ffffff;
-  --primary-hover: #2dd4bf;
-  --primary-deep: #0d9488;
-  --primary-subtle: rgba(20, 184, 166, 0.12);
+  --primary-hover: #333333;
+  --primary-deep: #000000;
+  --primary-subtle: rgba(23, 23, 23, 0.08);
 
-  --accent: #8b5cf6;
+  --accent: #0070f3;
   --accent-foreground: #ffffff;
 
-  --success: #22c55e;
-  --success-subtle: rgba(34, 197, 94, 0.15);
-  --warning: #eab308;
-  --warning-subtle: rgba(234, 179, 8, 0.15);
-  --destructive: #ef4444;
-  --destructive-subtle: rgba(239, 68, 68, 0.15);
+  --success: #0070f3;
+  --success-subtle: rgba(0, 112, 243, 0.08);
+  --warning: #f5a623;
+  --warning-subtle: rgba(245, 166, 35, 0.08);
+  --destructive: #ee0000;
+  --destructive-subtle: rgba(238, 0, 0, 0.08);
 
-  --chart-cpu: #5eead4;
-  --chart-memory: #c4b5fd;
-  --chart-network: #38bdf8;
-  --chart-disk: #c084fc;
-  --chart-grid: #475569;
-  --chart-axis: #94a3b8;
-  --chart-bg: rgba(30, 41, 59, 0.5);
+  --chart-cpu: #0070f3;
+  --chart-memory: #7928ca;
+  --chart-network: #50e3c2;
+  --chart-disk: #ff0080;
+  --chart-grid: #eaeaea;
+  --chart-axis: #a1a1a1;
 
-  --shadow-glow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.03);
-  --shadow-glow-md: 0 4px 12px 0 rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.03);
-  --shadow-glow-lg: 0 16px 70px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.03);
-  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 2px rgba(0, 0, 0, 0.04), 0 8px 16px -4px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 4px 4px rgba(0, 0, 0, 0.04), 0 16px 32px -8px rgba(0, 0, 0, 0.08);
+  --shadow-card: 0 1px 1px rgba(0, 0, 0, 0.04);
 }
 
-/* Light Mode — Smoke White */
-.light {
-  --background: #f1f5f9;
-  --foreground: #0f172a;
-  --card: #ffffff;
-  --card-foreground: #0f172a;
-  --popover: #ffffff;
-  --popover-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --subtle: #e2e8f0;
-  --input: #ffffff;
-  --border: #e2e8f0;
-  --ring: #0d9488;
+/* Dark Mode — Vercel Geist Dark */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --card: #111111;
+  --card-foreground: #ededed;
+  --popover: #111111;
+  --popover-foreground: #ededed;
+  --muted: #1a1a1a;
+  --muted-foreground: #888888;
+  --subtle: #1a1a1a;
+  --input: #1a1a1a;
+  --border: #2a2a2a;
+  --ring: #ededed;
 
-  --primary: #0d9488;
-  --primary-foreground: #ffffff;
-  --primary-hover: #0f766e;
-  --primary-deep: #115e59;
-  --primary-subtle: rgba(13, 148, 136, 0.08);
+  --primary: #ededed;
+  --primary-foreground: #0a0a0a;
+  --primary-hover: #cccccc;
+  --primary-deep: #ffffff;
+  --primary-subtle: rgba(237, 237, 237, 0.1);
 
-  --accent: #7c3aed;
+  --accent: #0070f3;
   --accent-foreground: #ffffff;
 
-  --success: #16a34a;
-  --warning: #ca8a04;
-  --destructive: #dc2626;
+  --success: #0070f3;
+  --success-subtle: rgba(0, 112, 243, 0.15);
+  --warning: #f5a623;
+  --warning-subtle: rgba(245, 166, 35, 0.15);
+  --destructive: #ee0000;
+  --destructive-subtle: rgba(238, 0, 0, 0.15);
 
-  --chart-cpu: #0d9488;
-  --chart-memory: #7c3aed;
-  --chart-network: #0284c7;
-  --chart-disk: #9333ea;
-  --chart-grid: #e2e8f0;
-  --chart-axis: #94a3b8;
-  --chart-bg: transparent;
+  --chart-cpu: #0070f3;
+  --chart-memory: #7928ca;
+  --chart-network: #50e3c2;
+  --chart-disk: #ff0080;
+  --chart-grid: #2a2a2a;
+  --chart-axis: #666666;
 
-  --shadow-glow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-glow-md: 0 4px 12px 0 rgba(0, 0, 0, 0.08);
-  --shadow-glow-lg: 0 10px 30px 0 rgba(0, 0, 0, 0.1);
-  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 2px 2px rgba(0, 0, 0, 0.2), 0 8px 16px -4px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 4px 4px rgba(0, 0, 0, 0.2), 0 16px 32px -8px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 1px 1px rgba(0, 0, 0, 0.2);
 }
 
 /* Reduced motion */
@@ -145,30 +149,19 @@
 
 /* Base styles */
 body {
-  font-family: 'Exo', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 400;
-  font-style: normal;
-  font-variant: normal;
-  font-kerning: auto;
-  font-optical-sizing: auto;
-  font-stretch: 100%;
-  font-variation-settings: normal;
-  font-feature-settings: normal;
-  font-size: 16px;
-  line-height: 1.5;
-  text-transform: none;
-  text-decoration: none;
-  text-align: start;
-  text-indent: 0;
+  font-size: 14px;
+  line-height: 20px;
   background-color: var(--background);
   color: var(--foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Monospace numbers */
+/* Monospace */
 .mono {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
 }
 
 /* Scrollbar styling */
@@ -178,12 +171,12 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--background);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--border);
-  border-radius: 0;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -192,6 +185,6 @@ body {
 
 /* Dialog backdrop */
 dialog::backdrop {
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
 }

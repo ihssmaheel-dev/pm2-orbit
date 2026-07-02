@@ -1,26 +1,27 @@
 import { cn } from '@/lib/utils';
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
 
-type Variant = 'default' | 'outline' | 'accent' | 'ghost' | 'destructive';
+type Variant = 'default' | 'outline' | 'ghost' | 'destructive' | 'primary';
 type Size = 'sm' | 'md' | 'lg' | 'icon';
 
 const variants: Record<Variant, string> = {
   default:
-    'bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-deep',
+    'bg-primary text-primary-foreground hover:bg-primary-hover',
+  primary:
+    'bg-primary text-primary-foreground hover:bg-primary-hover',
   outline:
-    'border border-primary bg-transparent text-foreground hover:bg-primary hover:text-primary-foreground',
-  accent:
-    'border border-accent bg-transparent text-foreground hover:bg-accent hover:text-accent-foreground',
-  ghost: 'hover:bg-subtle text-foreground',
+    'border border-border bg-transparent text-foreground hover:bg-muted',
+  ghost:
+    'hover:bg-muted text-foreground',
   destructive:
-    'border border-destructive bg-transparent text-destructive hover:bg-destructive hover:text-white',
+    'bg-destructive text-white hover:bg-destructive/90',
 };
 
 const sizes: Record<Size, string> = {
-  sm: 'h-8 px-3 text-xs',
-  md: 'h-10 px-5 text-sm',
-  lg: 'h-12 px-7 text-base',
-  icon: 'h-10 w-10',
+  sm: 'h-8 px-3 text-sm',
+  md: 'h-9 px-4 text-sm',
+  lg: 'h-10 px-6 text-base',
+  icon: 'h-9 w-9',
 };
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -33,16 +34,15 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     <button
       ref={ref}
       className={cn(
-        'inline-flex items-center justify-center gap-2 font-sans uppercase tracking-wider font-normal transition-all duration-150',
-        'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+        'inline-flex items-center justify-center gap-2 font-medium transition-colors',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         'disabled:opacity-50 disabled:pointer-events-none',
-        'rounded-none',
         variants[variant],
         sizes[size],
         className,
       )}
       {...props}
     />
-  ),
+  )
 );
 Button.displayName = 'Button';

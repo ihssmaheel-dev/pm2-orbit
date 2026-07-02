@@ -1,13 +1,12 @@
 import { cn } from '@/lib/utils';
 
-type BadgeVariant = 'default' | 'success' | 'warning' | 'destructive' | 'accent' | 'outline';
+type BadgeVariant = 'default' | 'success' | 'warning' | 'destructive' | 'outline';
 
 const variantStyles: Record<BadgeVariant, string> = {
-  default: 'bg-primary-subtle text-primary border border-primary/20',
-  success: 'bg-success-subtle text-success border border-success/20',
-  warning: 'bg-warning-subtle text-warning border border-warning/20',
-  destructive: 'bg-destructive-subtle text-destructive border border-destructive/20',
-  accent: 'bg-accent/10 text-accent border border-accent/20',
+  default: 'bg-primary text-primary-foreground',
+  success: 'bg-success text-white',
+  warning: 'bg-warning text-white',
+  destructive: 'bg-destructive text-white',
   outline: 'bg-transparent text-foreground border border-border',
 };
 
@@ -21,8 +20,7 @@ export function Badge({ variant = 'default', className, children }: BadgeProps) 
   return (
     <span
       className={cn(
-        'inline-flex items-center px-2 py-0.5 text-xs font-normal uppercase tracking-wider',
-        'rounded-none',
+        'inline-flex items-center px-2 py-0.5 text-xs font-medium',
         variantStyles[variant],
         className,
       )}

@@ -30,8 +30,8 @@ export function Dialog({ open, onClose, children, className }: DialogProps) {
       }}
       className={cn(
         'bg-card text-card-foreground border border-border p-0',
-        'rounded-none max-w-md w-full',
-        'shadow-glow-lg',
+        'rounded-lg max-w-md w-full',
+        'shadow-lg',
         className,
       )}
       style={{
@@ -67,7 +67,7 @@ interface DialogTitleProps {
 
 export function DialogTitle({ children, className }: DialogTitleProps) {
   return (
-    <h2 className={cn('text-base font-medium tracking-wide uppercase', className)}>
+    <h2 className={cn('text-lg font-semibold tracking-tight', className)}>
       {children}
     </h2>
   );

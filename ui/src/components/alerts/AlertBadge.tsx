@@ -12,11 +12,11 @@ export function AlertBadge({ onClick }: AlertBadgeProps) {
   return (
     <button
       onClick={onClick}
-      className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors relative cursor-pointer"
+      className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors relative cursor-pointer"
     >
       <Bell size={16} />
       {count > 0 && (
-        <span className="absolute -top-0.5 -right-0.5 h-4 w-4 text-[9px] font-mono bg-destructive text-white flex items-center justify-center rounded-full">
+        <span className="absolute -top-0.5 -right-0.5 h-4 w-4 text-[10px] font-medium bg-destructive text-white flex items-center justify-center rounded-full">
           {count > 9 ? '9+' : count}
         </span>
       )}
