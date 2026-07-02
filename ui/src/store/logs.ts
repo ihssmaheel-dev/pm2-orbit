@@ -12,6 +12,7 @@ interface LogsStore {
   buffers: Map<number, LogEntry[]>;
   maxSize: number;
   paused: boolean;
+  clearedAt: number;
   addLog: (entry: LogEntry) => void;
   clearLogs: (processId?: number) => void;
   setPaused: (paused: boolean) => void;
@@ -97,9 +98,11 @@ export const useLogsStore = create<LogsStore>((set, get) => ({
   buffers: new Map(),
   maxSize: DEFAULT_MAX_SIZE,
   paused: false,
+  clearedAt: 0,
 
   addLog: (entry) => {
     if (get().paused) return;
+    if (entry.ts < get().clearedAt) return;
     lastSeen.set(entry.processId, Date.now());
     getBuf(pending, entry.processId).push(entry);
     pendingCount++;
@@ -115,16 +118,17 @@ export const useLogsStore = create<LogsStore>((set, get) => ({
     if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
     pending.clear();
     pendingCount = 0;
+    const now = Date.now();
     if (processId !== undefined) {
       working.delete(processId);
       set((state) => {
         const next = new Map(state.buffers);
         next.delete(processId);
-        return { buffers: next };
+        return { buffers: next, clearedAt: now };
       });
     } else {
       working.clear();
-      set({ buffers: new Map() });
+      set({ buffers: new Map(), clearedAt: now });
     }
   },
 

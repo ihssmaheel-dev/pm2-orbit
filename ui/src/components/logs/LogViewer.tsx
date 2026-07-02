@@ -290,10 +290,14 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
   }, [filteredLogs]);
 
   const handleClear = useCallback(() => {
-    clearLogs();
+    if (selectedProcessId !== null) {
+      clearLogs(selectedProcessId);
+    } else {
+      clearLogs();
+    }
     autoScrollRef.current = true;
     setAutoScroll(true);
-  }, [clearLogs]);
+  }, [clearLogs, selectedProcessId]);
 
   const selectProcess = useCallback(
     (id: number | null) => {
