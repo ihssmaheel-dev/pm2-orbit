@@ -9,6 +9,7 @@ import {
   Copy,
   Terminal,
   X,
+  ArrowDown,
 } from "lucide-react";
 import { useLogsStore, type LogEntry } from "@/store/logs";
 import { useProcessStore } from "@/store/processes";
@@ -251,6 +252,22 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
       parentRef.current.scrollTop = parentRef.current.scrollHeight;
     }
   }, []);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "End" && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        scrollToBottom();
+      }
+      if (e.key === "Home" && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        if (parentRef.current) parentRef.current.scrollTop = 0;
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [scrollToBottom]);
 
   const downloadLogs = useCallback(() => {
     const text = filteredLogs
@@ -553,25 +570,31 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
         )}
       </div>
 
-      {/* Bottom bar */}
-      <div className="flex items-center gap-3 px-4 py-1.5 border-t border-border/30 bg-[#0c1219] dark:bg-[#0c1219] bg-muted/20 shrink-0">
-        {!autoScroll && !paused && (
-          <button
-            onClick={scrollToBottom}
-            className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-primary hover:text-primary-hover font-semibold transition-colors"
-          >
-            <span>↓</span>
-            <span>Scroll to bottom</span>
-          </button>
-        )}
-        {paused && (
-          <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-warning font-semibold">
-            <span>⏸</span>
-            <span>Paused</span>
-          </span>
-        )}
-       
-      </div>
+      {/* Floating scroll-to-bottom button */}
+      {!autoScroll && selectedProcessId !== null && (
+        <button
+          onClick={scrollToBottom}
+          className={cn(
+            "fixed bottom-20 right-8 z-40 flex items-center gap-2 px-4 py-2.5",
+            "bg-primary/90 hover:bg-primary text-primary-foreground",
+            "shadow-lg shadow-primary/20 transition-all duration-200",
+            "text-xs font-semibold uppercase tracking-wider",
+            "hover:scale-105 active:scale-95",
+          )}
+          title="Scroll to bottom (End)"
+        >
+          <ArrowDown size={14} />
+          <span>Latest</span>
+        </button>
+      )}
+
+      {/* Paused indicator */}
+      {paused && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-4 py-2 bg-warning/90 text-warning-foreground shadow-lg shadow-warning/20 text-xs font-semibold uppercase tracking-wider">
+          <Pause size={12} />
+          Paused
+        </div>
+      )}
     </div>
   );
 }

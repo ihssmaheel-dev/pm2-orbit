@@ -79,7 +79,7 @@ function flushToStore(set: (partial: Partial<LogsStore>) => void) {
 
   const result = new Map<number, LogEntry[]>();
   for (const [pid, buf] of working) {
-    result.set(pid, buf.slice());
+    result.set(pid, buf);
   }
 
   set({ buffers: result });
@@ -89,7 +89,7 @@ function scheduleFlush(set: (partial: Partial<LogsStore>) => void) {
   if (flushTimer !== null) return;
   flushTimer = setTimeout(() => {
     flushTimer = null;
-    flushToStore(set);
+    requestAnimationFrame(() => flushToStore(set));
   }, FLUSH_MS);
 }
 
