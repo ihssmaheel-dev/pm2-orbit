@@ -442,9 +442,6 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
                   {buffers.get(p.id)?.length ?? 0}
                 </span>
               )}
-              {isStopped && !hasLogs && (
-                <span className="text-[9px] text-muted-foreground/40">stopped</span>
-              )}
             </button>
           );
         })}
