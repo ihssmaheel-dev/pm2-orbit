@@ -41,7 +41,7 @@ function Card({ icon, label, value, subtext, color, bgColor, progress, circular 
       />
 
       {/* Row 1: Label + indicator */}
-      <div className="flex items-center justify-between relative z-0 mb-2">
+      <div className="flex items-center justify-between relative z-0 mb-3">
         <div className="flex items-center gap-2 min-w-0">
           <span className={`${color} shrink-0`}>{icon}</span>
           <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50 truncate">
@@ -76,7 +76,7 @@ function Card({ icon, label, value, subtext, color, bgColor, progress, circular 
       </div>
 
       {/* Row 3: Linear progress bar (always present for consistent height) */}
-      <div className="relative z-0 mt-2">
+      <div className="relative z-0 mt-3">
         {progress !== undefined && !circular ? (
           <div className="h-0.5 bg-subtle/60 overflow-hidden rounded-full">
             <div
