@@ -34,13 +34,13 @@ interface CardProps {
 
 function Card({ icon, label, value, subtext, color, bgColor, progress, circular }: CardProps) {
   return (
-    <div className="relative flex flex-col gap-2 px-4 py-3.5 bg-card border border-border/50 overflow-hidden group hover:border-border/80 transition-colors duration-200">
+    <div className="relative flex flex-col gap-1.5 px-4 py-3 bg-card border border-border/50 overflow-hidden group hover:border-border/80 transition-colors duration-200">
       <div
         className="absolute inset-0 opacity-0 group-hover:opacity-[0.04] transition-opacity duration-500"
         style={{ background: `radial-gradient(ellipse 80% 60% at 50% 0%, ${bgColor}, transparent)` }}
       />
 
-      <div className="flex items-center justify-between relative z-0 mb-1">
+      <div className="flex items-center justify-between relative z-0">
         <div className="flex items-center gap-2 min-w-0">
           <span className={`${color} shrink-0`}>{icon}</span>
           <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50 truncate">
@@ -57,24 +57,24 @@ function Card({ icon, label, value, subtext, color, bgColor, progress, circular 
         )}
       </div>
 
-      <div className="relative z-0 flex items-baseline gap-2.5">
-        <span className="text-[15px] font-medium font-mono tracking-tight tabular-nums leading-none text-foreground/90">
-          {value}
-        </span>
-        {subtext && (
-          <span className="text-[10px] font-mono tabular-nums leading-none text-muted-foreground/40">
-            {subtext}
+      <div className="relative z-0 flex items-center justify-between">
+        <div className="flex items-baseline gap-2">
+          <span className="text-[15px] font-medium font-mono tracking-tight tabular-nums leading-none text-foreground/90">
+            {value}
           </span>
-        )}
-        <div className="ml-auto flex items-center">
-          {circular && progress !== undefined && (
-            <CircularProgress percent={progress} color={bgColor} />
+          {subtext && (
+            <span className="text-[10px] font-mono tabular-nums leading-none text-muted-foreground/40">
+              {subtext}
+            </span>
           )}
         </div>
+        {circular && progress !== undefined && (
+          <CircularProgress percent={progress} color={bgColor} />
+        )}
       </div>
 
       {progress !== undefined && !circular && (
-        <div className="h-[2px] bg-subtle/60 overflow-hidden rounded-full relative z-0">
+        <div className="h-0.5 bg-subtle/60 overflow-hidden rounded-full relative z-0">
           <div
             className="h-full rounded-full transition-all duration-700 ease-out"
             style={{
