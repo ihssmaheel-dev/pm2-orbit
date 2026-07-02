@@ -77,7 +77,7 @@ export function Header() {
           {theme === "system" ? <Monitor size={16} /> : <ThemeIcon size={16} />}
         </button>
 
-        <AlertBadge onClick={() => navigate("/alerts")} />
+        <AlertBadge onClick={() => navigate("/alerts/history")} />
 
         <ConnectionDot connected={wsStatus === "connected"} />
       </div>
