@@ -30,7 +30,7 @@ export function Header() {
   ];
 
   return (
-    <header className="h-14 border-b border-border flex items-center px-2 sm:px-6 shrink-0 overflow-x-auto">
+    <header className="h-14 border-b border-border flex items-center px-2 sm:px-6 shrink-0 overflow-hidden">
       <div className="hidden sm:block w-[140px] shrink-0">
         <div className="font-light text-lg tracking-[0.2em] text-primary select-none">
           PM2 ORBIT

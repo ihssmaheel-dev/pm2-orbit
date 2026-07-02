@@ -1,8 +1,21 @@
-import { Cpu, MemoryStick, Activity, Network, HardDrive, Server } from 'lucide-react';
-import { useSystemStore } from '@/store/system';
-import { formatBytes } from '@/lib/format';
+import {
+  Cpu,
+  MemoryStick,
+  Activity,
+  Network,
+  HardDrive,
+  Server,
+} from "lucide-react";
+import { useSystemStore } from "@/store/system";
+import { formatBytes } from "@/lib/format";
 
-function CircularProgress({ percent, color }: { percent: number; color: string }) {
+function CircularProgress({
+  percent,
+  color,
+}: {
+  percent: number;
+  color: string;
+}) {
   const size = 18;
   const stroke = 2.5;
   const r = (size - stroke) / 2;
@@ -11,10 +24,25 @@ function CircularProgress({ percent, color }: { percent: number; color: string }
 
   return (
     <svg width={size} height={size} className="-rotate-90 shrink-0">
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="currentColor" strokeWidth={stroke} className="text-subtle/50" />
       <circle
-        cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke}
-        strokeDasharray={c} strokeDashoffset={o} strokeLinecap="round"
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={stroke}
+        className="text-subtle/50"
+      />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        stroke={color}
+        strokeWidth={stroke}
+        strokeDasharray={c}
+        strokeDashoffset={o}
+        strokeLinecap="round"
         className="transition-all duration-700 ease-out"
       />
     </svg>
@@ -32,16 +60,27 @@ interface CardProps {
   circular?: boolean;
 }
 
-function Card({ icon, label, value, subtext, color, bgColor, progress, circular }: CardProps) {
+function Card({
+  icon,
+  label,
+  value,
+  subtext,
+  color,
+  bgColor,
+  progress,
+  circular,
+}: CardProps) {
   return (
-    <div className="relative flex flex-col px-4 py-3 bg-card border border-border/50 overflow-hidden group hover:border-border/80 transition-colors duration-200">
+    <div className="relative flex flex-col px-4 py-2.5 bg-card border border-border/50 overflow-hidden group hover:border-border/80 transition-colors duration-200">
       <div
         className="absolute inset-0 opacity-0 group-hover:opacity-[0.04] transition-opacity duration-500"
-        style={{ background: `radial-gradient(ellipse 80% 60% at 50% 0%, ${bgColor}, transparent)` }}
+        style={{
+          background: `radial-gradient(ellipse 80% 60% at 50% 0%, ${bgColor}, transparent)`,
+        }}
       />
 
       {/* Row 1: Label + indicator */}
-      <div className="flex items-center justify-between relative z-0 mb-3">
+      <div className="flex items-center justify-between relative z-0 mb-2.5">
         <div className="flex items-center gap-2 min-w-0">
           <span className={`${color} shrink-0`}>{icon}</span>
           <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50 truncate">
@@ -54,7 +93,10 @@ function Card({ icon, label, value, subtext, color, bgColor, progress, circular 
           </span>
         )}
         {progress === undefined && (
-          <span className="h-1.5 w-1.5 rounded-full opacity-30 group-hover:opacity-60 transition-opacity shrink-0" style={{ background: bgColor }} />
+          <span
+            className="h-1.5 w-1.5 rounded-full opacity-30 group-hover:opacity-60 transition-opacity shrink-0"
+            style={{ background: bgColor }}
+          />
         )}
       </div>
 
@@ -76,7 +118,7 @@ function Card({ icon, label, value, subtext, color, bgColor, progress, circular 
       </div>
 
       {/* Row 3: Linear progress bar (always present for consistent height) */}
-      <div className="relative z-0 mt-3">
+      <div className="relative z-0">
         {progress !== undefined && !circular ? (
           <div className="h-0.5 bg-subtle/60 overflow-hidden rounded-full">
             <div
@@ -98,9 +140,10 @@ function Card({ icon, label, value, subtext, color, bgColor, progress, circular 
 export function SystemCards() {
   const system = useSystemStore((s) => s.system);
 
-  const memPercent = system.memory.total > 0
-    ? (system.memory.used / system.memory.total) * 100
-    : 0;
+  const memPercent =
+    system.memory.total > 0
+      ? (system.memory.used / system.memory.total) * 100
+      : 0;
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 shrink-0">
@@ -149,8 +192,12 @@ export function SystemCards() {
       <Card
         icon={<HardDrive size={13} />}
         label="Disk"
-        value={system.disk.read > 0 ? `${formatBytes(system.disk.read)}/s` : '—'}
-        subtext={system.disk.write > 0 ? `↓ ${formatBytes(system.disk.write)}/s` : ''}
+        value={
+          system.disk.read > 0 ? `${formatBytes(system.disk.read)}/s` : "—"
+        }
+        subtext={
+          system.disk.write > 0 ? `↓ ${formatBytes(system.disk.write)}/s` : ""
+        }
         color="text-chart-disk"
         bgColor="#c084fc"
       />
