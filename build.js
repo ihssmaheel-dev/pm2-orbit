@@ -1,7 +1,16 @@
 const { build: esbuild } = require('esbuild');
 const path = require('path');
+const { execSync } = require('child_process');
+const fs = require('fs');
 
 async function buildUI() {
+  // Install UI dependencies if node_modules doesn't exist
+  const uiNodeModules = path.join(__dirname, 'ui', 'node_modules');
+  if (!fs.existsSync(uiNodeModules)) {
+    console.log('▸ Installing UI dependencies...');
+    execSync('npm install', { cwd: path.join(__dirname, 'ui'), stdio: 'inherit' });
+  }
+
   console.log('▸ Building UI with Vite...');
   const { build } = await import('vite');
   await build({
