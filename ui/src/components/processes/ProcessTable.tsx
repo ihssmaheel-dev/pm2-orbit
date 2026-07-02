@@ -133,28 +133,28 @@ export function ProcessTable() {
           <button
             disabled={busy || onlineCount === 0}
             onClick={() => setRestartConfirm(true)}
-            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-foreground/80 hover:text-primary border border-border/60 hover:border-primary/40 transition-colors disabled:opacity-25 disabled:pointer-events-none"
+            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-foreground hover:text-primary border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
             <RotateCw size={10} /> Restart All
           </button>
           <button
             disabled={busy || onlineCount === 0}
             onClick={() => setStopConfirm(true)}
-            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-foreground/80 hover:text-destructive border border-border/60 hover:border-destructive/40 transition-colors disabled:opacity-25 disabled:pointer-events-none"
+            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-foreground hover:text-destructive border border-border hover:border-destructive/40 hover:bg-destructive/5 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
             <Square size={10} /> Stop All
           </button>
           <button
             disabled={busy || stoppedCount === 0}
             onClick={() => setStartConfirm(true)}
-            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-foreground/80 hover:text-success border border-border/60 hover:border-success/40 transition-colors disabled:opacity-25 disabled:pointer-events-none"
+            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-foreground hover:text-success border border-border hover:border-success/40 hover:bg-success/5 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
             <Play size={10} /> Start All
           </button>
           <button
             disabled={busy || filteredData.length === 0}
             onClick={() => setDeleteConfirm(true)}
-            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-foreground/80 hover:text-destructive border border-destructive/30 hover:border-destructive/60 hover:bg-destructive/10 transition-colors disabled:opacity-25 disabled:pointer-events-none"
+            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-destructive border border-destructive/40 hover:border-destructive/60 hover:bg-destructive/10 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
             <Trash2 size={10} /> Delete All
           </button>

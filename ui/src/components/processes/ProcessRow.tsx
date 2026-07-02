@@ -254,11 +254,11 @@ function ActBtn({
       disabled={disabled}
       title={label}
       aria-label={label}
-      className={`cursor-pointer h-5 w-5 flex items-center justify-center transition-all duration-75 ${
+      className={`cursor-pointer h-6 w-6 flex items-center justify-center rounded transition-colors ${
         danger
-          ? "text-muted-foreground/30 hover:text-destructive hover:bg-destructive/10"
-          : "text-muted-foreground/30 hover:text-primary hover:bg-primary/8"
-      } disabled:opacity-15 disabled:pointer-events-none`}
+          ? "text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+          : "text-muted-foreground hover:text-primary hover:bg-primary/10"
+      } disabled:opacity-25 disabled:pointer-events-none`}
     >
       {icon}
     </button>
