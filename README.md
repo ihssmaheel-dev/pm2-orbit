@@ -104,6 +104,8 @@ Examples:
 
 ### Notification Channels
 
+Notifications can be configured via environment variables **or** the Settings UI (accessible at `/settings` in the browser). The Settings UI saves to `~/.pm2-orbit/settings.json` and applies values at startup.
+
 | Variable | Description |
 |----------|-------------|
 | `SLACK_WEBHOOK_URL` | Slack incoming webhook URL |
