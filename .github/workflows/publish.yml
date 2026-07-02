@@ -1,0 +1,34 @@
+name: Publish to npm
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify build output
+        run: |
+          test -f dist/server.js || (echo "Missing dist/server.js" && exit 1)
+          test -f dist-ui/index.html || (echo "Missing dist-ui/index.html" && exit 1)
+          test -f bin/pm2-orbit.js || (echo "Missing bin/pm2-orbit.js" && exit 1)
+
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

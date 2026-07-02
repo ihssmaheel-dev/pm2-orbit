@@ -21,7 +21,7 @@ async function buildServer() {
     outfile: 'dist/server.js',
     external: ['pm2', 'better-sqlite3'],
     minify: true,
-    sourcemap: true,
+    sourcemap: false,
   });
 }
 

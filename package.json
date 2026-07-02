@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "files": [
     "dist/",
+    "dist-ui/",
     "bin/"
   ],
   "description": "High-performance PM2 monitoring dashboard — event-driven, 1000+ processes, < 150KB",
@@ -21,7 +22,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "vitest --config vitest.e2e.config.ts",
-    "prepare": "husky"
+    "prepare": "husky",
+    "prepublishOnly": "npm run build",
+    "postinstall": "node -e \"try{require.resolve('pm2')}catch{console.log('\\n  ℹ  Install pm2 for process monitoring: npm install -g pm2\\n')}\""
   },
   "engines": {
     "node": ">=18"
