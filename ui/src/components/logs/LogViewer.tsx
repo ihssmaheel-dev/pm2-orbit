@@ -450,7 +450,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
       <div
         ref={parentRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-auto font-mono text-[13px] leading-[1.55] bg-[#0a0e14] dark:bg-[#0a0e14]"
+        className="flex-1 overflow-auto font-mono text-[13px] leading-[1.55] bg-[#0a0e14] dark:bg-[#0a0e14] relative"
         style={{ fontFamily: "'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace" }}
       >
         {processEntries.length === 0 ? (
@@ -575,23 +575,22 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
         <button
           onClick={scrollToBottom}
           className={cn(
-            "fixed bottom-20 right-8 z-40 flex items-center gap-2 px-4 py-2.5",
+            "absolute bottom-4 right-4 z-40",
+            "w-10 h-10 flex items-center justify-center",
             "bg-primary/90 hover:bg-primary text-primary-foreground",
             "shadow-lg shadow-primary/20 transition-all duration-200",
-            "text-xs font-semibold uppercase tracking-wider",
-            "hover:scale-105 active:scale-95",
+            "hover:scale-110 active:scale-95",
           )}
           title="Scroll to bottom (End)"
         >
-          <ArrowDown size={14} />
-          <span>Latest</span>
+          <ArrowDown size={16} />
         </button>
       )}
 
       {/* Paused indicator */}
       {paused && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-4 py-2 bg-warning/90 text-warning-foreground shadow-lg shadow-warning/20 text-xs font-semibold uppercase tracking-wider">
-          <Pause size={12} />
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-3 py-1.5 bg-warning/90 text-black shadow-lg text-[11px] font-semibold uppercase tracking-wider">
+          <Pause size={11} />
           Paused
         </div>
       )}
