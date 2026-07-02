@@ -82,7 +82,7 @@ export function ProcessDetail() {
           <button
             onClick={() => select(null)}
             aria-label="Close detail panel"
-            className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+            className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
             <X size={16} />
           </button>
@@ -148,7 +148,7 @@ export function ProcessDetail() {
                   </div>
                   <button
                     onClick={() => setShowMasked(!showMasked)}
-                    className="flex items-center gap-1 h-7 px-2 text-[10px] text-muted-foreground/60 hover:text-foreground border border-border/40 hover:border-border/80 transition-colors"
+                    className="flex items-center gap-1 h-7 px-2 text-[10px] text-muted-foreground/60 hover:text-foreground border border-border/40 hover:border-border/80 transition-colors cursor-pointer"
                     title={showMasked ? 'Show sensitive values' : 'Hide sensitive values'}
                   >
                     {showMasked ? <EyeOff size={11} /> : <Eye size={11} />}

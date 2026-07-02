@@ -342,7 +342,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-foreground"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-foreground cursor-pointer"
               >
                 <X size={11} />
               </button>
@@ -356,7 +356,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
                 key={s}
                 onClick={() => setStreamFilter(s)}
                 className={cn(
-                  "px-2 text-[10px] uppercase tracking-wider transition-colors font-mono",
+                  "px-2 text-[10px] uppercase tracking-wider transition-colors font-mono cursor-pointer",
                   streamFilter === s
                     ? s === "stderr"
                       ? "bg-destructive/10 text-destructive font-semibold"
@@ -373,7 +373,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
           <button
             onClick={() => setPaused(!paused)}
             className={cn(
-              "h-7 px-2 text-[10px] uppercase tracking-wider border transition-colors font-mono flex items-center gap-1",
+              "h-7 px-2 text-[10px] uppercase tracking-wider border transition-colors font-mono flex items-center gap-1 cursor-pointer",
               paused
                 ? "border-warning/40 text-warning bg-warning/5 hover:bg-warning/10"
                 : "border-border/60 text-muted-foreground/60 hover:text-foreground hover:bg-subtle/30",
@@ -387,21 +387,21 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
           <div className="flex border border-border/60 h-7">
             <button
               onClick={copyLogs}
-              className="px-2 h-full flex items-center justify-center text-muted-foreground/60 hover:text-foreground transition-colors"
+              className="px-2 h-full flex items-center justify-center text-muted-foreground/60 hover:text-foreground transition-colors cursor-pointer"
               title="Copy visible logs"
             >
               <Copy size={12} />
             </button>
             <button
               onClick={downloadLogs}
-              className="px-2 h-full flex items-center justify-center text-muted-foreground/60 hover:text-foreground transition-colors"
+              className="px-2 h-full flex items-center justify-center text-muted-foreground/60 hover:text-foreground transition-colors cursor-pointer"
               title="Download logs"
             >
               <Download size={12} />
             </button>
             <button
               onClick={handleClear}
-              className="px-2 h-full flex items-center justify-center text-muted-foreground/60 hover:text-destructive transition-colors"
+              className="px-2 h-full flex items-center justify-center text-muted-foreground/60 hover:text-destructive transition-colors cursor-pointer"
               title="Clear logs"
             >
               <Trash2 size={12} />
@@ -582,7 +582,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
               "w-10 h-10 flex items-center justify-center",
               "bg-primary/90 hover:bg-primary text-primary-foreground",
               "shadow-lg shadow-primary/20 transition-all duration-200",
-              "hover:scale-110 active:scale-95",
+              "hover:scale-110 active:scale-95 cursor-pointer",
             )}
             title="Scroll to bottom (End)"
           >

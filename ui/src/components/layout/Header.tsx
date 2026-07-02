@@ -59,7 +59,7 @@ export function Header() {
       <div className="w-auto sm:w-[140px] flex items-center justify-end gap-1 sm:gap-2 shrink-0">
         <button
           onClick={toggleTheme}
-          className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+          className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           title={`Theme: ${themeLabels[theme] || theme}`}
         >
           {theme === "system" ? <Monitor size={16} /> : <ThemeIcon size={16} />}

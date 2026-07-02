@@ -12,7 +12,7 @@ export function AlertBadge({ onClick }: AlertBadgeProps) {
   return (
     <button
       onClick={onClick}
-      className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors relative"
+      className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors relative cursor-pointer"
     >
       <Bell size={16} />
       {count > 0 && (
