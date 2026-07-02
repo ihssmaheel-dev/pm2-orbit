@@ -1,20 +1,46 @@
 <!doctype html>
-<html lang="en" class="light">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>PM2 Orbit</title>
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-sans/style.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-mono/style.css" />
+    <style>
+      @font-face {
+        font-family: 'Exo';
+        font-style: normal;
+        font-weight: 300;
+        font-display: swap;
+        src: url('/fonts/Exo-300.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Exo';
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url('/fonts/Exo-400.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Exo';
+        font-style: normal;
+        font-weight: 600;
+        font-display: swap;
+        src: url('/fonts/Exo-600.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'JetBrains Mono';
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url('/fonts/JetBrainsMono-400.woff2') format('woff2');
+      }
+    </style>
     <script>
       (function() {
         try {
           var stored = localStorage.getItem('pm2-orbit-theme');
-          var theme = stored || 'light';
+          var theme = stored || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
           if (theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.remove('light');
             document.documentElement.classList.add('dark');
           } else {
             document.documentElement.classList.remove('dark');

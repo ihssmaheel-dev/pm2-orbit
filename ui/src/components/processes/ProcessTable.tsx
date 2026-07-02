@@ -118,14 +118,14 @@ export function ProcessTable() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-card border border-border rounded-lg">
+    <div className="flex flex-col h-full bg-card/30 border border-border/50">
       {/* Toolbar */}
-      <div className="flex items-center justify-between h-12 px-4 shrink-0 border-b border-border">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-foreground">
+      <div className="flex items-center justify-between h-12 px-5 shrink-0 border-b border-border/50">
+        <div className="flex items-center gap-2.5">
+          <span className="text-[12px] font-semibold text-foreground/85">
             Processes
           </span>
-          <span className="text-xs font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded tabular-nums">
+          <span className="text-[11px] font-mono text-primary bg-primary/10 px-1.5 leading-4.5 tabular-nums">
             {filteredData.length}
           </span>
         </div>
@@ -133,50 +133,50 @@ export function ProcessTable() {
           <button
             disabled={busy || onlineCount === 0}
             onClick={() => setRestartConfirm(true)}
-            className="cursor-pointer flex items-center gap-1.5 h-8 px-3 text-sm font-medium text-foreground hover:bg-muted border border-border rounded-md transition-colors disabled:opacity-25 disabled:pointer-events-none"
+            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-foreground/80 hover:text-primary border border-border/60 hover:border-primary/40 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
-            <RotateCw size={12} /> Restart All
+            <RotateCw size={10} /> Restart All
           </button>
           <button
             disabled={busy || onlineCount === 0}
             onClick={() => setStopConfirm(true)}
-            className="cursor-pointer flex items-center gap-1.5 h-8 px-3 text-sm font-medium text-foreground hover:bg-muted border border-border rounded-md transition-colors disabled:opacity-25 disabled:pointer-events-none"
+            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-foreground/80 hover:text-destructive border border-border/60 hover:border-destructive/40 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
-            <Square size={12} /> Stop All
+            <Square size={10} /> Stop All
           </button>
           <button
             disabled={busy || stoppedCount === 0}
             onClick={() => setStartConfirm(true)}
-            className="cursor-pointer flex items-center gap-1.5 h-8 px-3 text-sm font-medium text-foreground hover:bg-muted border border-border rounded-md transition-colors disabled:opacity-25 disabled:pointer-events-none"
+            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-foreground/80 hover:text-success border border-border/60 hover:border-success/40 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
-            <Play size={12} /> Start All
+            <Play size={10} /> Start All
           </button>
           <button
             disabled={busy || filteredData.length === 0}
             onClick={() => setDeleteConfirm(true)}
-            className="cursor-pointer flex items-center gap-1.5 h-8 px-3 text-sm font-medium text-destructive hover:bg-destructive/10 border border-destructive/30 rounded-md transition-colors disabled:opacity-25 disabled:pointer-events-none"
+            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-foreground/80 hover:text-destructive border border-destructive/30 hover:border-destructive/60 hover:bg-destructive/10 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
-            <Trash2 size={12} /> Delete All
+            <Trash2 size={10} /> Delete All
           </button>
           <div className="relative">
             <Search
-              size={14}
-              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+              size={11}
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/30"
             />
             <input
-              placeholder="Search processes..."
+              placeholder="Search processes…"
               value={sq}
               onChange={(e) => setSq(e.target.value)}
               aria-label="Search processes"
-              className="h-8 w-48 pl-8 pr-7 text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring rounded-md"
+              className="h-7 w-49 pl-7 pr-7 text-[12px] bg-background border border-border/80 text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/40 rounded-none"
             />
             {sq && (
               <button
                 onClick={() => setSq("")}
                 aria-label="Clear search"
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground/30 hover:text-foreground"
               >
-                <X size={12} />
+                <X size={10} />
               </button>
             )}
           </div>
@@ -194,7 +194,7 @@ export function ProcessTable() {
         <div role="rowgroup" className="shrink-0">
           <div
             role="row"
-            className="flex items-center h-10 px-4 border-b border-border bg-muted/50 text-muted-foreground select-none"
+            className="flex items-center h-8 px-5 border-b border-border/40 bg-background/40 text-muted-foreground/50 select-none"
           >
             {COLS.map((col) => {
               const dir = sd(col.id);
@@ -211,11 +211,22 @@ export function ProcessTable() {
                     }
                   }}
                   onClick={() => toggleSort(col.id)}
-                  className={`${col.w} shrink-0 px-3 text-xs font-medium cursor-pointer transition-colors hover:text-foreground ${col.right ? "text-right" : ""} ${dir ? "text-foreground" : ""}`}
+                  className={`${col.w} shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest cursor-pointer transition-colors hover:text-foreground/60 ${col.right ? "text-right" : ""} ${dir ? "text-primary" : ""}`}
                 >
                   {col.label}
                   {dir && (
-                    <span className="ml-1 text-xs">{dir === "ascending" ? "↑" : "↓"}</span>
+                    <svg
+                      width="6"
+                      height="6"
+                      viewBox="0 0 8 8"
+                      className="inline-block ml-1 -mt-px text-primary align-middle"
+                    >
+                      {dir === "ascending" ? (
+                        <path d="M4 1L7 5H1L4 1Z" fill="currentColor" />
+                      ) : (
+                        <path d="M4 7L1 3H7L4 7Z" fill="currentColor" />
+                      )}
+                    </svg>
                   )}
                 </div>
               );
@@ -223,28 +234,28 @@ export function ProcessTable() {
 
             <div
               role="columnheader"
-              className={`${W_SPARKLINE} shrink-0 px-3 text-xs font-medium text-muted-foreground`}
+              className={`${W_SPARKLINE} shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/40`}
             >
               History
             </div>
 
             <div
               role="columnheader"
-              className={`${W_STATUS} shrink-0 pl-3 text-xs font-medium text-muted-foreground`}
+              className={`${W_STATUS} shrink-0 pl-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50`}
             >
               Status
             </div>
 
             <div
               role="columnheader"
-              className={`${W_UPTIME} shrink-0 px-3 text-xs font-medium text-muted-foreground`}
+              className={`${W_UPTIME} shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50`}
             >
               Uptime
             </div>
 
             <div
               role="columnheader"
-              className={`${W_ACTIONS} shrink-0 flex items-center justify-center text-xs font-medium text-muted-foreground`}
+              className={`${W_ACTIONS} shrink-0 flex items-center justify-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/40`}
             >
               Actions
             </div>
@@ -256,13 +267,27 @@ export function ProcessTable() {
           {rows.length === 0 ? (
             <div className="flex items-center justify-center h-full text-center py-16">
               <div>
-                <div className="w-12 h-12 mx-auto mb-4 bg-muted rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                <div className="w-12 h-12 mx-auto mb-4 bg-subtle/40 border border-border/30 flex items-center justify-center">
+                  <svg
+                    className="w-5 h-5 text-muted-foreground/25"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                    />
                   </svg>
                 </div>
-                <p className="text-sm text-muted-foreground">No processes running</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">Start PM2 to see your processes here</p>
+                <p className="text-sm text-muted-foreground/60">
+                  No processes running
+                </p>
+                <p className="text-xs text-muted-foreground/30 mt-1">
+                  Start PM2 to see your processes here
+                </p>
               </div>
             </div>
           ) : (

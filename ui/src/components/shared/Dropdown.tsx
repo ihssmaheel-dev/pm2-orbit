@@ -83,8 +83,8 @@ export function Dropdown({ trigger, children, open, onOpenChange, align = 'right
           role="menu"
           onKeyDown={handleMenuKeyDown}
           className={cn(
-            'absolute z-50 mt-1 min-w-[180px] bg-card border border-border',
-            'shadow-md',
+            'absolute z-50 mt-1.5 min-w-[176px] bg-card border border-border/60',
+            'shadow-lg shadow-black/30',
             align === 'right' ? 'right-0' : 'left-0',
             className,
           )}
@@ -110,8 +110,8 @@ export function DropdownItem({ children, onClick, danger, className }: DropdownI
       tabIndex={-1}
       onClick={onClick}
       className={cn(
-        'w-full px-3 py-2 text-sm text-left flex items-center gap-2 cursor-pointer',
-        'hover:bg-muted transition-colors focus-visible:bg-muted focus-visible:outline-none',
+        'w-full px-4 py-2.5 text-sm text-left flex items-center gap-3',
+        'hover:bg-subtle/60 transition-colors focus-visible:bg-subtle/60 focus-visible:outline-none',
         danger ? 'text-destructive' : 'text-foreground',
         className,
       )}
