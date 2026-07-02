@@ -512,8 +512,9 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
 
                   {/* Message */}
                   <span
+                    title={cleanMsg}
                     className={cn(
-                      "flex-1 min-w-0 whitespace-nowrap overflow-hidden text-ellipsis leading-[22px]",
+                      "flex-1 min-w-0 whitespace-nowrap overflow-hidden text-ellipsis leading-[22px] cursor-default",
                       isErr ? "text-red-400/90 dark:text-red-400/90" : "text-[#c9d1d9] dark:text-[#c9d1d9] text-foreground",
                     )}
                   >
