@@ -1,0 +1,20 @@
+{
+  "name": "PM2 Orbit",
+  "short_name": "PM2 Orbit",
+  "description": "High-performance PM2 monitoring dashboard",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0f1a",
+  "theme_color": "#14b8a6",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["developer", "utilities"],
+  "lang": "en"
+}
