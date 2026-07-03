@@ -90,13 +90,27 @@ export async function createServer(_opts: ServerOpts) {
     const addr = app.server.address();
     const port = typeof addr === 'string' ? 9823 : (addr?.port ?? 9823);
     const host = `http://127.0.0.1:${port}`;
-    logger.info('─'.repeat(40));
-    logger.info('PM2 Orbit server started successfully');
-    logger.info(`→ ${host}`);
-    logger.info(`Health: ${host}/api/health`);
-    logger.info(`Ping:   ${host}/api/ping`);
-    logger.info(`WS:     ws://127.0.0.1:${port}/ws`);
-    logger.info('─'.repeat(40));
+    const pkg = require('../package.json');
+
+    console.log('');
+    console.log('  \x1b[1m\x1b[36mPM2 Orbit\x1b[0m \x1b[90mv' + pkg.version + '\x1b[0m');
+    console.log('');
+    console.log('  \x1b[32m→\x1b[0m ' + host);
+    console.log('  \x1b[90mHealth:\x1b[0m ' + host + '/api/health');
+    console.log('  \x1b[90mWS:    \x1b[0m ws://127.0.0.1:' + port + '/ws');
+    console.log('');
+
+    // Check for updates
+    fetch('https://registry.npmjs.org/pm2-orbit/latest')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.version && data.version !== pkg.version) {
+          console.log('  \x1b[33m⬆\x1b[0m \x1b[33mUpdate available: v' + data.version + '\x1b[0m');
+          console.log('  \x1b[90mRun: npm install -g pm2-orbit@latest\x1b[0m');
+          console.log('');
+        }
+      })
+      .catch(() => {});
   });
 
   await registerRoutes(app, pipeline);
