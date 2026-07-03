@@ -90,17 +90,12 @@ export async function createServer(_opts: ServerOpts) {
     const addr = app.server.address();
     const port = typeof addr === 'string' ? 9823 : (addr?.port ?? 9823);
     const host = `http://127.0.0.1:${port}`;
-    const token = process.env.PM2_ORBIT_TOKEN;
     logger.info('─'.repeat(40));
     logger.info('PM2 Orbit server started successfully');
     logger.info(`→ ${host}`);
     logger.info(`Health: ${host}/api/health`);
     logger.info(`Ping:   ${host}/api/ping`);
     logger.info(`WS:     ws://127.0.0.1:${port}/ws`);
-    if (token) {
-      logger.info(`Token:  ${token}`);
-      logger.info('Use this token in Settings → Security → Auth Token');
-    }
     logger.info('─'.repeat(40));
   });
 
@@ -108,20 +103,6 @@ export async function createServer(_opts: ServerOpts) {
 
   app.server.on('upgrade', (req, socket, head) => {
     if (req.url === '/ws') {
-      // Authenticate WebSocket if token is configured
-      const wsToken = process.env.PM2_ORBIT_TOKEN;
-      if (wsToken) {
-        const url = new URL(req.url, `http://${req.headers.host}`);
-        const providedToken = url.searchParams.get('token') ||
-          req.headers.authorization?.replace('Bearer ', '');
-
-        if (providedToken !== wsToken) {
-          socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
-          socket.destroy();
-          return;
-        }
-      }
-
       const ip = req.socket.remoteAddress || 'unknown';
       const count = wsConnPerIp.get(ip) || 0;
       if (count >= MAX_WS_PER_IP) {
@@ -143,6 +124,21 @@ export async function createServer(_opts: ServerOpts) {
             system: require('./core/system/metrics').readSystem(),
           }));
         });
+
+        const decrement = () => {
+          pipeline.clients.delete(ws);
+          const c = wsConnPerIp.get(ip) || 1;
+          if (c <= 1) wsConnPerIp.delete(ip);
+          else wsConnPerIp.set(ip, c - 1);
+        };
+
+        ws.on('close', decrement);
+        ws.on('error', decrement);
+      });
+    } else {
+      socket.destroy();
+    }
+  });
 
         const decrement = () => {
           pipeline.clients.delete(ws);
