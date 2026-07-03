@@ -278,7 +278,7 @@ export function AlertForm({ open, onClose, editRule }: AlertFormProps) {
       <DialogFooter>
         <Button variant="ghost" onClick={onClose}>Cancel</Button>
         <Button onClick={handleSubmit} disabled={!threshold}>
-          <Plus size={14} /> Create Rule
+          <Plus size={14} /> {editRule ? 'Update Rule' : 'Create Rule'}
         </Button>
       </DialogFooter>
     </Dialog>
