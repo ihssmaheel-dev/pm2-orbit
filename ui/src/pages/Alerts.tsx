@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Plus, Trash2, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, AlertTriangle, Pencil } from 'lucide-react';
 import { Button } from '@/components/shared/Button';
 import { Badge } from '@/components/shared/Badge';
 import { Skeleton } from '@/components/shared/Skeleton';
@@ -8,15 +8,33 @@ import { useAlertsStore } from '@/store/alerts';
 import { AlertForm } from '@/components/alerts/AlertForm';
 import { AlertHistory } from '@/components/alerts/AlertHistory';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/shared/Tabs';
+import type { AlertRule } from '@/types/alerts';
 
 export function Alerts() {
   const rules = useAlertsStore((s) => s.rules);
   const loading = useAlertsStore((s) => s.loading);
   const removeRule = useAlertsStore((s) => s.removeRule);
+  const updateRule = useAlertsStore((s) => s.updateRule);
   const [formOpen, setFormOpen] = useState(false);
+  const [editRule, setEditRule] = useState<AlertRule | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const tabFromUrl = location.pathname.endsWith('/history') ? 'history' : 'rules';
+
+  const handleEdit = (rule: AlertRule) => {
+    setEditRule(rule);
+    setFormOpen(true);
+  };
+
+  const handleNew = () => {
+    setEditRule(null);
+    setFormOpen(true);
+  };
+
+  const handleClose = () => {
+    setFormOpen(false);
+    setEditRule(null);
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -25,7 +43,7 @@ export function Alerts() {
           <div className="w-1 h-4 bg-warning rounded-full" />
           <span className="text-sm text-foreground font-medium tracking-wide">ALERTS</span>
         </div>
-        <Button size="sm" onClick={() => setFormOpen(true)}>
+        <Button size="sm" onClick={handleNew}>
           <Plus size={14} /> New Rule
         </Button>
       </div>
@@ -59,9 +77,14 @@ export function Alerts() {
                 {rules.map((rule) => (
                   <div key={rule.id} className="flex items-center justify-between px-4 py-3 bg-card border border-border">
                     <div className="flex items-center gap-3">
-                      <Badge variant={rule.enabled ? 'success' : 'outline'}>
-                        {rule.enabled ? 'Active' : 'Disabled'}
-                      </Badge>
+                      <button
+                        onClick={() => updateRule(rule.id, { enabled: !rule.enabled })}
+                        className="cursor-pointer"
+                      >
+                        <Badge variant={rule.enabled ? 'success' : 'outline'}>
+                          {rule.enabled ? 'Active' : 'Disabled'}
+                        </Badge>
+                      </button>
                       <span className="text-sm text-foreground">
                         {rule.metric.toUpperCase()} {rule.operator} {rule.threshold}
                       </span>
@@ -69,12 +92,20 @@ export function Alerts() {
                         <span className="text-xs text-muted-foreground">PID {rule.processId}</span>
                       )}
                     </div>
-                    <button
-                      onClick={() => removeRule(rule.id)}
-                      className="text-muted-foreground hover:text-destructive transition-colors"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleEdit(rule)}
+                        className="text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      <button
+                        onClick={() => removeRule(rule.id)}
+                        className="text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -87,7 +118,7 @@ export function Alerts() {
         </Tabs>
       </div>
 
-      <AlertForm open={formOpen} onClose={() => setFormOpen(false)} />
+      <AlertForm open={formOpen} onClose={handleClose} editRule={editRule} />
     </div>
   );
 }

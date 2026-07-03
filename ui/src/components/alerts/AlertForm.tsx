@@ -14,10 +14,12 @@ interface ChannelInfo {
 interface AlertFormProps {
   open: boolean;
   onClose: () => void;
+  editRule?: AlertRule | null;
 }
 
-export function AlertForm({ open, onClose }: AlertFormProps) {
+export function AlertForm({ open, onClose, editRule }: AlertFormProps) {
   const addRule = useAlertsStore((s) => s.addRule);
+  const updateRule = useAlertsStore((s) => s.updateRule);
   const [metric, setMetric] = useState<AlertRule['metric']>('cpu');
   const [operator, setOperator] = useState<AlertRule['operator']>('>');
   const [threshold, setThreshold] = useState('');
@@ -34,7 +36,15 @@ export function AlertForm({ open, onClose }: AlertFormProps) {
   }, []);
 
   useEffect(() => {
-    if (!open) {
+    if (!open) return;
+    if (editRule) {
+      setMetric(editRule.metric);
+      setOperator(editRule.operator);
+      setThreshold(String(editRule.threshold));
+      setSeverity(editRule.severity);
+      setScope(editRule.scope);
+      setChannels(new Set(editRule.channels));
+    } else {
       setMetric('cpu');
       setOperator('>');
       setThreshold('');
@@ -42,7 +52,7 @@ export function AlertForm({ open, onClose }: AlertFormProps) {
       setScope('process');
       setChannels(new Set(['browser']));
     }
-  }, [open]);
+  }, [open, editRule]);
 
   const toggleChannel = (ch: string) => {
     setChannels((prev) => {
@@ -56,25 +66,35 @@ export function AlertForm({ open, onClose }: AlertFormProps) {
   const handleSubmit = () => {
     if (threshold.trim() === '' || isNaN(parseFloat(threshold))) return;
 
-    const rule: AlertRule = {
-      id: `rule-${Date.now()}`,
-      scope,
-      metric,
-      operator,
-      threshold: parseFloat(threshold),
-      severity,
-      enabled: true,
-      channels: Array.from(channels) as AlertRule['channels'],
-    };
-
-    addRule(rule);
+    if (editRule) {
+      updateRule(editRule.id, {
+        scope,
+        metric,
+        operator,
+        threshold: parseFloat(threshold),
+        severity,
+        channels: Array.from(channels) as AlertRule['channels'],
+      });
+    } else {
+      const rule: AlertRule = {
+        id: `rule-${Date.now()}`,
+        scope,
+        metric,
+        operator,
+        threshold: parseFloat(threshold),
+        severity,
+        enabled: true,
+        channels: Array.from(channels) as AlertRule['channels'],
+      };
+      addRule(rule);
+    }
     onClose();
   };
 
   return (
     <Dialog open={open} onClose={onClose}>
       <DialogHeader>
-        <DialogTitle>Create Alert Rule</DialogTitle>
+        <DialogTitle>{editRule ? 'Edit Alert Rule' : 'Create Alert Rule'}</DialogTitle>
       </DialogHeader>
       <DialogBody>
         <div className="space-y-4">
