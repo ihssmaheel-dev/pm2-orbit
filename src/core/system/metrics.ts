@@ -5,7 +5,7 @@ export interface SystemSnapshot {
   cpu: number;
   memory: { used: number; total: number };
   loadAvg: [number, number, number];
-  disk: { read: number; write: number };
+  disk: { read: number; write: number; used: number; total: number };
   network: { rx: number; tx: number };
   cpuCores: number;
 }
@@ -14,6 +14,7 @@ let prevIdle = 0;
 let prevTotal = 0;
 
 let diskCache = { read: 0, write: 0 };
+let diskSpaceCache = { used: 0, total: 0 };
 let networkCache = { rx: 0, tx: 0 };
 let loadCache: [number, number, number] | null = null;
 let collectorTimer: ReturnType<typeof setInterval> | null = null;
@@ -109,8 +110,26 @@ async function collectLoad() {
   }
 }
 
+async function collectDiskSpace() {
+  try {
+    const fsSize = await si.fsSize();
+    if (fsSize && fsSize.length > 0) {
+      // Use the first non-virtual filesystem (typically the root)
+      const rootFs = fsSize.find((f) => f.mount === '/') || fsSize[0];
+      if (rootFs) {
+        diskSpaceCache = {
+          used: rootFs.used || 0,
+          total: rootFs.size || 0,
+        };
+      }
+    }
+  } catch {
+    // keep previous values
+  }
+}
+
 async function collect() {
-  await Promise.all([collectNetwork(), collectDisk(), collectLoad()]);
+  await Promise.all([collectNetwork(), collectDisk(), collectLoad(), collectDiskSpace()]);
   cachedSnapshot = null;
 }
 
@@ -162,7 +181,7 @@ function computeSystemSnapshot(): SystemSnapshot {
     cpu: cpuPercent,
     memory: { used: os.totalmem() - os.freemem(), total: os.totalmem() },
     loadAvg,
-    disk: diskCache,
+    disk: { ...diskCache, ...diskSpaceCache },
     network: networkCache,
     cpuCores: cpus.length,
   };

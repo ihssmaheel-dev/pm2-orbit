@@ -140,10 +140,13 @@ function Card({
 export function SystemCards() {
   const system = useSystemStore((s) => s.system);
 
-  const memPercent =
-    system.memory.total > 0
-      ? (system.memory.used / system.memory.total) * 100
-      : 0;
+  const memPercent = system.memory.total > 0
+    ? (system.memory.used / system.memory.total) * 100
+    : 0;
+
+  const diskPercent = system.disk.total > 0
+    ? (system.disk.used / system.disk.total) * 100
+    : 0;
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 shrink-0">
@@ -160,7 +163,7 @@ export function SystemCards() {
         icon={<Server size={13} />}
         label="Cores"
         value={String(system.cpuCores)}
-        color="text-primary/70"
+        color="text-muted-foreground"
         bgColor="#14b8a6"
       />
       <Card
@@ -168,8 +171,7 @@ export function SystemCards() {
         label="Memory"
         value={formatBytes(system.memory.used)}
         subtext={`/ ${formatBytes(system.memory.total)}`}
-        color="text-chart-memory"
-        bgColor="#7f45e7"
+        color="text-accent"
         progress={memPercent}
         circular
       />
@@ -192,9 +194,15 @@ export function SystemCards() {
       <Card
         icon={<HardDrive size={13} />}
         label="Disk"
-        value={
-          system.disk.read > 0 ? `${formatBytes(system.disk.read)}/s` : "—"
-        }
+        value={system.disk.total > 0 ? `${diskPercent.toFixed(0)}%` : '—'}
+        subtext={system.disk.total > 0 ? `${formatBytes(system.disk.used)} / ${formatBytes(system.disk.total)}` : ''}
+        color="text-accent"
+        progress={diskPercent}
+        circular
+      />
+    </div>
+  );
+}
         subtext={
           system.disk.write > 0 ? `↓ ${formatBytes(system.disk.write)}/s` : ""
         }
