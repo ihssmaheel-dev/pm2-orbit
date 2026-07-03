@@ -129,14 +129,14 @@ export function Alerts() {
         <div className="flex flex-col flex-1 min-h-0">
           {/* Column headers */}
           <div className="flex items-center h-8 px-5 border-b border-border/40 bg-background/40 text-muted-foreground/50 select-none shrink-0">
-            <div className="w-16 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Scope</div>
+            <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Scope</div>
             <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Metric</div>
             <div className="flex-1 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Process</div>
-            <div className="w-16 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Condition</div>
-            <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Threshold</div>
-            <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Severity</div>
+            <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Condition</div>
+            <div className="w-24 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Threshold</div>
+            <div className="w-24 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Severity</div>
             {CHANNELS.map((ch) => (
-              <div key={ch} className="w-14 shrink-0 px-2 text-[10px] font-semibold uppercase tracking-widest text-center">{ch}</div>
+              <div key={ch} className="w-16 shrink-0 px-2 text-[10px] font-semibold uppercase tracking-widest text-center">{ch}</div>
             ))}
             <div className="w-14 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest text-center">Active</div>
             <div className="w-16 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest text-right">Actions</div>
@@ -148,14 +148,14 @@ export function Alerts() {
               <div className="p-5 space-y-2">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className="flex items-center h-11 px-5 border-b border-border/10">
-                    <div className="w-16 shrink-0 px-3"><Skeleton className="h-4 w-12" /></div>
+                    <div className="w-20 shrink-0 px-3"><Skeleton className="h-4 w-12" /></div>
                     <div className="w-20 shrink-0 px-3"><Skeleton className="h-4 w-14" /></div>
                     <div className="flex-1 shrink-0 px-3"><Skeleton className="h-4 w-24" /></div>
-                    <div className="w-16 shrink-0 px-3"><Skeleton className="h-4 w-6" /></div>
                     <div className="w-20 shrink-0 px-3"><Skeleton className="h-4 w-8" /></div>
-                    <div className="w-20 shrink-0 px-3"><Skeleton className="h-4 w-14" /></div>
+                    <div className="w-24 shrink-0 px-3"><Skeleton className="h-4 w-10" /></div>
+                    <div className="w-24 shrink-0 px-3"><Skeleton className="h-4 w-14" /></div>
                     {CHANNELS.map((ch) => (
-                      <div key={ch} className="w-14 shrink-0 px-2 flex justify-center"><Skeleton className="h-4 w-6" /></div>
+                      <div key={ch} className="w-16 shrink-0 px-2 flex justify-center"><Skeleton className="h-4 w-6" /></div>
                     ))}
                     <div className="w-14 shrink-0 px-3 flex justify-center"><Skeleton className="h-4 w-8" /></div>
                     <div className="w-16 shrink-0 px-3 flex justify-end"><Skeleton className="h-4 w-12" /></div>
@@ -183,7 +183,7 @@ export function Alerts() {
                     } ${i % 2 === 0 ? 'bg-background/20' : ''}`}
                   >
                     {/* Scope */}
-                    <div className="w-16 shrink-0 px-3">
+                    <div className="w-20 shrink-0 px-3">
                       <span className="text-[11px] text-muted-foreground/55">
                         {rule.scope === 'system' ? 'System' : rule.processId !== undefined ? `PID ${rule.processId}` : 'Global'}
                       </span>
@@ -204,17 +204,17 @@ export function Alerts() {
                     </div>
 
                     {/* Condition */}
-                    <div className="w-16 shrink-0 px-3">
+                    <div className="w-20 shrink-0 px-3">
                       <span className="text-[12px] font-mono text-muted-foreground/55">{rule.operator}</span>
                     </div>
 
                     {/* Threshold */}
-                    <div className="w-20 shrink-0 px-3">
+                    <div className="w-24 shrink-0 px-3">
                       <span className="text-[12px] font-mono font-medium text-foreground/80 tabular-nums">{rule.threshold}</span>
                     </div>
 
                     {/* Severity */}
-                    <div className="w-20 shrink-0 px-3">
+                    <div className="w-24 shrink-0 px-3">
                       <span className="inline-flex items-center gap-1.5">
                         <span className={`w-1.5 h-1.5 rounded-full ${sev.dot}`} />
                         <span className={`text-[11px] font-medium ${sev.txt}`}>{sev.label}</span>
@@ -223,7 +223,7 @@ export function Alerts() {
 
                     {/* Channel status */}
                     {CHANNELS.map((ch) => (
-                      <div key={ch} className="w-14 shrink-0 px-2 flex justify-center">
+                      <div key={ch} className="w-16 shrink-0 px-2 flex justify-center">
                         <ChannelDot enabled={rule.channels.includes(ch)} />
                       </div>
                     ))}
