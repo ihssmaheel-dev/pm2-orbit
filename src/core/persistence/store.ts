@@ -194,7 +194,9 @@ export function createStore() {
   const FLUSH_INTERVAL = 5000;
   const CLEANUP_INTERVAL = 5 * 60 * 1000;
   const HISTORY_RETENTION_MS = 24 * 60 * 60 * 1000;
+  const CHECKPOINT_INTERVAL = 50;
   let lastCleanup = 0;
+  let flushCount = 0;
 
   function flush() {
     const now = Date.now();
@@ -214,6 +216,14 @@ export function createStore() {
       const cutoff = now - HISTORY_RETENTION_MS;
       deleteProcessBefore.run(cutoff);
       deleteSystemBefore.run(cutoff);
+    }
+
+    flushCount++;
+    if (flushCount >= CHECKPOINT_INTERVAL) {
+      flushCount = 0;
+      try {
+        db.pragma('wal_checkpoint(TRUNCATE)');
+      } catch {}
     }
   }
 
