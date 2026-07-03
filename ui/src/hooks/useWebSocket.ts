@@ -5,6 +5,7 @@ import { useProcessStore } from '@/store/processes';
 import { useLogsStore } from '@/store/logs';
 import { useSystemStore } from '@/store/system';
 import { useAlertsStore } from '@/store/alerts';
+import { ensureToken } from '@/lib/api';
 import type { Tick } from '@/types/api';
 
 type WSStatus = 'connecting' | 'connected' | 'disconnected';
@@ -23,115 +24,62 @@ export function useWebSocket() {
   const addAlertEvent = useAlertsStore((s) => s.addEvent);
 
   useEffect(() => {
+    let unsubTick: (() => void) | null = null;
+    let unsubStatus: (() => void) | null = null;
+
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host;
     const url = `${protocol}//${host}/ws`;
 
-    // Fetch auth token from settings
-    fetch('/api/settings')
-      .then((r) => r.json())
-      .then((data) => {
-        const token = data.authToken || '';
-        const client = new WSClient(url, token);
-        clientRef.current = client;
+    ensureToken().then((token) => {
+      const client = new WSClient(url, token);
+      clientRef.current = client;
 
-        const unsubTick = client.subscribe((tick: Tick) => {
-          lastTickRef.current = tick.ts;
+      unsubTick = client.subscribe((tick: Tick) => {
+        lastTickRef.current = tick.ts;
 
-          if (tick.type === 'reconnect') {
-            toast.success('PM2 daemon reconnected');
-            return;
+        if (tick.type === 'reconnect') {
+          toast.success('PM2 daemon reconnected');
+          return;
+        }
+
+        if (tick.full && tick.fullSeq !== undefined) {
+          if (tick.fullSeq !== lastFullSeqRef.current) {
+            lastFullSeqRef.current = tick.fullSeq;
+            setAll(tick.full);
           }
+        }
 
-          if (tick.full && tick.fullSeq !== undefined) {
-            if (tick.fullSeq !== lastFullSeqRef.current) {
-              lastFullSeqRef.current = tick.fullSeq;
-              setAll(tick.full);
+        if (tick.events.length > 0) {
+          for (const event of tick.events) {
+            if (event.type === 'remove') {
+              clearLogsRef.current(event.process.id);
             }
           }
+          applyDelta(tick.events);
+        }
 
-          if (tick.events.length > 0) {
-            for (const event of tick.events) {
-              if (event.type === 'remove') {
-                clearLogsRef.current(event.process.id);
-              }
-            }
-            applyDelta(tick.events);
+        if (tick.alerts && tick.alerts.length > 0) {
+          for (const alertEvent of tick.alerts) {
+            addAlertEvent(alertEvent);
+            toast.warning(alertEvent.message, {
+              description: `${alertEvent.severity.toUpperCase()} — ${alertEvent.processName}`,
+            });
           }
+        }
 
-          // Handle alert events
-          if (tick.alerts && tick.alerts.length > 0) {
-            for (const alertEvent of tick.alerts) {
-              addAlertEvent(alertEvent);
-              toast.warning(alertEvent.message, {
-                description: `${alertEvent.severity.toUpperCase()} — ${alertEvent.processName}`,
-              });
-            }
-          }
-
-          updateSystem(tick.system);
-        });
-
-        const unsubStatus = client.onStatus(setStatus);
-        client.connect();
-
-        return () => {
-          unsubTick();
-          unsubStatus();
-          client.disconnect();
-        };
-      })
-      .catch(() => {
-        // Fallback: connect without token
-        const client = new WSClient(url);
-        clientRef.current = client;
-
-        const unsubTick = client.subscribe((tick: Tick) => {
-          lastTickRef.current = tick.ts;
-
-          if (tick.type === 'reconnect') {
-            toast.success('PM2 daemon reconnected');
-            return;
-          }
-
-          if (tick.full && tick.fullSeq !== undefined) {
-            if (tick.fullSeq !== lastFullSeqRef.current) {
-              lastFullSeqRef.current = tick.fullSeq;
-              setAll(tick.full);
-            }
-          }
-
-          if (tick.events.length > 0) {
-            for (const event of tick.events) {
-              if (event.type === 'remove') {
-                clearLogsRef.current(event.process.id);
-              }
-            }
-            applyDelta(tick.events);
-          }
-
-          // Handle alert events
-          if (tick.alerts && tick.alerts.length > 0) {
-            for (const alertEvent of tick.alerts) {
-              addAlertEvent(alertEvent);
-              toast.warning(alertEvent.message, {
-                description: `${alertEvent.severity.toUpperCase()} — ${alertEvent.processName}`,
-              });
-            }
-          }
-
-          updateSystem(tick.system);
-        });
-
-        const unsubStatus = client.onStatus(setStatus);
-        client.connect();
-
-        return () => {
-          unsubTick();
-          unsubStatus();
-          client.disconnect();
-        };
+        updateSystem(tick.system);
       });
+
+      unsubStatus = client.onStatus(setStatus);
+      client.connect();
+    });
+
+    return () => {
+      unsubTick?.();
+      unsubStatus?.();
+      clientRef.current?.disconnect();
+    };
   }, [applyDelta, setAll, updateSystem]);
 
   return { status, lastTick: lastTickRef.current };

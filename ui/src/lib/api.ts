@@ -6,51 +6,59 @@ interface ApiOptions extends RequestInit {
 }
 
 let cachedToken: string = '';
-let tokenFetchPromise: Promise<string> | null = null;
+let tokenReady = false;
+let tokenFetchPromise: Promise<void> | null = null;
 
-async function getToken(): Promise<string> {
-  if (cachedToken) return cachedToken;
-  if (tokenFetchPromise) return tokenFetchPromise;
+async function ensureToken(): Promise<string> {
+  if (tokenReady) return cachedToken;
+  if (tokenFetchPromise) {
+    await tokenFetchPromise;
+    return cachedToken;
+  }
 
   tokenFetchPromise = fetch('/api/settings')
     .then((r) => r.json())
     .then((data) => {
-      cachedToken = data.authToken || '';
-      return cachedToken;
+      cachedToken = String(data.authToken || '');
+      tokenReady = true;
     })
     .catch(() => {
       cachedToken = '';
-      return '';
+      tokenReady = true;
     });
 
-  return tokenFetchPromise;
+  await tokenFetchPromise;
+  return cachedToken;
 }
 
 function invalidateToken() {
   cachedToken = '';
+  tokenReady = false;
   tokenFetchPromise = null;
 }
 
 async function api(url: string, options: ApiOptions = {}): Promise<Response> {
   const { silent, label, ...fetchOptions } = options;
 
-  // Skip auth for exempt endpoints
   const exemptPaths = ['/api/health', '/api/ping', '/api/settings'];
   const isExempt = exemptPaths.some((p) => url.startsWith(p));
 
-  let headers: Record<string, string> = {};
+  // Build headers as plain object
+  const headers: Record<string, string> = {};
   if (fetchOptions.headers) {
     if (fetchOptions.headers instanceof Headers) {
       fetchOptions.headers.forEach((v, k) => { headers[k] = v; });
     } else {
-      headers = { ...fetchOptions.headers as Record<string, string> };
+      Object.entries(fetchOptions.headers).forEach(([k, v]) => {
+        if (typeof v === 'string') headers[k] = v;
+      });
     }
   }
 
   if (!isExempt) {
-    const token = await getToken();
+    const token = await ensureToken();
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers['Authorization'] = 'Bearer ' + token;
     }
   }
 
@@ -64,12 +72,12 @@ async function api(url: string, options: ApiOptions = {}): Promise<Response> {
     throw err;
   }
 
-  // If 401, token might be stale — invalidate and retry once
+  // If 401, invalidate and retry once
   if (res.status === 401 && !isExempt) {
     invalidateToken();
-    const token = await getToken();
+    const token = await ensureToken();
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers['Authorization'] = 'Bearer ' + token;
       try {
         res = await fetch(url, { ...fetchOptions, headers });
       } catch (err) {
@@ -95,4 +103,4 @@ export async function apiJson<T>(url: string, options: ApiOptions = {}): Promise
   return res.json();
 }
 
-export { api, invalidateToken };
+export { api, invalidateToken, ensureToken };
