@@ -55,7 +55,7 @@ interface CardProps {
   value: string;
   subtext?: string;
   color: string;
-  bgColor: string;
+  bgColor?: string;
   progress?: number;
   circular?: boolean;
 }
@@ -66,7 +66,7 @@ function Card({
   value,
   subtext,
   color,
-  bgColor,
+  bgColor = '#666',
   progress,
   circular,
 }: CardProps) {

@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Activity, BarChart3, AlertCircle, ChevronDown } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useProcessStore } from '@/store/processes';
+import { useSystemStore } from '@/store/system';
 import { CpuChart, MemoryChart, LoadChart } from '@/components/charts/Charts';
 import { formatBytes } from '@/lib/format';
 
@@ -23,10 +24,13 @@ interface SystemHistory {
 
 type TimeRange = '1h' | '6h' | '24h';
 
+const MAX_REALTIME_POINTS = 120;
+
 function fmtPercent(v: number) { return v.toFixed(1) + '%'; }
 
 export function History() {
   const processes = useProcessStore((s) => s.processes);
+  const system = useSystemStore((s) => s.system);
   const [timeRange, setTimeRange] = useState<TimeRange>('24h');
   const [systemHistory, setSystemHistory] = useState<SystemHistory[]>([]);
   const [systemLoading, setSystemLoading] = useState(true);
@@ -35,8 +39,34 @@ export function History() {
   const [processHistory, setProcessHistory] = useState<ProcessHistory[]>([]);
   const [processLoading, setProcessLoading] = useState(false);
   const [processError, setProcessError] = useState<string | null>(null);
+  const realtimeBufferRef = useRef<SystemHistory[]>([]);
 
   const processList = useMemo(() => Array.from(processes.values()), [processes]);
+
+  // Append real-time system data to chart
+  useEffect(() => {
+    if (system.cpu === 0 && system.memory.used === 0) return;
+
+    const newPoint: SystemHistory = {
+      ts: system.ts || Date.now(),
+      cpu: system.cpu,
+      memoryUsed: system.memory.used,
+      memoryTotal: system.memory.total,
+      load1: system.loadAvg[0],
+      load5: system.loadAvg[1],
+      load15: system.loadAvg[2],
+    };
+
+    realtimeBufferRef.current.push(newPoint);
+    if (realtimeBufferRef.current.length > MAX_REALTIME_POINTS) {
+      realtimeBufferRef.current.shift();
+    }
+
+    setSystemHistory((prev) => {
+      const combined = [...prev, ...realtimeBufferRef.current];
+      return combined.slice(-MAX_REALTIME_POINTS);
+    });
+  }, [system]);
 
   useEffect(() => {
     const hours = timeRange === '1h' ? 1 : timeRange === '6h' ? 6 : 24;

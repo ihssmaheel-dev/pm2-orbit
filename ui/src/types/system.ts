@@ -1,4 +1,5 @@
 export interface SystemSnapshot {
+  ts?: number;
   cpu: number;
   memory: { used: number; total: number };
   loadAvg: [number, number, number];

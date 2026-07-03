@@ -30,7 +30,6 @@ export function ActionMenu({ processId, processName }: ActionMenuProps) {
   const [scaleValue, setScaleValue] = useState('+1');
   const process = useProcessStore((s) => s.processes.get(processId));
   const status = process?.status || 'stopped';
-  const mode = process?.mode || 'fork';
 
   const handleAction = async (action: string, instances?: string) => {
     try {

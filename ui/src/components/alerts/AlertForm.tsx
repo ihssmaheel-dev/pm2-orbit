@@ -74,15 +74,16 @@ export function AlertForm({ open, onClose, editRule }: AlertFormProps) {
     if (threshold.trim() === '' || isNaN(parseFloat(threshold))) return;
 
     if (editRule) {
-      updateRule(editRule.id, {
+      const updates: Partial<AlertRule> = {
         scope,
         metric,
         operator,
         threshold: parseFloat(threshold),
         severity,
-        processId: processId || undefined,
         channels: Array.from(channels) as AlertRule['channels'],
-      });
+      };
+      if (processId) updates.processId = processId;
+      updateRule(editRule.id, updates);
     } else {
       const rule: AlertRule = {
         id: `rule-${Date.now()}`,
@@ -91,9 +92,9 @@ export function AlertForm({ open, onClose, editRule }: AlertFormProps) {
         operator,
         threshold: parseFloat(threshold),
         severity,
-        processId: processId || undefined,
         enabled: true,
         channels: Array.from(channels) as AlertRule['channels'],
+        ...(processId ? { processId } : {}),
       };
       addRule(rule);
     }
