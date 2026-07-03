@@ -14,9 +14,9 @@ function formatTimestamp(ts: number): string {
   const diffHr = Math.floor(diffMs / 3600000);
 
   if (diffMin < 1) return 'now';
-  if (diffMin < 60) return `${diffMin}m`;
-  if (diffHr < 24) return `${diffHr}h`;
-  return `${Math.floor(diffHr / 24)}d`;
+  if (diffMin < 60) return `${diffMin}m ago`;
+  if (diffHr < 24) return `${diffHr}h ago`;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 interface UPlotChartProps {
@@ -79,30 +79,22 @@ export function UPlotChart({ data, series, height = 160, className, formatY }: U
         {
           stroke: axisColor,
           grid: { stroke: gridColor, width: 0.5 },
-          size: 50,
+          size: 55,
           font: '10px monospace',
-          values: (_u: uPlot, ticks: number[]) =>
-            ticks.map((v) => {
+          values: (_u: uPlot, splits: number[]) =>
+            splits.map((v) => {
               const idx = Math.round(v);
               if (idx >= 0 && idx < data[0].length) {
                 return formatTimestamp(data[0][idx]);
               }
               return '';
             }),
-          splits: (_u: uPlot, _axisIdx: number, _foundSpace: number, _foundIncr: number, axisMin: number, axisMax: number) => {
-            const range = axisMax - axisMin;
-            const step = Math.max(1, Math.floor(range / 5));
-            const splits: number[] = [];
-            for (let i = 0; i <= 5; i++) {
-              splits.push(axisMin + i * step);
-            }
-            return splits;
-          },
+          space: 60,
         },
         {
           stroke: axisColor,
           grid: { stroke: gridColor, width: 0.5 },
-          size: 40,
+          size: 45,
           font: '10px monospace',
           values: (_u: uPlot, ticks: number[]) => ticks.map((v) => formatY ? formatY(v) : String(Math.round(v))),
         },

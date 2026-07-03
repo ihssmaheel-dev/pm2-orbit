@@ -24,8 +24,6 @@ interface SystemHistory {
 
 type TimeRange = '1h' | '6h' | '24h';
 
-const MAX_REALTIME_POINTS = 120;
-
 function fmtPercent(v: number) { return v.toFixed(1) + '%'; }
 
 export function History() {
@@ -39,16 +37,21 @@ export function History() {
   const [processHistory, setProcessHistory] = useState<ProcessHistory[]>([]);
   const [processLoading, setProcessLoading] = useState(false);
   const [processError, setProcessError] = useState<string | null>(null);
-  const realtimeBufferRef = useRef<SystemHistory[]>([]);
+  const lastRealtimeRef = useRef<number>(0);
 
   const processList = useMemo(() => Array.from(processes.values()), [processes]);
 
-  // Append real-time system data to chart
+  // Append real-time system data to chart (debounced, no duplicates)
   useEffect(() => {
     if (system.cpu === 0 && system.memory.used === 0) return;
 
+    const now = Date.now();
+    // Only add point every 2 seconds to avoid duplicates
+    if (now - lastRealtimeRef.current < 2000) return;
+    lastRealtimeRef.current = now;
+
     const newPoint: SystemHistory = {
-      ts: system.ts || Date.now(),
+      ts: now,
       cpu: system.cpu,
       memoryUsed: system.memory.used,
       memoryTotal: system.memory.total,
@@ -57,14 +60,11 @@ export function History() {
       load15: system.loadAvg[2],
     };
 
-    realtimeBufferRef.current.push(newPoint);
-    if (realtimeBufferRef.current.length > MAX_REALTIME_POINTS) {
-      realtimeBufferRef.current.shift();
-    }
-
     setSystemHistory((prev) => {
-      const combined = [...prev, ...realtimeBufferRef.current];
-      return combined.slice(-MAX_REALTIME_POINTS);
+      const next = [...prev, newPoint];
+      // Sort by timestamp and keep last 120 points
+      next.sort((a, b) => a.ts - b.ts);
+      return next.slice(-120);
     });
   }, [system]);
 
