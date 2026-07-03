@@ -1,33 +1,35 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Plus, Trash2, AlertTriangle, Pencil, RotateCcw } from 'lucide-react';
-import { Button } from '@/components/shared/Button';
-import { Badge } from '@/components/shared/Badge';
+import { Plus, Trash2, AlertTriangle, Pencil, RotateCcw, Bell } from 'lucide-react';
 import { Skeleton } from '@/components/shared/Skeleton';
 import { useAlertsStore } from '@/store/alerts';
 import { AlertForm } from '@/components/alerts/AlertForm';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/shared/Tabs';
 import type { AlertRule } from '@/types/alerts';
 
-const severityColors: Record<string, string> = {
-  info: 'text-blue-500 bg-blue-500/10',
-  warning: 'text-warning bg-warning/10',
-  critical: 'text-destructive bg-destructive/10',
+const severityConfig: Record<string, { label: string; dot: string; txt: string }> = {
+  info: { label: 'Info', dot: 'bg-blue-400', txt: 'text-blue-400' },
+  warning: { label: 'Warning', dot: 'bg-amber-400', txt: 'text-amber-400' },
+  critical: { label: 'Critical', dot: 'bg-red-400', txt: 'text-red-400' },
 };
 
 const metricLabels: Record<string, string> = {
-  cpu: 'CPU %',
+  cpu: 'CPU',
   memory: 'Memory',
   restarts: 'Restarts',
   status: 'Status',
-  systemCpu: 'System CPU %',
-  systemMemory: 'System Memory %',
-  systemLoad: 'System Load',
+  systemCpu: 'Sys CPU',
+  systemMemory: 'Sys Memory',
+  systemLoad: 'Sys Load',
 };
 
 function formatTime(ts: number): string {
   const d = new Date(ts);
-  return d.toLocaleString();
+  const now = new Date();
+  const diff = now.getTime() - d.getTime();
+  if (diff < 60000) return 'Just now';
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+  return d.toLocaleDateString();
 }
 
 export function Alerts() {
@@ -59,263 +61,298 @@ export function Alerts() {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-card/30 border border-border/50">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-card/50 shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="w-1 h-4 bg-warning rounded-full" />
-          <span className="text-sm text-foreground font-medium tracking-wide">ALERTS</span>
-          <span className="text-xs text-muted-foreground">({rules.length} rules, {history.length} events)</span>
+      <div className="flex items-center justify-between h-12 px-5 shrink-0 border-b border-border/50">
+        <div className="flex items-center gap-2.5">
+          <span className="text-[12px] font-semibold text-foreground/85">Alerts</span>
+          <span className="text-[11px] font-mono text-primary bg-primary/10 px-1.5 leading-4.5 tabular-nums">
+            {tabFromUrl === 'rules' ? rules.length : history.length}
+          </span>
         </div>
-        <Button size="sm" onClick={handleNew}>
-          <Plus size={14} /> New Rule
-        </Button>
+        <div className="flex items-center gap-2">
+          {tabFromUrl === 'history' && history.length > 0 && (
+            <button
+              onClick={clearHistory}
+              className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-foreground hover:text-destructive border border-border hover:border-destructive/40 hover:bg-destructive/5 transition-colors"
+            >
+              <RotateCcw size={10} /> Clear
+            </button>
+          )}
+          <button
+            onClick={handleNew}
+            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-foreground hover:text-primary border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors"
+          >
+            <Plus size={10} /> New Rule
+          </button>
+        </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-auto">
-        <Tabs value={tabFromUrl} onValueChange={(v) => navigate(v === 'rules' ? '/alerts/rules' : '/alerts/history', { replace: true })}>
-          <div className="px-5 border-b border-border">
-            <TabsList>
-              <TabsTrigger value="rules">Rules</TabsTrigger>
-              <TabsTrigger value="history">History</TabsTrigger>
-            </TabsList>
+      {/* Tabs */}
+      <div className="flex items-center h-10 px-5 border-b border-border/40 bg-background/40 text-muted-foreground/50 select-none shrink-0">
+        <button
+          onClick={() => navigate('/alerts/rules', { replace: true })}
+          className={`px-3 h-10 text-[11px] font-semibold uppercase tracking-widest transition-colors cursor-pointer border-b-2 ${
+            tabFromUrl === 'rules'
+              ? 'text-primary border-primary'
+              : 'border-transparent hover:text-foreground/60'
+          }`}
+        >
+          Rules
+          <span className="ml-1.5 text-[10px] font-mono tabular-nums text-muted-foreground/40">
+            {rules.length}
+          </span>
+        </button>
+        <button
+          onClick={() => navigate('/alerts/history', { replace: true })}
+          className={`px-3 h-10 text-[11px] font-semibold uppercase tracking-widest transition-colors cursor-pointer border-b-2 ${
+            tabFromUrl === 'history'
+              ? 'text-primary border-primary'
+              : 'border-transparent hover:text-foreground/60'
+          }`}
+        >
+          History
+          <span className="ml-1.5 text-[10px] font-mono tabular-nums text-muted-foreground/40">
+            {history.length}
+          </span>
+        </button>
+      </div>
+
+      {/* Rules Table */}
+      {tabFromUrl === 'rules' && (
+        <div className="flex flex-col flex-1 min-h-0">
+          {/* Column headers */}
+          <div className="flex items-center h-8 px-5 border-b border-border/40 bg-background/40 text-muted-foreground/50 select-none shrink-0">
+            <div className="w-12 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Status</div>
+            <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Severity</div>
+            <div className="w-16 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Scope</div>
+            <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Metric</div>
+            <div className="w-12 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Cond</div>
+            <div className="w-16 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Value</div>
+            <div className="w-28 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Channels</div>
+            <div className="flex-1 px-3 text-[10px] font-semibold uppercase tracking-widest">Process</div>
+            <div className="w-16 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest text-right">Actions</div>
           </div>
 
-          {/* Rules Tab */}
-          <TabsContent value="rules">
+          {/* Data rows */}
+          <div className="flex-1 overflow-auto">
             {loading ? (
               <div className="p-5 space-y-2">
                 {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-4 h-11 px-4 bg-card border border-border">
-                    <Skeleton className="h-4 w-16" />
-                    <Skeleton className="h-4 w-12" />
-                    <Skeleton className="h-4 w-8" />
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-4 w-16 ml-auto" />
+                  <div key={i} className="flex items-center h-11 px-5 border-b border-border/10">
+                    <div className="w-12 shrink-0 px-3"><Skeleton className="h-4 w-10" /></div>
+                    <div className="w-20 shrink-0 px-3"><Skeleton className="h-4 w-14" /></div>
+                    <div className="w-16 shrink-0 px-3"><Skeleton className="h-4 w-10" /></div>
+                    <div className="w-20 shrink-0 px-3"><Skeleton className="h-4 w-12" /></div>
+                    <div className="w-12 shrink-0 px-3"><Skeleton className="h-4 w-6" /></div>
+                    <div className="w-16 shrink-0 px-3"><Skeleton className="h-4 w-8" /></div>
+                    <div className="w-28 shrink-0 px-3"><Skeleton className="h-4 w-20" /></div>
+                    <div className="flex-1 px-3"><Skeleton className="h-4 w-16" /></div>
+                    <div className="w-16 shrink-0 px-3 flex justify-end"><Skeleton className="h-4 w-12" /></div>
                   </div>
                 ))}
               </div>
             ) : rules.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-                <div className="w-12 h-12 rounded-lg bg-subtle/40 border border-border/30 flex items-center justify-center mb-4">
-                  <AlertTriangle size={24} className="text-warning/40" />
+              <div className="flex items-center justify-center h-full text-center py-16">
+                <div>
+                  <div className="w-12 h-12 mx-auto mb-4 bg-subtle/40 border border-border/30 flex items-center justify-center">
+                    <AlertTriangle size={20} className="text-muted-foreground/25" />
+                  </div>
+                  <p className="text-sm text-muted-foreground/60">No alert rules configured</p>
+                  <p className="text-xs text-muted-foreground/30 mt-1">Create a rule to get notified when thresholds are exceeded</p>
                 </div>
-                <p className="text-sm font-medium">No alert rules configured</p>
-                <p className="text-xs mt-1 text-muted-foreground/60">Create a rule to get notified when thresholds are exceeded</p>
-                <Button size="sm" className="mt-4" onClick={handleNew}>
-                  <Plus size={14} /> Create Rule
-                </Button>
               </div>
             ) : (
-              <div className="p-5">
-                {/* Table Header */}
-                <div className="flex items-center h-9 px-4 border-b border-border text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-                  <div className="w-20 shrink-0">Status</div>
-                  <div className="w-16 shrink-0">Severity</div>
-                  <div className="w-20 shrink-0">Scope</div>
-                  <div className="w-24 shrink-0">Metric</div>
-                  <div className="w-16 shrink-0">Operator</div>
-                  <div className="w-20 shrink-0">Threshold</div>
-                  <div className="w-24 shrink-0">Channels</div>
-                  <div className="flex-1"></div>
-                  <div className="w-20 shrink-0 text-right">Actions</div>
-                </div>
-
-                {/* Table Rows */}
-                <div className="divide-y divide-border/50">
-                  {rules.map((rule) => (
-                    <div
-                      key={rule.id}
-                      className="flex items-center h-11 px-4 hover:bg-subtle/30 transition-colors"
-                    >
-                      {/* Status */}
-                      <div className="w-20 shrink-0">
-                        <button
-                          onClick={() => updateRule(rule.id, { enabled: !rule.enabled })}
-                          className="cursor-pointer"
-                        >
-                          <Badge variant={rule.enabled ? 'success' : 'outline'}>
-                            {rule.enabled ? 'Active' : 'Off'}
-                          </Badge>
-                        </button>
-                      </div>
-
-                      {/* Severity */}
-                      <div className="w-16 shrink-0">
-                        <span className={`inline-flex px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${severityColors[rule.severity] || severityColors.warning}`}>
-                          {rule.severity}
-                        </span>
-                      </div>
-
-                      {/* Scope */}
-                      <div className="w-20 shrink-0">
-                        <span className="text-xs text-muted-foreground">
-                          {rule.scope === 'system' ? 'System' : rule.processId ? `PID ${rule.processId}` : 'Global'}
-                        </span>
-                      </div>
-
-                      {/* Metric */}
-                      <div className="w-24 shrink-0">
-                        <span className="text-xs font-medium text-foreground">
-                          {metricLabels[rule.metric] || rule.metric}
-                        </span>
-                      </div>
-
-                      {/* Operator */}
-                      <div className="w-16 shrink-0">
-                        <span className="text-xs font-mono text-muted-foreground">
-                          {rule.operator}
-                        </span>
-                      </div>
-
-                      {/* Threshold */}
-                      <div className="w-20 shrink-0">
-                        <span className="text-xs font-mono font-medium text-foreground">
-                          {rule.threshold}
-                        </span>
-                      </div>
-
-                      {/* Channels */}
-                      <div className="w-24 shrink-0 flex gap-1">
-                        {rule.channels.slice(0, 3).map((ch) => (
-                          <span key={ch} className="px-1.5 py-0.5 text-[9px] font-mono bg-subtle text-muted-foreground rounded">
-                            {ch}
-                          </span>
-                        ))}
-                        {rule.channels.length > 3 && (
-                          <span className="text-[9px] text-muted-foreground">+{rule.channels.length - 3}</span>
-                        )}
-                      </div>
-
-                      {/* Spacer */}
-                      <div className="flex-1"></div>
-
-                      {/* Actions */}
-                      <div className="w-20 shrink-0 flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => handleEdit(rule)}
-                          className="h-7 w-7 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 rounded transition-colors cursor-pointer"
-                          title="Edit rule"
-                        >
-                          <Pencil size={13} />
-                        </button>
-                        <button
-                          onClick={() => removeRule(rule.id)}
-                          className="h-7 w-7 flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors cursor-pointer"
-                          title="Delete rule"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
+              rules.map((rule, i) => {
+                const sev = severityConfig[rule.severity] || severityConfig.warning;
+                return (
+                  <div
+                    key={rule.id}
+                    className={`flex items-center h-11 px-5 cursor-pointer transition-colors group border-b border-border/10 hover:bg-subtle/20 ${
+                      !rule.enabled ? 'opacity-50' : ''
+                    } ${i % 2 === 0 ? 'bg-background/20' : ''}`}
+                  >
+                    {/* Status toggle */}
+                    <div className="w-12 shrink-0 px-3">
+                      <button
+                        onClick={() => updateRule(rule.id, { enabled: !rule.enabled })}
+                        className={`relative w-8 h-[18px] rounded-full transition-colors cursor-pointer ${
+                          rule.enabled ? 'bg-primary' : 'bg-subtle/60'
+                        }`}
+                      >
+                        <span className={`absolute top-[2px] left-[2px] w-[14px] h-[14px] rounded-full bg-white transition-transform ${
+                          rule.enabled ? 'translate-x-[14px]' : 'translate-x-0'
+                        }`} />
+                      </button>
                     </div>
-                  ))}
+
+                    {/* Severity */}
+                    <div className="w-20 shrink-0 px-3">
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className={`w-1.5 h-1.5 rounded-full ${sev.dot}`} />
+                        <span className={`text-[11px] font-medium ${sev.txt}`}>{sev.label}</span>
+                      </span>
+                    </div>
+
+                    {/* Scope */}
+                    <div className="w-16 shrink-0 px-3">
+                      <span className="text-[11px] text-muted-foreground/55">
+                        {rule.scope === 'system' ? 'System' : rule.processId !== undefined ? `PID ${rule.processId}` : 'Global'}
+                      </span>
+                    </div>
+
+                    {/* Metric */}
+                    <div className="w-20 shrink-0 px-3">
+                      <span className="text-[12px] font-medium text-foreground">
+                        {metricLabels[rule.metric] || rule.metric}
+                      </span>
+                    </div>
+
+                    {/* Operator */}
+                    <div className="w-12 shrink-0 px-3">
+                      <span className="text-[12px] font-mono text-muted-foreground/55">
+                        {rule.operator}
+                      </span>
+                    </div>
+
+                    {/* Threshold */}
+                    <div className="w-16 shrink-0 px-3">
+                      <span className="text-[12px] font-mono font-medium text-foreground/80 tabular-nums">
+                        {rule.threshold}
+                      </span>
+                    </div>
+
+                    {/* Channels */}
+                    <div className="w-28 shrink-0 px-3 flex gap-1">
+                      {rule.channels.map((ch) => (
+                        <span key={ch} className="px-1.5 py-0.5 text-[9px] font-mono bg-subtle/60 text-muted-foreground/50 rounded">
+                          {ch}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Process */}
+                    <div className="flex-1 px-3">
+                      <span className="text-[11px] text-muted-foreground/45">
+                        {rule.processId !== undefined ? `Process ${rule.processId}` : 'All processes'}
+                      </span>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="w-16 shrink-0 px-3 flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => handleEdit(rule)}
+                        className="h-6 w-6 flex items-center justify-center text-muted-foreground/40 hover:text-primary hover:bg-primary/10 rounded transition-colors cursor-pointer"
+                        title="Edit"
+                      >
+                        <Pencil size={11} />
+                      </button>
+                      <button
+                        onClick={() => removeRule(rule.id)}
+                        className="h-6 w-6 flex items-center justify-center text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 rounded transition-colors cursor-pointer"
+                        title="Delete"
+                      >
+                        <Trash2 size={11} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* History Table */}
+      {tabFromUrl === 'history' && (
+        <div className="flex flex-col flex-1 min-h-0">
+          {/* Column headers */}
+          <div className="flex items-center h-8 px-5 border-b border-border/40 bg-background/40 text-muted-foreground/50 select-none shrink-0">
+            <div className="w-24 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Time</div>
+            <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Severity</div>
+            <div className="w-32 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Process</div>
+            <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Metric</div>
+            <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Value</div>
+            <div className="flex-1 px-3 text-[10px] font-semibold uppercase tracking-widest">Message</div>
+          </div>
+
+          {/* Data rows */}
+          <div className="flex-1 overflow-auto">
+            {history.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-center py-16">
+                <div>
+                  <div className="w-12 h-12 mx-auto mb-4 bg-subtle/40 border border-border/30 flex items-center justify-center">
+                    <Bell size={20} className="text-muted-foreground/25" />
+                  </div>
+                  <p className="text-sm text-muted-foreground/60">No alerts triggered yet</p>
+                  <p className="text-xs text-muted-foreground/30 mt-1">Alert events will appear here when rules fire</p>
                 </div>
               </div>
+            ) : (
+              history.map((event, i) => {
+                const sev = severityConfig[event.severity] || severityConfig.warning;
+                return (
+                  <div
+                    key={`${event.ruleId}-${event.ts}-${i}`}
+                    className={`flex items-center h-11 px-5 border-b border-border/10 hover:bg-subtle/20 transition-colors ${
+                      i % 2 === 0 ? 'bg-background/20' : ''
+                    }`}
+                  >
+                    {/* Time */}
+                    <div className="w-24 shrink-0 px-3">
+                      <span className="text-[11px] font-mono text-muted-foreground/45 tabular-nums">
+                        {formatTime(event.ts)}
+                      </span>
+                    </div>
+
+                    {/* Severity */}
+                    <div className="w-20 shrink-0 px-3">
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className={`w-1.5 h-1.5 rounded-full ${sev.dot}`} />
+                        <span className={`text-[11px] font-medium ${sev.txt}`}>{sev.label}</span>
+                      </span>
+                    </div>
+
+                    {/* Process */}
+                    <div className="w-32 shrink-0 px-3">
+                      <span className="text-[12px] font-medium text-foreground block truncate">
+                        {event.processName}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground/40 font-mono">
+                        PID {event.processId}
+                      </span>
+                    </div>
+
+                    {/* Metric */}
+                    <div className="w-20 shrink-0 px-3">
+                      <span className="text-[11px] text-muted-foreground/55">
+                        {metricLabels[event.metric] || event.metric}
+                      </span>
+                    </div>
+
+                    {/* Value */}
+                    <div className="w-20 shrink-0 px-3">
+                      <span className="text-[12px] font-mono text-foreground/80 tabular-nums">
+                        {typeof event.value === 'number' ? event.value.toFixed(1) : event.value}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground/35 font-mono ml-1">
+                        / {event.threshold}
+                      </span>
+                    </div>
+
+                    {/* Message */}
+                    <div className="flex-1 px-3">
+                      <span className="text-[11px] text-muted-foreground/50 truncate block">
+                        {event.message}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })
             )}
-          </TabsContent>
-
-          {/* History Tab */}
-          <TabsContent value="history">
-            <div className="p-5">
-              {history.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-                  <div className="w-12 h-12 rounded-lg bg-subtle/40 border border-border/30 flex items-center justify-center mb-4">
-                    <AlertTriangle size={24} className="text-muted-foreground/30" />
-                  </div>
-                  <p className="text-sm font-medium">No alerts triggered yet</p>
-                  <p className="text-xs mt-1 text-muted-foreground/60">Alert events will appear here when rules are triggered</p>
-                </div>
-              ) : (
-                <>
-                  {/* Header with clear button */}
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-xs text-muted-foreground">
-                      {history.length} event{history.length !== 1 ? 's' : ''}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={clearHistory}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <RotateCcw size={12} /> Clear History
-                    </Button>
-                  </div>
-
-                  {/* Table Header */}
-                  <div className="flex items-center h-9 px-4 border-b border-border text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-                    <div className="w-40 shrink-0">Time</div>
-                    <div className="w-16 shrink-0">Severity</div>
-                    <div className="w-28 shrink-0">Process</div>
-                    <div className="w-20 shrink-0">Metric</div>
-                    <div className="w-24 shrink-0">Value</div>
-                    <div className="flex-1">Message</div>
-                  </div>
-
-                  {/* Table Rows */}
-                  <div className="divide-y divide-border/50">
-                    {history.map((event, i) => (
-                      <div
-                        key={`${event.ruleId}-${event.ts}-${i}`}
-                        className="flex items-start h-auto py-2.5 px-4 hover:bg-subtle/30 transition-colors"
-                      >
-                        {/* Time */}
-                        <div className="w-40 shrink-0">
-                          <span className="text-xs font-mono text-muted-foreground tabular-nums">
-                            {formatTime(event.ts)}
-                          </span>
-                        </div>
-
-                        {/* Severity */}
-                        <div className="w-16 shrink-0">
-                          <span className={`inline-flex px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${severityColors[event.severity] || severityColors.warning}`}>
-                            {event.severity}
-                          </span>
-                        </div>
-
-                        {/* Process */}
-                        <div className="w-28 shrink-0">
-                          <span className="text-xs text-foreground truncate block">
-                            {event.processName}
-                          </span>
-                          <span className="text-[10px] text-muted-foreground">
-                            PID {event.processId}
-                          </span>
-                        </div>
-
-                        {/* Metric */}
-                        <div className="w-20 shrink-0">
-                          <span className="text-xs font-medium text-foreground">
-                            {metricLabels[event.metric] || event.metric}
-                          </span>
-                        </div>
-
-                        {/* Value */}
-                        <div className="w-24 shrink-0">
-                          <span className="text-xs font-mono text-muted-foreground">
-                            {typeof event.value === 'number' ? event.value.toFixed(1) : event.value}
-                          </span>
-                          <span className="text-[10px] text-muted-foreground/50 ml-1">
-                            / {event.threshold}
-                          </span>
-                        </div>
-
-                        {/* Message */}
-                        <div className="flex-1 min-w-0">
-                          <span className="text-xs text-muted-foreground truncate block">
-                            {event.message}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+          </div>
+        </div>
+      )}
 
       <AlertForm open={formOpen} onClose={handleClose} editRule={editRule} />
     </div>
