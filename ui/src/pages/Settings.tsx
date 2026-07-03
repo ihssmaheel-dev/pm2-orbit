@@ -21,6 +21,8 @@ interface Settings {
   smtpFrom: string;
   smtpTo: string;
   enabledChannels: Record<NotificationChannel, boolean>;
+  historyRetentionHours: number;
+  logBufferSize: number;
 }
 
 export function Settings() {
@@ -266,6 +268,23 @@ export function Settings() {
                   <Field label="From Address" value={settings.smtpFrom} onChange={(v) => update('smtpFrom', v)} placeholder="alerts@yourdomain.com" disabled={!chEnabled('email')} />
                   <Field label="To Address" value={settings.smtpTo} onChange={(v) => update('smtpTo', v)} placeholder="admin@yourdomain.com" disabled={!chEnabled('email')} />
                 </div>
+              </div>
+            </Section>
+
+            <Section title="Data Retention">
+              <div className="grid grid-cols-2 gap-3">
+                <Field
+                  label="History Retention (hours)"
+                  value={String(settings.historyRetentionHours)}
+                  onChange={(v) => update('historyRetentionHours', parseInt(v) || 24)}
+                  placeholder="24"
+                />
+                <Field
+                  label="Log Buffer Size"
+                  value={String(settings.logBufferSize)}
+                  onChange={(v) => update('logBufferSize', parseInt(v) || 2000)}
+                  placeholder="2000"
+                />
               </div>
             </Section>
           </div>

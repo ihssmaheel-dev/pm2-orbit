@@ -25,6 +25,8 @@ export interface Settings {
   smtpFrom: string;
   smtpTo: string;
   enabledChannels: Record<NotificationChannel, boolean>;
+  historyRetentionHours: number;
+  logBufferSize: number;
 }
 
 const DEFAULTS: Settings = {
@@ -41,6 +43,8 @@ const DEFAULTS: Settings = {
   smtpFrom: '',
   smtpTo: '',
   enabledChannels: { browser: true, slack: true, discord: true, webhook: true, email: true },
+  historyRetentionHours: 24,
+  logBufferSize: 2000,
 };
 
 const SENSITIVE_KEYS = ['authToken', 'smtpPass', 'slackWebhookUrl', 'discordWebhookUrl', 'webhookUrl'];
@@ -179,6 +183,8 @@ export function applySettingsToEnv(settings: Settings): void {
   if (settings.smtpFrom) process.env.SMTP_FROM = settings.smtpFrom;
   if (settings.smtpTo) process.env.SMTP_TO = settings.smtpTo;
   if (settings.theme) process.env.PM2_ORBIT_THEME = settings.theme;
+  if (settings.historyRetentionHours) process.env.PM2_ORBIT_RETENTION_HOURS = String(settings.historyRetentionHours);
+  if (settings.logBufferSize) process.env.PM2_ORBIT_LOG_BUFFER = String(settings.logBufferSize);
   for (const ch of Object.keys(settings.enabledChannels)) {
     process.env[`NOTIFY_${ch.toUpperCase()}_ENABLED`] = settings.enabledChannels[ch as NotificationChannel] ? '1' : '0';
   }

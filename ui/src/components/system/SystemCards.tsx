@@ -203,12 +203,3 @@ export function SystemCards() {
     </div>
   );
 }
-        subtext={
-          system.disk.write > 0 ? `↓ ${formatBytes(system.disk.write)}/s` : ""
-        }
-        color="text-chart-disk"
-        bgColor="#c084fc"
-      />
-    </div>
-  );
-}

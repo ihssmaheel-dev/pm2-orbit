@@ -98,7 +98,7 @@ export async function registerHealthRoutes(app: FastifyInstance, pipeline: Pipel
     const allowed = [
       'theme', 'authToken', 'slackWebhookUrl', 'discordWebhookUrl',
       'webhookUrl', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPass',
-      'smtpFrom', 'smtpTo', 'enabledChannels',
+      'smtpFrom', 'smtpTo', 'enabledChannels', 'historyRetentionHours', 'logBufferSize',
     ];
 
     const filtered: Record<string, unknown> = {};
