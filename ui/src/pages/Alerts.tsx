@@ -241,7 +241,7 @@ export function Alerts() {
                     </div>
 
                     {/* Actions */}
-                    <div className="w-16 shrink-0 px-3 flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="w-16 shrink-0 px-3 flex items-center justify-end gap-1">
                       <button
                         onClick={() => handleEdit(rule)}
                         className="h-6 w-6 flex items-center justify-center text-muted-foreground/40 hover:text-primary hover:bg-primary/10 rounded transition-colors cursor-pointer"
