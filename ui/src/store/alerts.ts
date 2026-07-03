@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { api } from '@/lib/api';
 import type { AlertRule, AlertEvent } from '@/types/alerts';
+import { toast } from 'sonner';
 
 interface AlertsStore {
   rules: AlertRule[];
