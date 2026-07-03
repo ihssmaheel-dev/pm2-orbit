@@ -164,11 +164,11 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-70 motion-safe:animate-[ping_1.5s_ease-in-out_infinite]" />
           )}
           <span
-            className={`relative inline-flex h-2 w-2 rounded-full ${st.dot}`}
+            className={`relative inline-flex h-2 w-2 rounded-full transition-colors duration-300 ${st.dot}`}
           />
         </span>
         <span
-          className={`text-[12px] font-medium leading-none truncate ${st.txt}`}
+          className={`text-[12px] font-medium leading-none truncate transition-colors duration-300 ${st.txt}`}
         >
           {st.label}
         </span>
