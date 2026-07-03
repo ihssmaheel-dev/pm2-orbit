@@ -4,7 +4,39 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.2.0] - 2026-07-03
+## [1.3.0] - 2026-07-03
+
+### Added
+- Alert rule editing with pre-filled form and server persistence
+- Alert rule enable/disable toggle in table
+- Scale controls dialog for cluster-mode processes
+- Process-specific alert rules (target individual processes)
+- Disk usage percentage in system metrics cards
+- History retention and log buffer size settings in UI
+- CSV export for process list
+- Real-time chart updates via WebSocket system metrics
+- Test suite with 28 unit tests (alert engine, buffer, validation)
+- Alert cooldown (60s) to prevent notification spam
+- Alert severity levels (info, warning, critical)
+- Aggregate system resource alerts
+- WebSocket authentication support
+- API documentation
+- CHANGELOG.md
+
+### Fixed
+- Alert rule editing now persists to server (was only local state)
+- Dialog button text changes to "Update Rule" when editing
+- X-axis removed from charts (Now/Peak stats in header suffice)
+- Chart real-time data debouncing prevents duplicate/zigzag lines
+- Alert evaluation in 2s tick interval (was missing system alerts)
+- Consistent headers across Logs, Alerts, History, Settings pages
+- Alert action buttons always visible (no hover required)
+- History table redesigned with wider threshold column
+- Duplicate code cleanup in History page
+
+### Changed
+- Removed auto-token auth system (was causing 401 errors)
+- Reverted to token-in-Settings approach for auth
 
 ### Added
 - **PWA support** — Install PM2 Orbit as a standalone app from your browser
