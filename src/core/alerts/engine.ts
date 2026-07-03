@@ -5,7 +5,8 @@ export interface AlertRule {
   id: string;
   processId?: number;
   processName?: string;
-  metric: 'cpu' | 'memory' | 'restarts' | 'status';
+  scope: 'process' | 'system';
+  metric: 'cpu' | 'memory' | 'restarts' | 'status' | 'systemCpu' | 'systemMemory' | 'systemLoad';
   operator: '>' | '<' | '==' | '>=' | '<=';
   threshold: number;
   enabled: boolean;
@@ -150,6 +151,51 @@ export function createAlertEngine() {
     return fired;
   }
 
+  function evaluateSystem(systemMetrics: Record<string, number>): AlertEvent[] {
+    const fired: AlertEvent[] = [];
+    const now = Date.now();
+
+    for (const rule of rules) {
+      if (!rule.enabled || rule.scope !== 'system') continue;
+
+      const cooldownMs = (rule as any).cooldownMs || 60000;
+      const lastFire = lastFiredAt.get(rule.id) || 0;
+      if (now - lastFire < cooldownMs) continue;
+
+      const value = systemMetrics[rule.metric];
+      if (value === undefined) continue;
+
+      let triggered = false;
+      switch (rule.operator) {
+        case '>': triggered = value > rule.threshold; break;
+        case '<': triggered = value < rule.threshold; break;
+        case '>=': triggered = value >= rule.threshold; break;
+        case '<=': triggered = value <= rule.threshold; break;
+        case '==': triggered = value === rule.threshold; break;
+      }
+
+      if (triggered) {
+        lastFiredAt.set(rule.id, now);
+        const event: AlertEvent = {
+          ruleId: rule.id,
+          processId: 0,
+          processName: 'System',
+          metric: rule.metric,
+          value,
+          threshold: rule.threshold,
+          severity: (rule as any).severity || 'warning',
+          message: `System: ${rule.metric} ${rule.operator} ${rule.threshold} (current: ${value})`,
+          ts: now,
+        };
+        fired.push(event);
+        history.unshift(event);
+        if (history.length > 50) history.pop();
+      }
+    }
+
+    return fired;
+  }
+
   function getRules(): AlertRule[] {
     return [...rules];
   }
@@ -165,6 +211,7 @@ export function createAlertEngine() {
     removeRule,
     updateRule,
     evaluate,
+    evaluateSystem,
     getRules,
     getHistory,
     MAX_HISTORY,

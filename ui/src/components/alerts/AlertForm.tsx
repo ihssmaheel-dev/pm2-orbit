@@ -22,6 +22,7 @@ export function AlertForm({ open, onClose }: AlertFormProps) {
   const [operator, setOperator] = useState<AlertRule['operator']>('>');
   const [threshold, setThreshold] = useState('');
   const [severity, setSeverity] = useState<AlertRule['severity']>('warning');
+  const [scope, setScope] = useState<AlertRule['scope']>('process');
   const [channels, setChannels] = useState<Set<string>>(new Set(['browser']));
   const [channelInfo, setChannelInfo] = useState<Record<string, ChannelInfo> | null>(null);
 
@@ -38,6 +39,7 @@ export function AlertForm({ open, onClose }: AlertFormProps) {
       setOperator('>');
       setThreshold('');
       setSeverity('warning');
+      setScope('process');
       setChannels(new Set(['browser']));
     }
   }, [open]);
@@ -56,6 +58,7 @@ export function AlertForm({ open, onClose }: AlertFormProps) {
 
     const rule: AlertRule = {
       id: `rule-${Date.now()}`,
+      scope,
       metric,
       operator,
       threshold: parseFloat(threshold),
@@ -75,19 +78,53 @@ export function AlertForm({ open, onClose }: AlertFormProps) {
       </DialogHeader>
       <DialogBody>
         <div className="space-y-4">
-          <div>
-            <label className="text-xs text-muted-foreground uppercase tracking-wider mb-1 block">Metric</label>
-            <div className="relative">
-              <select
-                value={metric}
-                onChange={(e) => setMetric(e.target.value as AlertRule['metric'])}
-                className="h-10 w-full appearance-none bg-input border border-border text-foreground text-sm rounded-none focus:outline-none focus:ring-1 focus:ring-ring pl-3 pr-9"
-              >
-                <option value="cpu">CPU %</option>
-                <option value="memory">Memory (bytes)</option>
-                <option value="restarts">Restarts</option>
-              </select>
-              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground/60" />
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-1 block">Scope</label>
+              <div className="relative">
+                <select
+                  value={scope}
+                  onChange={(e) => {
+                    const val = e.target.value as AlertRule['scope'];
+                    setScope(val);
+                    if (val === 'system') {
+                      setMetric('systemCpu');
+                    } else {
+                      setMetric('cpu');
+                    }
+                  }}
+                  className="h-10 w-full appearance-none bg-input border border-border text-foreground text-sm rounded-none focus:outline-none focus:ring-1 focus:ring-ring pl-3 pr-9"
+                >
+                  <option value="process">Per Process</option>
+                  <option value="system">System (Aggregate)</option>
+                </select>
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground/60" />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-1 block">Metric</label>
+              <div className="relative">
+                <select
+                  value={metric}
+                  onChange={(e) => setMetric(e.target.value as AlertRule['metric'])}
+                  className="h-10 w-full appearance-none bg-input border border-border text-foreground text-sm rounded-none focus:outline-none focus:ring-1 focus:ring-ring pl-3 pr-9"
+                >
+                  {scope === 'process' ? (
+                    <>
+                      <option value="cpu">CPU %</option>
+                      <option value="memory">Memory (bytes)</option>
+                      <option value="restarts">Restarts</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="systemCpu">System CPU %</option>
+                      <option value="systemMemory">System Memory %</option>
+                      <option value="systemLoad">System Load</option>
+                    </>
+                  )}
+                </select>
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground/60" />
+              </div>
             </div>
           </div>
 

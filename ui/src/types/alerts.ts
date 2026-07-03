@@ -2,7 +2,8 @@ export interface AlertRule {
   id: string;
   processId?: number;
   processName?: string;
-  metric: 'cpu' | 'memory' | 'restarts' | 'status';
+  scope: 'process' | 'system';
+  metric: 'cpu' | 'memory' | 'restarts' | 'status' | 'systemCpu' | 'systemMemory' | 'systemLoad';
   operator: '>' | '<' | '==' | '>=' | '<=';
   threshold: number;
   duration?: number;

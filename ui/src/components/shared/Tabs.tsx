@@ -52,6 +52,7 @@ interface TabsListProps {
 export function TabsList({ children, className }: TabsListProps) {
   return (
     <div
+      role="tablist"
       className={cn(
         'flex border-b border-border',
         className,
@@ -74,6 +75,8 @@ export function TabsTrigger({ value, children, className }: TabsTriggerProps) {
 
   return (
     <button
+      role="tab"
+      aria-selected={isActive}
       onClick={() => setActiveTab(value)}
       className={cn(
         'px-4 py-2 text-sm uppercase tracking-wider font-normal transition-colors cursor-pointer',
@@ -98,5 +101,9 @@ interface TabsContentProps {
 export function TabsContent({ value, children, className }: TabsContentProps) {
   const { activeTab } = useTabs();
   if (activeTab !== value) return null;
-  return <div className={cn('py-4', className)}>{children}</div>;
+  return (
+    <div role="tabpanel" className={cn('py-4', className)}>
+      {children}
+    </div>
+  );
 }

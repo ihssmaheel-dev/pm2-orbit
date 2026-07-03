@@ -104,6 +104,18 @@ export function createEventPipeline() {
   function evaluateAlerts(tick: Tick) {
     const allRules = alerts.getRules();
 
+    // Evaluate system-level alerts
+    const systemMetrics: Record<string, number> = {
+      systemCpu: tick.system.cpu,
+      systemMemory: tick.system.memory.total > 0 ? (tick.system.memory.used / tick.system.memory.total) * 100 : 0,
+      systemLoad: tick.system.loadAvg[0],
+    };
+    const systemFired = alerts.evaluateSystem(systemMetrics);
+    if (systemFired.length > 0) {
+      notifyAlerts(systemFired, allRules);
+    }
+
+    // Evaluate process-level alerts
     for (const event of tick.events) {
       if (event.type === 'remove') continue;
       const proc = event.process;

@@ -28,6 +28,8 @@ export function Dialog({ open, onClose, children, className }: DialogProps) {
       onClick={(e) => {
         if (e.target === dialogRef.current) onClose();
       }}
+      role="dialog"
+      aria-modal="true"
       className={cn(
         'bg-card text-card-foreground border border-border p-0',
         'rounded-none max-w-md w-full',
