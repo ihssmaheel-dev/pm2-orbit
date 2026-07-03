@@ -7,7 +7,7 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Search, X, Square, Play, RotateCw, Trash2 } from "lucide-react";
+import { Search, X, Square, Play, RotateCw, Trash2, Download } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { useProcessStore } from "@/store/processes";
@@ -117,6 +117,30 @@ export function ProcessTable() {
     return s ? (s.desc ? "descending" : "ascending") : null;
   };
 
+  const exportCSV = useCallback(() => {
+    if (filteredData.length === 0) return;
+    const headers = ["Name", "Mode", "PID", "CPU", "Memory", "Restarts", "Status", "Uptime"];
+    const rows = filteredData.map((p) => [
+      p.name,
+      p.mode,
+      p.pid,
+      `${p.cpu.toFixed(1)}%`,
+      p.memory,
+      p.restarts,
+      p.status,
+      p.uptime,
+    ]);
+    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `pm2-orbit-processes-${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${filteredData.length} processes`);
+  }, [filteredData]);
+
   return (
     <div className="flex flex-col h-full bg-card/30 border border-border/50">
       {/* Toolbar */}
@@ -180,6 +204,13 @@ export function ProcessTable() {
               </button>
             )}
           </div>
+          <button
+            onClick={exportCSV}
+            disabled={filteredData.length === 0}
+            className="hidden sm:flex cursor-pointer items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-foreground hover:text-primary border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors disabled:opacity-25 disabled:pointer-events-none"
+          >
+            <Download size={10} /> Export
+          </button>
         </div>
       </div>
 
