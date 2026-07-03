@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Plus, CheckCircle, XCircle, BellOff, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/shared/Button';
 import { Input } from '@/components/shared/Input';
 import { Dialog, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components/shared/Dialog';
 import { useAlertsStore } from '@/store/alerts';
+import { useProcessStore } from '@/store/processes';
 import type { AlertRule } from '@/types/alerts';
 
 interface ChannelInfo {
@@ -20,13 +21,17 @@ interface AlertFormProps {
 export function AlertForm({ open, onClose, editRule }: AlertFormProps) {
   const addRule = useAlertsStore((s) => s.addRule);
   const updateRule = useAlertsStore((s) => s.updateRule);
+  const processes = useProcessStore((s) => s.processes);
   const [metric, setMetric] = useState<AlertRule['metric']>('cpu');
   const [operator, setOperator] = useState<AlertRule['operator']>('>');
   const [threshold, setThreshold] = useState('');
   const [severity, setSeverity] = useState<AlertRule['severity']>('warning');
   const [scope, setScope] = useState<AlertRule['scope']>('process');
+  const [processId, setProcessId] = useState<number | ''>('');
   const [channels, setChannels] = useState<Set<string>>(new Set(['browser']));
   const [channelInfo, setChannelInfo] = useState<Record<string, ChannelInfo> | null>(null);
+
+  const processList = useMemo(() => Array.from(processes.values()), [processes]);
 
   useEffect(() => {
     fetch('/api/channels')
@@ -43,6 +48,7 @@ export function AlertForm({ open, onClose, editRule }: AlertFormProps) {
       setThreshold(String(editRule.threshold));
       setSeverity(editRule.severity);
       setScope(editRule.scope);
+      setProcessId(editRule.processId || '');
       setChannels(new Set(editRule.channels));
     } else {
       setMetric('cpu');
@@ -50,6 +56,7 @@ export function AlertForm({ open, onClose, editRule }: AlertFormProps) {
       setThreshold('');
       setSeverity('warning');
       setScope('process');
+      setProcessId('');
       setChannels(new Set(['browser']));
     }
   }, [open, editRule]);
@@ -73,6 +80,7 @@ export function AlertForm({ open, onClose, editRule }: AlertFormProps) {
         operator,
         threshold: parseFloat(threshold),
         severity,
+        processId: processId || undefined,
         channels: Array.from(channels) as AlertRule['channels'],
       });
     } else {
@@ -83,6 +91,7 @@ export function AlertForm({ open, onClose, editRule }: AlertFormProps) {
         operator,
         threshold: parseFloat(threshold),
         severity,
+        processId: processId || undefined,
         enabled: true,
         channels: Array.from(channels) as AlertRule['channels'],
       };
@@ -109,6 +118,7 @@ export function AlertForm({ open, onClose, editRule }: AlertFormProps) {
                     setScope(val);
                     if (val === 'system') {
                       setMetric('systemCpu');
+                      setProcessId('');
                     } else {
                       setMetric('cpu');
                     }
@@ -147,6 +157,25 @@ export function AlertForm({ open, onClose, editRule }: AlertFormProps) {
               </div>
             </div>
           </div>
+
+          {scope === 'process' && (
+            <div>
+              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-1 block">Process (optional)</label>
+              <div className="relative">
+                <select
+                  value={processId}
+                  onChange={(e) => setProcessId(e.target.value ? parseInt(e.target.value) : '')}
+                  className="h-10 w-full appearance-none bg-input border border-border text-foreground text-sm rounded-none focus:outline-none focus:ring-1 focus:ring-ring pl-3 pr-9"
+                >
+                  <option value="">All processes (global rule)</option>
+                  {processList.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name} (PID {p.pid})</option>
+                  ))}
+                </select>
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground/60" />
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-3 gap-2">
             <div>
