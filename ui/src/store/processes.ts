@@ -1,6 +1,20 @@
 import { create } from 'zustand';
 import type { ProcessSnapshot, ProcessEvent } from '@/types/pm2';
 
+function shallowEqual(a: Record<string, unknown>, b: Record<string, unknown>): boolean {
+  for (const key in a) {
+    if (a[key] !== b[key]) return false;
+  }
+  return Object.keys(a).length === Object.keys(b).length;
+}
+
+function mergeSnapshot(existing: ProcessSnapshot, incoming: ProcessSnapshot): ProcessSnapshot {
+  if (shallowEqual(existing as unknown as Record<string, unknown>, incoming as unknown as Record<string, unknown>)) {
+    return existing;
+  }
+  return { ...existing, ...incoming };
+}
+
 interface ProcessStore {
   processes: Map<number, ProcessSnapshot>;
   selectedId: number | null;
@@ -16,31 +30,57 @@ export const useProcessStore = create<ProcessStore>((set, get) => ({
 
   applyDelta: (events) => {
     set((state) => {
+      let changed = false;
       const next = new Map(state.processes);
       for (const event of events) {
         if (event.type === 'remove') {
-          next.delete(event.process.id);
+          if (next.has(event.process.id)) {
+            next.delete(event.process.id);
+            changed = true;
+          }
         } else {
           const existing = next.get(event.process.id);
-          next.set(event.process.id, existing ? { ...existing, ...event.process } : { ...event.process });
+          if (existing) {
+            const merged = mergeSnapshot(existing, event.process);
+            if (merged !== existing) {
+              next.set(event.process.id, merged);
+              changed = true;
+            }
+          } else {
+            next.set(event.process.id, { ...event.process });
+            changed = true;
+          }
         }
       }
-      return { processes: next };
+      return changed ? { processes: next } : {};
     });
   },
 
   setAll: (snapshots) => {
     set((state) => {
+      let changed = false;
       const next = new Map(state.processes);
       for (const snap of snapshots) {
         const existing = next.get(snap.id);
-        next.set(snap.id, existing ? { ...existing, ...snap } : { ...snap });
+        if (existing) {
+          const merged = mergeSnapshot(existing, snap);
+          if (merged !== existing) {
+            next.set(snap.id, merged);
+            changed = true;
+          }
+        } else {
+          next.set(snap.id, { ...snap });
+          changed = true;
+        }
       }
       const incomingIds = new Set(snapshots.map((s) => s.id));
       for (const id of next.keys()) {
-        if (!incomingIds.has(id)) next.delete(id);
+        if (!incomingIds.has(id)) {
+          next.delete(id);
+          changed = true;
+        }
       }
-      return { processes: next };
+      return changed ? { processes: next } : {};
     });
   },
 

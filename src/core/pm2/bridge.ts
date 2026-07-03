@@ -241,9 +241,29 @@ export function createPm2Bridge() {
         staleIds.push(id);
       }
     }
-    if (staleIds.length > 0) {
-      await Promise.all(staleIds.map((id) => refreshSingleProcess(id)));
-    }
+    if (staleIds.length === 0) return;
+
+    // Single pm2.list() call instead of N calls
+    if (!pm2Module) return;
+    try {
+      const list = await new Promise<unknown[]>((resolve, reject) => {
+        pm2Module!.list((err: Error | null, data: unknown[]) => {
+          if (err) return reject(err);
+          resolve(data);
+        });
+      });
+
+      const now2 = Date.now();
+      for (const proc of list) {
+        const p = proc as any;
+        const id = p.pm_id as number;
+        if (staleIds.includes(id)) {
+          const snap = procToSnapshot(p);
+          processCache.set(id, snap);
+          lastUpdateMap.set(id, now2);
+        }
+      }
+    } catch {}
   }
 
   async function connect(): Promise<void> {
