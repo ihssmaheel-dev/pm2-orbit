@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Plus, Trash2, AlertTriangle, Pencil, RotateCcw, Bell } from 'lucide-react';
+import { Plus, Trash2, AlertTriangle, Pencil, RotateCcw, Bell, Check } from 'lucide-react';
 import { Skeleton } from '@/components/shared/Skeleton';
 import { useAlertsStore } from '@/store/alerts';
 import { AlertForm } from '@/components/alerts/AlertForm';
@@ -22,6 +22,8 @@ const metricLabels: Record<string, string> = {
   systemLoad: 'Sys Load',
 };
 
+const CHANNELS = ['browser', 'slack', 'discord', 'webhook', 'email'] as const;
+
 function formatTime(ts: number): string {
   const d = new Date(ts);
   const now = new Date();
@@ -30,6 +32,21 @@ function formatTime(ts: number): string {
   if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
   if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
   return d.toLocaleDateString();
+}
+
+function ChannelCheck({ enabled, onChange }: { enabled: boolean; onChange: () => void }) {
+  return (
+    <button
+      onClick={onChange}
+      className={`w-4 h-4 rounded border flex items-center justify-center transition-colors cursor-pointer ${
+        enabled
+          ? 'bg-primary border-primary text-white'
+          : 'bg-transparent border-border/40 hover:border-border/60'
+      }`}
+    >
+      {enabled && <Check size={10} strokeWidth={3} />}
+    </button>
+  );
 }
 
 export function Alerts() {
@@ -58,6 +75,13 @@ export function Alerts() {
   const handleClose = () => {
     setFormOpen(false);
     setEditRule(null);
+  };
+
+  const toggleChannel = (rule: AlertRule, channel: string) => {
+    const channels = rule.channels.includes(channel as AlertRule['channels'][number])
+      ? rule.channels.filter((c) => c !== channel)
+      : [...rule.channels, channel];
+    updateRule(rule.id, { channels: channels as AlertRule['channels'] });
   };
 
   return (
@@ -123,14 +147,15 @@ export function Alerts() {
         <div className="flex flex-col flex-1 min-h-0">
           {/* Column headers */}
           <div className="flex items-center h-8 px-5 border-b border-border/40 bg-background/40 text-muted-foreground/50 select-none shrink-0">
-            <div className="w-12 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Status</div>
-            <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Severity</div>
             <div className="w-16 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Scope</div>
             <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Metric</div>
+            <div className="flex-1 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Process</div>
+            <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Severity</div>
             <div className="w-12 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Cond</div>
             <div className="w-16 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Value</div>
-            <div className="w-28 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Channels</div>
-            <div className="flex-1 px-3 text-[10px] font-semibold uppercase tracking-widest">Process</div>
+            {CHANNELS.map((ch) => (
+              <div key={ch} className="w-14 shrink-0 px-2 text-[10px] font-semibold uppercase tracking-widest text-center">{ch}</div>
+            ))}
             <div className="w-16 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest text-right">Actions</div>
           </div>
 
@@ -140,14 +165,15 @@ export function Alerts() {
               <div className="p-5 space-y-2">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className="flex items-center h-11 px-5 border-b border-border/10">
-                    <div className="w-12 shrink-0 px-3"><Skeleton className="h-4 w-10" /></div>
+                    <div className="w-16 shrink-0 px-3"><Skeleton className="h-4 w-12" /></div>
                     <div className="w-20 shrink-0 px-3"><Skeleton className="h-4 w-14" /></div>
-                    <div className="w-16 shrink-0 px-3"><Skeleton className="h-4 w-10" /></div>
-                    <div className="w-20 shrink-0 px-3"><Skeleton className="h-4 w-12" /></div>
+                    <div className="flex-1 shrink-0 px-3"><Skeleton className="h-4 w-24" /></div>
+                    <div className="w-20 shrink-0 px-3"><Skeleton className="h-4 w-14" /></div>
                     <div className="w-12 shrink-0 px-3"><Skeleton className="h-4 w-6" /></div>
                     <div className="w-16 shrink-0 px-3"><Skeleton className="h-4 w-8" /></div>
-                    <div className="w-28 shrink-0 px-3"><Skeleton className="h-4 w-20" /></div>
-                    <div className="flex-1 px-3"><Skeleton className="h-4 w-16" /></div>
+                    {CHANNELS.map((ch) => (
+                      <div key={ch} className="w-14 shrink-0 px-2 flex justify-center"><Skeleton className="h-4 w-4" /></div>
+                    ))}
                     <div className="w-16 shrink-0 px-3 flex justify-end"><Skeleton className="h-4 w-12" /></div>
                   </div>
                 ))}
@@ -168,32 +194,10 @@ export function Alerts() {
                 return (
                   <div
                     key={rule.id}
-                    className={`flex items-center h-11 px-5 cursor-pointer transition-colors group border-b border-border/10 hover:bg-subtle/20 ${
+                    className={`flex items-center h-11 px-5 border-b border-border/10 hover:bg-subtle/20 transition-colors group ${
                       !rule.enabled ? 'opacity-50' : ''
                     } ${i % 2 === 0 ? 'bg-background/20' : ''}`}
                   >
-                    {/* Status toggle */}
-                    <div className="w-12 shrink-0 px-3">
-                      <button
-                        onClick={() => updateRule(rule.id, { enabled: !rule.enabled })}
-                        className={`relative w-8 h-[18px] rounded-full transition-colors cursor-pointer ${
-                          rule.enabled ? 'bg-primary' : 'bg-subtle/60'
-                        }`}
-                      >
-                        <span className={`absolute top-[2px] left-[2px] w-[14px] h-[14px] rounded-full bg-white transition-transform ${
-                          rule.enabled ? 'translate-x-[14px]' : 'translate-x-0'
-                        }`} />
-                      </button>
-                    </div>
-
-                    {/* Severity */}
-                    <div className="w-20 shrink-0 px-3">
-                      <span className="inline-flex items-center gap-1.5">
-                        <span className={`w-1.5 h-1.5 rounded-full ${sev.dot}`} />
-                        <span className={`text-[11px] font-medium ${sev.txt}`}>{sev.label}</span>
-                      </span>
-                    </div>
-
                     {/* Scope */}
                     <div className="w-16 shrink-0 px-3">
                       <span className="text-[11px] text-muted-foreground/55">
@@ -208,35 +212,40 @@ export function Alerts() {
                       </span>
                     </div>
 
-                    {/* Operator */}
-                    <div className="w-12 shrink-0 px-3">
-                      <span className="text-[12px] font-mono text-muted-foreground/55">
-                        {rule.operator}
-                      </span>
-                    </div>
-
-                    {/* Threshold */}
-                    <div className="w-16 shrink-0 px-3">
-                      <span className="text-[12px] font-mono font-medium text-foreground/80 tabular-nums">
-                        {rule.threshold}
-                      </span>
-                    </div>
-
-                    {/* Channels */}
-                    <div className="w-28 shrink-0 px-3 flex gap-1">
-                      {rule.channels.map((ch) => (
-                        <span key={ch} className="px-1.5 py-0.5 text-[9px] font-mono bg-subtle/60 text-muted-foreground/50 rounded">
-                          {ch}
-                        </span>
-                      ))}
-                    </div>
-
                     {/* Process */}
-                    <div className="flex-1 px-3">
+                    <div className="flex-1 shrink-0 px-3">
                       <span className="text-[11px] text-muted-foreground/45">
                         {rule.processId !== undefined ? `Process ${rule.processId}` : 'All processes'}
                       </span>
                     </div>
+
+                    {/* Severity */}
+                    <div className="w-20 shrink-0 px-3">
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className={`w-1.5 h-1.5 rounded-full ${sev.dot}`} />
+                        <span className={`text-[11px] font-medium ${sev.txt}`}>{sev.label}</span>
+                      </span>
+                    </div>
+
+                    {/* Condition */}
+                    <div className="w-12 shrink-0 px-3">
+                      <span className="text-[12px] font-mono text-muted-foreground/55">{rule.operator}</span>
+                    </div>
+
+                    {/* Value */}
+                    <div className="w-16 shrink-0 px-3">
+                      <span className="text-[12px] font-mono font-medium text-foreground/80 tabular-nums">{rule.threshold}</span>
+                    </div>
+
+                    {/* Channel checkboxes */}
+                    {CHANNELS.map((ch) => (
+                      <div key={ch} className="w-14 shrink-0 px-2 flex justify-center">
+                        <ChannelCheck
+                          enabled={rule.channels.includes(ch)}
+                          onChange={() => toggleChannel(rule, ch)}
+                        />
+                      </div>
+                    ))}
 
                     {/* Actions */}
                     <div className="w-16 shrink-0 px-3 flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -266,7 +275,6 @@ export function Alerts() {
       {/* History Table */}
       {tabFromUrl === 'history' && (
         <div className="flex flex-col flex-1 min-h-0">
-          {/* Column headers */}
           <div className="flex items-center h-8 px-5 border-b border-border/40 bg-background/40 text-muted-foreground/50 select-none shrink-0">
             <div className="w-24 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Time</div>
             <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Severity</div>
@@ -276,7 +284,6 @@ export function Alerts() {
             <div className="flex-1 px-3 text-[10px] font-semibold uppercase tracking-widest">Message</div>
           </div>
 
-          {/* Data rows */}
           <div className="flex-1 overflow-auto">
             {history.length === 0 ? (
               <div className="flex items-center justify-center h-full text-center py-16">
@@ -298,53 +305,28 @@ export function Alerts() {
                       i % 2 === 0 ? 'bg-background/20' : ''
                     }`}
                   >
-                    {/* Time */}
                     <div className="w-24 shrink-0 px-3">
-                      <span className="text-[11px] font-mono text-muted-foreground/45 tabular-nums">
-                        {formatTime(event.ts)}
-                      </span>
+                      <span className="text-[11px] font-mono text-muted-foreground/45 tabular-nums">{formatTime(event.ts)}</span>
                     </div>
-
-                    {/* Severity */}
                     <div className="w-20 shrink-0 px-3">
                       <span className="inline-flex items-center gap-1.5">
                         <span className={`w-1.5 h-1.5 rounded-full ${sev.dot}`} />
                         <span className={`text-[11px] font-medium ${sev.txt}`}>{sev.label}</span>
                       </span>
                     </div>
-
-                    {/* Process */}
                     <div className="w-32 shrink-0 px-3">
-                      <span className="text-[12px] font-medium text-foreground block truncate">
-                        {event.processName}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground/40 font-mono">
-                        PID {event.processId}
-                      </span>
+                      <span className="text-[12px] font-medium text-foreground block truncate">{event.processName}</span>
+                      <span className="text-[10px] text-muted-foreground/40 font-mono">PID {event.processId}</span>
                     </div>
-
-                    {/* Metric */}
                     <div className="w-20 shrink-0 px-3">
-                      <span className="text-[11px] text-muted-foreground/55">
-                        {metricLabels[event.metric] || event.metric}
-                      </span>
+                      <span className="text-[11px] text-muted-foreground/55">{metricLabels[event.metric] || event.metric}</span>
                     </div>
-
-                    {/* Value */}
                     <div className="w-20 shrink-0 px-3">
-                      <span className="text-[12px] font-mono text-foreground/80 tabular-nums">
-                        {typeof event.value === 'number' ? event.value.toFixed(1) : event.value}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground/35 font-mono ml-1">
-                        / {event.threshold}
-                      </span>
+                      <span className="text-[12px] font-mono text-foreground/80 tabular-nums">{typeof event.value === 'number' ? event.value.toFixed(1) : event.value}</span>
+                      <span className="text-[10px] text-muted-foreground/35 font-mono ml-1">/ {event.threshold}</span>
                     </div>
-
-                    {/* Message */}
                     <div className="flex-1 px-3">
-                      <span className="text-[11px] text-muted-foreground/50 truncate block">
-                        {event.message}
-                      </span>
+                      <span className="text-[11px] text-muted-foreground/50 truncate block">{event.message}</span>
                     </div>
                   </div>
                 );
