@@ -140,21 +140,6 @@ export async function createServer(_opts: ServerOpts) {
     }
   });
 
-        const decrement = () => {
-          pipeline.clients.delete(ws);
-          const c = wsConnPerIp.get(ip) || 1;
-          if (c <= 1) wsConnPerIp.delete(ip);
-          else wsConnPerIp.set(ip, c - 1);
-        };
-
-        ws.on('close', decrement);
-        ws.on('error', decrement);
-      });
-    } else {
-      socket.destroy();
-    }
-  });
-
   pipeline.start();
 
   await Promise.race([
