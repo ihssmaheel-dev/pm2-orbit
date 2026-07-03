@@ -5,6 +5,7 @@ import { Input } from '@/components/shared/Input';
 import { Dialog, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components/shared/Dialog';
 import { useAlertsStore } from '@/store/alerts';
 import { useProcessStore } from '@/store/processes';
+import { api } from '@/lib/api';
 import type { AlertRule } from '@/types/alerts';
 
 interface ChannelInfo {
@@ -34,7 +35,7 @@ export function AlertForm({ open, onClose, editRule }: AlertFormProps) {
   const processList = useMemo(() => Array.from(processes.values()), [processes]);
 
   useEffect(() => {
-    fetch('/api/channels')
+    api('/api/channels', { silent: true })
       .then((r) => r.json())
       .then((data) => setChannelInfo(data))
       .catch(() => {});

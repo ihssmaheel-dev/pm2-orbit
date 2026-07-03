@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Download, Upload, Settings as SettingsIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import { api } from '@/lib/api';
 import { useTheme } from '@/hooks/useTheme';
 import { Badge } from '@/components/shared/Badge';
 import { Input } from '@/components/shared/Input';
@@ -87,10 +88,11 @@ export function Settings() {
     if (!settings) return;
     setSaving(true);
     try {
-      const res = await fetch('/api/settings', {
+      const res = await api('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
+        label: 'Save settings',
       });
       if (res.ok) {
         setTheme(settings.theme);
@@ -336,10 +338,11 @@ function ChannelItem({
     if (!value || !testType) return;
     setTesting(true);
     try {
-      const res = await fetch('/api/settings/test-webhook', {
+      const res = await api('/api/settings/test-webhook', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: value, type: testType }),
+        label: 'Test webhook',
       });
       const data = await res.json();
       if (data.success) {
