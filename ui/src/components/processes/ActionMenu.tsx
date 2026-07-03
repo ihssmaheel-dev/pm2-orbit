@@ -1,8 +1,11 @@
 import { useState } from 'react';
-import { RotateCw, Play, Square, RefreshCw, Trash2, MoreHorizontal } from 'lucide-react';
+import { RotateCw, Play, Square, RefreshCw, Trash2, MoreHorizontal, Minus, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dropdown, DropdownItem, DropdownSeparator } from '@/components/shared/Dropdown';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { Dialog, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components/shared/Dialog';
+import { Button } from '@/components/shared/Button';
+import { Input } from '@/components/shared/Input';
 import { useProcessStore } from '@/store/processes';
 import type { ProcessStatus } from '@/types/pm2';
 
@@ -23,14 +26,22 @@ export function ActionMenu({ processId, processName }: ActionMenuProps) {
   const [open, setOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
-  const status = useProcessStore((s) => s.processes.get(processId)?.status || 'stopped');
+  const [scaleOpen, setScaleOpen] = useState(false);
+  const [scaleValue, setScaleValue] = useState('+1');
+  const process = useProcessStore((s) => s.processes.get(processId));
+  const status = process?.status || 'stopped';
+  const mode = process?.mode || 'fork';
 
-  const handleAction = async (action: string) => {
+  const handleAction = async (action: string, instances?: string) => {
     try {
+      const body: Record<string, unknown> = { action };
+      if (action === 'scale' && instances) {
+        body.instances = instances;
+      }
       const res = await fetch(`/api/processes/${processId}/action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify(body),
       });
       if (res.ok) {
         toast.success(`${action.charAt(0).toUpperCase() + action.slice(1)} sent`, {
@@ -97,7 +108,7 @@ export function ActionMenu({ processId, processName }: ActionMenuProps) {
 
         {actions.length > 0 && <DropdownSeparator />}
 
-        <DropdownItem onClick={() => { setConfirmAction('scale'); }}>
+        <DropdownItem onClick={() => { setScaleOpen(true); }}>
           Scale
         </DropdownItem>
         <DropdownItem onClick={() => { setConfirmAction('flush'); }}>
@@ -127,6 +138,57 @@ export function ActionMenu({ processId, processName }: ActionMenuProps) {
         message={`Are you sure you want to delete "${processName}"? This action cannot be undone.`}
         confirmLabel="Delete"
       />
+
+      <Dialog open={scaleOpen} onClose={() => setScaleOpen(false)}>
+        <DialogHeader>
+          <DialogTitle>Scale Process</DialogTitle>
+        </DialogHeader>
+        <DialogBody>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Current instances: <span className="text-foreground font-mono">{process?.instances || 1}</span>
+            </p>
+            <div>
+              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-1 block">Scale To</label>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    const num = parseInt(scaleValue) || 1;
+                    setScaleValue(String(Math.max(1, num - 1)));
+                  }}
+                  className="h-10 w-10 flex items-center justify-center border border-border hover:bg-muted cursor-pointer"
+                >
+                  <Minus size={14} />
+                </button>
+                <Input
+                  type="text"
+                  value={scaleValue}
+                  onChange={(e) => setScaleValue(e.target.value)}
+                  placeholder="+1 or number"
+                  className="h-10 text-center font-mono"
+                />
+                <button
+                  onClick={() => {
+                    const num = parseInt(scaleValue) || 1;
+                    setScaleValue(String(num + 1));
+                  }}
+                  className="h-10 w-10 flex items-center justify-center border border-border hover:bg-muted cursor-pointer"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">Use "+1" to add one instance, "-1" to remove one, or a specific number</p>
+            </div>
+          </div>
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setScaleOpen(false)}>Cancel</Button>
+          <Button onClick={async () => {
+            await handleAction('scale', scaleValue);
+            setScaleOpen(false);
+          }}>Scale</Button>
+        </DialogFooter>
+      </Dialog>
     </>
   );
 }
