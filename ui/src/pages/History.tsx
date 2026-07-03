@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Activity, BarChart3, AlertCircle, ChevronDown } from 'lucide-react';
+import { Activity, BarChart3, AlertCircle, ChevronDown, Clock } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useProcessStore } from '@/store/processes';
 import { useSystemStore } from '@/store/system';
@@ -124,21 +124,21 @@ export function History() {
   const maxCpu = systemHistory.length > 0 ? Math.max(...systemHistory.map((r) => r.cpu)) : 0;
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-card/50 shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="w-1 h-4 bg-accent rounded-full" />
-          <span className="text-sm text-foreground font-medium tracking-wide">HISTORY</span>
-        </div>
-        <div className="flex items-center gap-2">
+    <div className="flex flex-col h-full bg-card/30 border border-border/50">
+      {/* Header - matching Logs style */}
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-border/50 bg-card/80 shrink-0">
+        <Clock size={14} className="text-primary" />
+        <span className="text-sm text-foreground font-semibold tracking-wider uppercase">History</span>
+
+        <div className="ml-auto flex items-center gap-1">
           {(['1h', '6h', '24h'] as TimeRange[]).map((range) => (
             <button
               key={range}
               onClick={() => setTimeRange(range)}
-              className={`px-3 py-1 text-xs uppercase tracking-wider transition-colors ${
+              className={`px-2.5 py-1 text-[11px] font-medium uppercase tracking-wider transition-colors cursor-pointer border border-border/60 ${
                 timeRange === range
-                  ? 'bg-primary/20 text-primary'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-primary/10 text-primary border-primary/40'
+                  : 'text-muted-foreground hover:text-foreground hover:border-border/80'
               }`}
             >
               {range}

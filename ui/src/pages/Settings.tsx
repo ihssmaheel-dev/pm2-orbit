@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { Download, Upload } from 'lucide-react';
+import { Download, Upload, Settings as SettingsIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTheme } from '@/hooks/useTheme';
-import { Button } from '@/components/shared/Button';
 import { Badge } from '@/components/shared/Badge';
 import { Input } from '@/components/shared/Input';
 
@@ -131,17 +130,15 @@ export function Settings() {
   const toggleCh = (ch: NotificationChannel) => update('enabledChannels', { ...settings.enabledChannels, [ch]: !chEnabled(ch) });
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-6 h-[52px] border-b border-border/60 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-[3px] h-4 bg-primary" />
-          <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground/80">
-            Settings
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          {importError && <Badge variant="destructive">{importError}</Badge>}
-          {saved && <Badge variant="success">Saved</Badge>}
+    <div className="flex flex-col h-full bg-card/30 border border-border/50">
+      {/* Header - matching Logs style */}
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-border/50 bg-card/80 shrink-0">
+        <SettingsIcon size={14} className="text-primary" />
+        <span className="text-sm text-foreground font-semibold tracking-wider uppercase">Settings</span>
+
+        <div className="ml-auto flex items-center gap-1.5">
+          {importError && <Badge variant="destructive" className="text-[10px]">{importError}</Badge>}
+          {saved && <Badge variant="success" className="text-[10px]">Saved</Badge>}
           <input
             ref={importRef}
             type="file"
@@ -151,21 +148,23 @@ export function Settings() {
           />
           <button
             onClick={() => importRef.current?.click()}
-            className="h-7 px-2.5 flex items-center gap-1.5 text-[11px] text-muted-foreground/70 hover:text-foreground border border-border/60 hover:border-border transition-colors"
-            title="Import settings"
+            className="cursor-pointer flex items-center gap-1 h-7 px-2.5 text-[11px] font-medium text-muted-foreground hover:text-foreground border border-border/60 hover:border-border/80 transition-colors"
           >
-            <Upload size={12} /> Import
+            <Upload size={11} /> Import
           </button>
           <button
             onClick={handleExport}
-            className="h-7 px-2.5 flex items-center gap-1.5 text-[11px] text-muted-foreground/70 hover:text-foreground border border-border/60 hover:border-border transition-colors"
-            title="Export settings"
+            className="cursor-pointer flex items-center gap-1 h-7 px-2.5 text-[11px] font-medium text-muted-foreground hover:text-foreground border border-border/60 hover:border-border/80 transition-colors"
           >
-            <Download size={12} /> Export
+            <Download size={11} /> Export
           </button>
-          <Button size="sm" onClick={handleSave} disabled={saving}>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="cursor-pointer flex items-center gap-1 h-7 px-2.5 text-[11px] font-medium text-foreground hover:text-primary border border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-colors disabled:opacity-50"
+          >
             {saving ? 'Saving...' : 'Save'}
-          </Button>
+          </button>
         </div>
       </div>
 

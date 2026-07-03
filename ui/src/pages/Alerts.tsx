@@ -72,28 +72,25 @@ export function Alerts() {
 
   return (
     <div className="flex flex-col h-full bg-card/30 border border-border/50">
-      {/* Header */}
-      <div className="flex items-center justify-between h-12 px-5 shrink-0 border-b border-border/50">
-        <div className="flex items-center gap-2.5">
-          <span className="text-[12px] font-semibold text-foreground/85">Alerts</span>
-          <span className="text-[11px] font-mono text-primary bg-primary/10 px-1.5 leading-4.5 tabular-nums">
-            {tabFromUrl === 'rules' ? rules.length : history.length}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
+      {/* Header - matching Logs style */}
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-border/50 bg-card/80 shrink-0">
+        <Bell size={14} className="text-primary" />
+        <span className="text-sm text-foreground font-semibold tracking-wider uppercase">Alerts</span>
+
+        <div className="ml-auto flex items-center gap-1.5">
           {tabFromUrl === 'history' && history.length > 0 && (
             <button
               onClick={clearHistory}
-              className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-foreground hover:text-destructive border border-border hover:border-destructive/40 hover:bg-destructive/5 transition-colors"
+              className="cursor-pointer flex items-center gap-1 h-7 px-2.5 text-[11px] font-medium text-muted-foreground hover:text-destructive border border-border/60 hover:border-destructive/40 hover:bg-destructive/5 transition-colors rounded-none"
             >
-              <RotateCcw size={10} /> Clear
+              <RotateCcw size={11} /> Clear
             </button>
           )}
           <button
             onClick={handleNew}
-            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-foreground hover:text-primary border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors"
+            className="cursor-pointer flex items-center gap-1 h-7 px-2.5 text-[11px] font-medium text-foreground hover:text-primary border border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-colors rounded-none"
           >
-            <Plus size={10} /> New Rule
+            <Plus size={11} /> New Rule
           </button>
         </div>
       </div>
