@@ -19,9 +19,9 @@ function makeSeries(colorVar: string, label: string): uPlot.Series[] {
     {
       label,
       stroke: color,
-      width: 3,
-      fill: color + '4D',
-      points: { show: true, size: 3, stroke: color, fill: '#fff' } as any,
+      width: 2,
+      fill: color + '20',
+      points: { show: false } as any,
     },
   ];
 }
@@ -31,11 +31,11 @@ export function CpuChart({ data, label = 'CPU %', color = '--chart-cpu' }: Chart
 
   return (
     <div>
-      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{label}</div>
+      <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 font-medium">{label}</div>
       <UPlotChart
         data={uData}
         series={makeSeries(color, label)}
-        height={130}
+        height={140}
         formatY={(v) => v.toFixed(1) + '%'}
       />
     </div>
@@ -47,11 +47,11 @@ export function MemoryChart({ data, label = 'Memory', color = '--chart-memory' }
 
   return (
     <div>
-      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{label}</div>
+      <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 font-medium">{label}</div>
       <UPlotChart
         data={uData}
         series={makeSeries(color, label)}
-        height={130}
+        height={140}
         formatY={(v) => v.toFixed(1) + '%'}
       />
     </div>
@@ -65,19 +65,20 @@ function makeLoadSeries(colorVars: [string, string, string]): uPlot.Series[] {
       label: '1m',
       stroke: cssVar(colorVars[0]),
       width: 2,
-      points: { show: true, size: 2.5, stroke: cssVar(colorVars[0]) } as any,
+      fill: cssVar(colorVars[0]) + '15',
+      points: { show: false } as any,
     },
     {
       label: '5m',
       stroke: cssVar(colorVars[1]),
       width: 2,
-      points: { show: true, size: 2.5, stroke: cssVar(colorVars[1]) } as any,
+      points: { show: false } as any,
     },
     {
       label: '15m',
       stroke: cssVar(colorVars[2]),
       width: 2,
-      points: { show: true, size: 2.5, stroke: cssVar(colorVars[2]) } as any,
+      points: { show: false } as any,
     },
   ];
 }
@@ -87,11 +88,11 @@ export function LoadChart({ data }: { data: { ts: number[]; load1: number[]; loa
 
   return (
     <div>
-      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Load Average</div>
+      <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 font-medium">Load Average</div>
       <UPlotChart
         data={uData}
         series={makeLoadSeries(['--chart-cpu', '--chart-memory', '--chart-axis'])}
-        height={130}
+        height={140}
         formatY={(v) => v.toFixed(2)}
       />
     </div>
