@@ -174,32 +174,52 @@ export function History() {
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="bg-card border border-border p-2">
-                  <CpuChart data={cpuData} label="CPU %" />
-                  {lastSys && (
-                    <div className="flex justify-between text-[10px] text-muted-foreground/60 mt-1 px-1">
-                      <span>Now: {fmtPercent(lastSys.cpu)}</span>
-                      <span>Peak: {fmtPercent(maxCpu)}</span>
-                    </div>
-                  )}
+                <div className="bg-card border border-border p-4 flex flex-col">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">CPU %</span>
+                    {lastSys && (
+                      <div className="flex items-center gap-3 text-[10px] text-muted-foreground/60">
+                        <span>Now: <span className="text-foreground/80 font-mono">{fmtPercent(lastSys.cpu)}</span></span>
+                        <span>Peak: <span className="text-foreground/80 font-mono">{fmtPercent(maxCpu)}</span></span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-h-[140px]">
+                    <CpuChart data={cpuData} />
+                  </div>
                 </div>
-                <div className="bg-card border border-border p-3">
-                  <MemoryChart data={memData} label="Memory %" />
-                  {lastSys && (
-                    <div className="flex justify-between text-[10px] text-muted-foreground/60 mt-1 px-1">
-                      <span>Now: {fmtPercent(lastSys.memoryTotal > 0 ? Math.round((lastSys.memoryUsed / lastSys.memoryTotal) * 1000) / 10 : 0)}</span>
-                      <span>Peak: {fmtPercent(maxMem)}</span>
-                    </div>
-                  )}
+                <div className="bg-card border border-border p-4 flex flex-col">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Memory %</span>
+                    {lastSys && (
+                      <div className="flex items-center gap-3 text-[10px] text-muted-foreground/60">
+                        <span>Now: <span className="text-foreground/80 font-mono">{fmtPercent(lastSys.memoryTotal > 0 ? Math.round((lastSys.memoryUsed / lastSys.memoryTotal) * 1000) / 10 : 0)}</span></span>
+                        <span>Peak: <span className="text-foreground/80 font-mono">{fmtPercent(maxMem)}</span></span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-h-[140px]">
+                    <MemoryChart data={memData} />
+                  </div>
                 </div>
-                <div className="bg-card border border-border p-3">
-                  <LoadChart data={loadData} />
+                <div className="bg-card border border-border p-4 flex flex-col">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Load Average</span>
+                    {lastSys && (
+                      <div className="flex items-center gap-3 text-[10px] text-muted-foreground/60">
+                        <span>1m: <span className="text-foreground/80 font-mono">{lastSys.load1.toFixed(2)}</span></span>
+                        <span>5m: <span className="text-foreground/80 font-mono">{lastSys.load5.toFixed(2)}</span></span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-h-[140px]">
+                    <LoadChart data={loadData} />
+                  </div>
                 </div>
               </div>
               {lastSys && (
                 <div className="flex gap-4 mt-2 text-[11px] text-muted-foreground/70 px-1">
                   <span>Memory: {formatBytes(lastSys.memoryUsed)} / {formatBytes(lastSys.memoryTotal)}</span>
-                  <span>Cores: {lastSys.load1 !== undefined ? '—' : ''}</span>
                 </div>
               )}
             </>

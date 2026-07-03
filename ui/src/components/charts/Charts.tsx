@@ -30,15 +30,12 @@ export function CpuChart({ data, label = 'CPU %', color = '--chart-cpu' }: Chart
   const uData: uPlot.AlignedData = [data.ts, data.values];
 
   return (
-    <div>
-      <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 font-medium">{label}</div>
-      <UPlotChart
-        data={uData}
-        series={makeSeries(color, label)}
-        height={140}
-        formatY={(v) => v.toFixed(1) + '%'}
-      />
-    </div>
+    <UPlotChart
+      data={uData}
+      series={makeSeries(color, label)}
+      height={140}
+      formatY={(v) => v.toFixed(1) + '%'}
+    />
   );
 }
 
@@ -46,15 +43,12 @@ export function MemoryChart({ data, label = 'Memory', color = '--chart-memory' }
   const uData: uPlot.AlignedData = [data.ts, data.values];
 
   return (
-    <div>
-      <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 font-medium">{label}</div>
-      <UPlotChart
-        data={uData}
-        series={makeSeries(color, label)}
-        height={140}
-        formatY={(v) => v.toFixed(1) + '%'}
-      />
-    </div>
+    <UPlotChart
+      data={uData}
+      series={makeSeries(color, label)}
+      height={140}
+      formatY={(v) => v.toFixed(1) + '%'}
+    />
   );
 }
 
@@ -87,14 +81,11 @@ export function LoadChart({ data }: { data: { ts: number[]; load1: number[]; loa
   const uData: uPlot.AlignedData = [data.ts, data.load1, data.load5, data.load15];
 
   return (
-    <div>
-      <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 font-medium">Load Average</div>
-      <UPlotChart
-        data={uData}
-        series={makeLoadSeries(['--chart-cpu', '--chart-memory', '--chart-axis'])}
-        height={140}
-        formatY={(v) => v.toFixed(2)}
-      />
-    </div>
+    <UPlotChart
+      data={uData}
+      series={makeLoadSeries(['--chart-cpu', '--chart-memory', '--chart-axis'])}
+      height={140}
+      formatY={(v) => v.toFixed(2)}
+    />
   );
 }
