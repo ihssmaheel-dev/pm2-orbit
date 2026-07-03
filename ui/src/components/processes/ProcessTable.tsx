@@ -263,7 +263,40 @@ export function ProcessTable() {
         </div>
 
         {/* Data rows */}
-        <div role="rowgroup" ref={parentRef} className="flex-1 overflow-auto">
+        <div
+          role="rowgroup"
+          ref={parentRef}
+          className="flex-1 overflow-auto"
+          onKeyDown={(e) => {
+            if (e.key === "ArrowDown" || e.key === "j") {
+              e.preventDefault();
+              const currentIdx = rows.findIndex((r) => (r.original as ProcessSnapshot).id === (useProcessStore.getState().selectedId));
+              const nextIdx = currentIdx < rows.length - 1 ? currentIdx + 1 : 0;
+              const nextRow = rows[nextIdx];
+              if (nextRow) {
+                useProcessStore.getState().select((nextRow.original as ProcessSnapshot).id);
+                virtualizer.scrollToIndex(nextIdx);
+              }
+            }
+            if (e.key === "ArrowUp" || e.key === "k") {
+              e.preventDefault();
+              const currentIdx = rows.findIndex((r) => (r.original as ProcessSnapshot).id === (useProcessStore.getState().selectedId));
+              const prevIdx = currentIdx > 0 ? currentIdx - 1 : rows.length - 1;
+              const prevRow = rows[prevIdx];
+              if (prevRow) {
+                useProcessStore.getState().select((prevRow.original as ProcessSnapshot).id);
+                virtualizer.scrollToIndex(prevIdx);
+              }
+            }
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              const selectedId = useProcessStore.getState().selectedId;
+              if (selectedId !== null) {
+                useProcessStore.getState().select(null);
+              }
+            }
+          }}
+        >
           {rows.length === 0 ? (
             <div className="flex items-center justify-center h-full text-center py-16">
               <div>

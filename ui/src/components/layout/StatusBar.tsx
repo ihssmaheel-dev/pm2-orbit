@@ -22,7 +22,12 @@ export function StatusBar() {
   }, []);
 
   return (
-    <footer className="h-7 border-t border-border flex items-center px-4 text-xs text-muted-foreground gap-3 shrink-0 select-none">
+    <footer
+      role="status"
+      aria-live="polite"
+      aria-label="Connection status"
+      className="h-7 border-t border-border flex items-center px-4 text-xs text-muted-foreground gap-3 shrink-0 select-none"
+    >
       <ConnectionDot connected={connected} />
       {connected ? (
         <Wifi size={12} className="text-success" />
