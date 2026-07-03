@@ -16,9 +16,11 @@ export class WSClient {
   private intentionalClose = false;
   private pendingTicks: Tick[] = [];
   private rafId: number | null = null;
+  private token: string | null = null;
 
-  constructor(url: string) {
+  constructor(url: string, token?: string) {
     this.url = url;
+    this.token = token || null;
   }
 
   connect() {
@@ -28,7 +30,10 @@ export class WSClient {
     this.emitStatus('connecting');
 
     try {
-      this.ws = new WebSocket(this.url);
+      const wsUrl = this.token
+        ? `${this.url}?token=${encodeURIComponent(this.token)}`
+        : this.url;
+      this.ws = new WebSocket(wsUrl);
     } catch {
       this.scheduleReconnect();
       return;
