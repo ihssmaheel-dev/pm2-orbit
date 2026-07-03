@@ -6,19 +6,6 @@ function cssVar(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#666';
 }
 
-function formatTimestamp(ts: number): string {
-  const d = new Date(ts);
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const diffMin = Math.floor(diffMs / 60000);
-  const diffHr = Math.floor(diffMs / 3600000);
-
-  if (diffMin < 1) return 'now';
-  if (diffMin < 60) return `${diffMin}m ago`;
-  if (diffHr < 24) return `${diffHr}h ago`;
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
 interface UPlotChartProps {
   data: uPlot.AlignedData;
   series: uPlot.Series[];
@@ -77,19 +64,7 @@ export function UPlotChart({ data, series, height = 160, className, formatY }: U
       },
       axes: [
         {
-          stroke: axisColor,
-          grid: { stroke: gridColor, width: 0.5 },
-          size: 55,
-          font: '10px monospace',
-          values: (_u: uPlot, splits: number[]) =>
-            splits.map((v) => {
-              const idx = Math.round(v);
-              if (idx >= 0 && idx < data[0].length) {
-                return formatTimestamp(data[0][idx]);
-              }
-              return '';
-            }),
-          space: 60,
+          show: false,
         },
         {
           stroke: axisColor,
