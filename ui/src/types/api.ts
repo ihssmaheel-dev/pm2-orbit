@@ -7,6 +7,7 @@ export interface Tick {
   full?: ProcessSnapshot[];
   fullSeq?: number;
   system: SystemSnapshot;
+  type?: 'update' | 'reconnect';
 }
 
 export interface HealthResponse {

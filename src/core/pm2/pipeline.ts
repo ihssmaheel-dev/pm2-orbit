@@ -178,6 +178,17 @@ export function createEventPipeline() {
 
   function start(): void {
     startMetricsCollector();
+
+    bridge.subscribeReconnect(() => {
+      const reconnectTick: Tick = {
+        ts: Date.now(),
+        events: [],
+        system: readSystem(),
+        type: 'reconnect',
+      };
+      broadcast(reconnectTick);
+    });
+
     bridge.subscribe((events) => {
       const now = Date.now();
       let hasRemoves = false;

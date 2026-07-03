@@ -220,6 +220,8 @@ export function Settings() {
                   value={settings.slackWebhookUrl}
                   onChange={(v) => update('slackWebhookUrl', v)}
                   placeholder="https://hooks.slack.com/services/..."
+                  testable
+                  testType="slack"
                 />
                 <ChannelItem
                   label="Discord"
@@ -229,6 +231,8 @@ export function Settings() {
                   value={settings.discordWebhookUrl}
                   onChange={(v) => update('discordWebhookUrl', v)}
                   placeholder="https://discord.com/api/webhooks/..."
+                  testable
+                  testType="discord"
                 />
                 <ChannelItem
                   label="Webhook"
@@ -238,6 +242,8 @@ export function Settings() {
                   value={settings.webhookUrl}
                   onChange={(v) => update('webhookUrl', v)}
                   placeholder="https://your-webhook-endpoint.com/..."
+                  testable
+                  testType="webhook"
                 />
               </div>
             </Section>
@@ -292,6 +298,8 @@ function ChannelItem({
   value,
   onChange,
   placeholder,
+  testable,
+  testType,
 }: {
   label: string;
   enabled: boolean;
@@ -301,7 +309,32 @@ function ChannelItem({
   value?: string;
   onChange?: (v: string) => void;
   placeholder?: string;
+  testable?: boolean;
+  testType?: 'slack' | 'discord' | 'webhook';
 }) {
+  const [testing, setTesting] = useState(false);
+
+  const handleTest = async () => {
+    if (!value || !testType) return;
+    setTesting(true);
+    try {
+      const res = await fetch('/api/settings/test-webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: value, type: testType }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Test notification sent');
+      } else {
+        toast.error(`Test failed: ${data.error || 'Unknown error'}`);
+      }
+    } catch (err) {
+      toast.error('Test failed: Network error');
+    }
+    setTesting(false);
+  };
+
   return (
     <div className="flex items-center gap-3 px-4 py-2.5 border border-border/30 bg-subtle/5 hover:bg-subtle/20 transition-colors">
       <div className={`w-1.5 h-1.5 rounded-full shrink-0 transition-opacity ${enabled ? dot : 'opacity-20'}`} />
@@ -319,6 +352,15 @@ function ChannelItem({
       ) : hint ? (
         <span className="text-[10px] text-muted-foreground/40">{hint}</span>
       ) : null}
+      {testable && value && (
+        <button
+          onClick={handleTest}
+          disabled={testing || !enabled}
+          className="text-[10px] text-primary hover:text-primary-hover disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+        >
+          {testing ? 'Testing...' : 'Test'}
+        </button>
+      )}
       <div className="shrink-0 ml-auto">
         <ToggleSwitch checked={enabled} onChange={onToggle} />
       </div>

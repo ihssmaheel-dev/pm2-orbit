@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { WSClient } from '@/lib/ws';
 import { useProcessStore } from '@/store/processes';
 import { useLogsStore } from '@/store/logs';
@@ -29,6 +30,11 @@ export function useWebSocket() {
 
     const unsubTick = client.subscribe((tick: Tick) => {
       lastTickRef.current = tick.ts;
+
+      if (tick.type === 'reconnect') {
+        toast.success('PM2 daemon reconnected');
+        return;
+      }
 
       if (tick.full && tick.fullSeq !== undefined) {
         if (tick.fullSeq !== lastFullSeqRef.current) {

@@ -1,7 +1,13 @@
 node_modules
-.git
 dist
 dist-ui
+.git
+.github
+.husky
 ui/node_modules
-.env
+test-servers
 *.md
+!README.md
+.env*
+ecosystem.config.js
+.editorconfig

@@ -51,6 +51,29 @@ export async function registerHealthRoutes(app: FastifyInstance, pipeline: Pipel
     return getSettingsSafe();
   });
 
+  app.post('/api/settings/test-webhook', async (req, reply) => {
+    const { url, type } = req.body as { url: string; type: 'slack' | 'discord' | 'webhook' };
+    if (!url) return reply.code(400).send({ error: 'URL is required' });
+
+    try {
+      const payload = type === 'slack'
+        ? { text: 'PM2 Orbit test notification' }
+        : type === 'discord'
+        ? { content: 'PM2 Orbit test notification' }
+        : { message: 'PM2 Orbit test notification', type: 'test' };
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      return { success: res.ok, status: res.status };
+    } catch (err) {
+      return { success: false, error: (err as Error).message };
+    }
+  });
+
   app.get('/api/channels', async () => {
     const settings = getSettings();
     const channels: NotificationChannel[] = ['browser', 'slack', 'discord', 'webhook', 'email'];

@@ -60,6 +60,7 @@ export function createAlertEngine() {
   const history: AlertEvent[] = [];
   const pendingEvals = new Map<number, AlertRule[]>();
   const globalRules: AlertRule[] = [];
+  const lastFiredAt = new Map<string, number>();
 
   function rebuildIndex() {
     pendingEvals.clear();
@@ -102,12 +103,17 @@ export function createAlertEngine() {
 
   function evaluate(processId: number, processName: string, metrics: Record<string, number>): AlertEvent[] {
     const fired: AlertEvent[] = [];
+    const now = Date.now();
     const rulesToCheck = [
       ...(pendingEvals.get(processId) || []),
       ...globalRules,
     ];
 
     for (const rule of rulesToCheck) {
+      const cooldownMs = (rule as any).cooldownMs || 60000;
+      const lastFire = lastFiredAt.get(rule.id) || 0;
+      if (now - lastFire < cooldownMs) continue;
+
       const value = metrics[rule.metric];
       if (value === undefined) continue;
 
@@ -121,6 +127,7 @@ export function createAlertEngine() {
       }
 
       if (triggered) {
+        lastFiredAt.set(rule.id, now);
         const event: AlertEvent = {
           ruleId: rule.id,
           processId,

@@ -13,11 +13,19 @@ interface UIStore {
   setWsStatus: (status: WSStatus) => void;
 }
 
+const getStoredSearch = (): string => {
+  if (typeof window === 'undefined') return '';
+  return localStorage.getItem('pm2-orbit-search') || '';
+};
+
 export const useUIStore = create<UIStore>((set) => ({
   detailOpen: false,
   setDetailOpen: (open) => set({ detailOpen: open }),
-  searchQuery: '',
-  setSearchQuery: (query) => set({ searchQuery: query }),
+  searchQuery: getStoredSearch(),
+  setSearchQuery: (query) => {
+    localStorage.setItem('pm2-orbit-search', query);
+    set({ searchQuery: query });
+  },
   statusFilter: null,
   setStatusFilter: (filter) => set({ statusFilter: filter }),
   wsStatus: 'connecting',

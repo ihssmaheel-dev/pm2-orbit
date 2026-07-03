@@ -25,6 +25,7 @@ interface Pm2Event {
 type Pm2Bus = any;
 
 type Listener = (events: ProcessEvent[]) => void;
+type ReconnectListener = () => void;
 
 export interface ProcessEvent {
   type: 'update' | 'add' | 'remove';
@@ -112,6 +113,7 @@ export function createPm2Bridge() {
 
   const logBuffers = new Map<number, LogEntry[]>();
   const logListeners = new Set<LogListener>();
+  const reconnectListeners = new Set<ReconnectListener>();
 
   let lastEventTime = 0;
   let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
@@ -148,6 +150,7 @@ export function createPm2Bridge() {
         logger.warn('PM2 bus heartbeat timeout — reconnecting...');
         bus.close();
         bus = null;
+        for (const fn of reconnectListeners) fn();
         connect().catch(() => {});
       }
     }, BUS_HEARTBEAT_MS);
@@ -374,6 +377,11 @@ export function createPm2Bridge() {
     return () => logListeners.delete(fn);
   }
 
+  function subscribeReconnect(fn: ReconnectListener): () => void {
+    reconnectListeners.add(fn);
+    return () => reconnectListeners.delete(fn);
+  }
+
   function getLogBuffer(processId: number): LogEntry[] {
     return logBuffers.get(processId) || [];
   }
@@ -387,6 +395,7 @@ export function createPm2Bridge() {
     list,
     subscribe,
     subscribeLogs,
+    subscribeReconnect,
     getLogBuffer,
     getAllLogBuffers,
     disconnect,
