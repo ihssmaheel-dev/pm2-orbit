@@ -1,5 +1,6 @@
 import { memo, useState } from "react";
 import { RotateCw, Square, Play, Trash2, Clock } from "lucide-react";
+import { toast } from "sonner";
 import { Sparkline } from "./Sparkline";
 import { formatBytes, formatDuration, formatPercent } from "@/lib/format";
 import { useProcessStore } from "@/store/processes";
@@ -43,13 +44,20 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
   const act = async (action: string) => {
     setLd(action);
     try {
-      await fetch(`/api/processes/${p.id}/action`, {
+      const res = await fetch(`/api/processes/${p.id}/action`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),
       });
+      if (res.ok) {
+        toast.success(`${action.charAt(0).toUpperCase() + action.slice(1)} sent`, {
+          description: p.name,
+        });
+      } else {
+        toast.error(`Failed to ${action}`);
+      }
     } catch {
-      /* ignore */
+      toast.error(`Failed to ${action}`);
     }
     setLd(null);
   };
