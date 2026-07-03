@@ -83,9 +83,7 @@ if (!checkDependency('pm2')) {
   }
 }
 
-if (!checkDependency('better-sqlite3')) {
-  installDependency('better-sqlite3', 'better-sqlite3 (optional, for persistence)');
-}
+// better-sqlite3 is optional — skip auto-install (requires native compilation)
 
 // Set theme from CLI
 if (args.theme) process.env.PM2_ORBIT_THEME = args.theme;

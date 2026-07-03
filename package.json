@@ -42,7 +42,6 @@
     "ws": "^8"
   },
   "optionalDependencies": {
-    "better-sqlite3": "^11",
     "nodemailer": "^9.0.1"
   },
   "peerDependencies": {

@@ -174,6 +174,11 @@ export async function createServer(_opts: ServerOpts) {
   process.on('SIGINT', () => shutdown('SIGINT'));
 
   process.on('uncaughtException', (err) => {
+    // Handle better-sqlite3 native module errors gracefully
+    if (err.message && err.message.includes('Could not locate the bindings file')) {
+      logger.warn('better-sqlite3 native bindings not available — using in-memory history');
+      return; // Don't exit, continue without SQLite
+    }
     logger.error('Uncaught exception:', err);
     process.exit(1);
   });

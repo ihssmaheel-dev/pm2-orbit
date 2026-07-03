@@ -5,10 +5,21 @@ import path from 'path';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let Database: any = null;
 
-try {
-  Database = require('better-sqlite3');
-} catch {
-  // better-sqlite3 not installed — use in-memory fallback
+// Immediately-invoked to catch native module errors at load time
+;(function loadDatabase() {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const mod = require('better-sqlite3');
+    if (typeof mod === 'function' || (typeof mod === 'object' && mod !== null)) {
+      Database = mod;
+    }
+  } catch {
+    // Native bindings not available — graceful fallback
+  }
+})();
+
+if (!Database) {
+  logger.warn('better-sqlite3 not available, using in-memory history');
 }
 
 const DB_DIR = path.join(
