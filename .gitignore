@@ -12,3 +12,5 @@ doc.md
 STATUS.md
 test-servers/
 ecosystem.config.js
+PRODUCTION-PLAN.md
+NPM-PUBLISH-PLAN.md
