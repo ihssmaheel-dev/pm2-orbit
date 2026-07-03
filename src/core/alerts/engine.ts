@@ -95,6 +95,14 @@ export function createAlertEngine() {
     rebuildIndex();
   }
 
+  function clearRules(): void {
+    rules = [];
+    saveRules(rules);
+    rebuildIndex();
+    lastFiredAt.clear();
+    history.length = 0;
+  }
+
   function updateRule(id: string, updates: Partial<AlertRule>): void {
     const rule = rules.find((r) => r.id === id);
     if (rule) {
@@ -209,6 +217,7 @@ export function createAlertEngine() {
   return {
     addRule,
     removeRule,
+    clearRules,
     updateRule,
     evaluate,
     evaluateSystem,

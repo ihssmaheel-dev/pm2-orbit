@@ -281,17 +281,7 @@ export function createEventPipeline() {
         system,
       };
 
-      for (const snap of snapshots) {
-        const metrics: Record<string, number> = {
-          cpu: snap.cpu,
-          memory: snap.memory,
-          restarts: snap.restarts,
-        };
-        const fired = alerts.evaluate(snap.id, snap.name, metrics);
-        if (fired.length > 0) {
-          notifyAlerts(fired, alerts.getRules());
-        }
-      }
+      evaluateAlerts(tick);
 
       broadcast(tick);
     }, 2000);
