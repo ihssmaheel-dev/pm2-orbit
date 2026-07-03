@@ -25,16 +25,16 @@ interface Col {
 
 const COLS: Col[] = [
   { id: "name", label: "Name", w: "flex-1 min-w-1" },
-  { id: "mode", label: "Mode", w: "w-19" },
-  { id: "pid", label: "PID", w: "w-19" },
-  { id: "cpu", label: "CPU", w: "w-24" },
-  { id: "memory", label: "Memory", w: "w-24" },
-  { id: "restarts", label: "Rst", w: "w-15" },
+  { id: "mode", label: "Mode", w: "hidden md:block md:w-19" },
+  { id: "pid", label: "PID", w: "hidden lg:block lg:w-19" },
+  { id: "cpu", label: "CPU", w: "w-20 sm:w-24" },
+  { id: "memory", label: "Memory", w: "w-20 sm:w-24" },
+  { id: "restarts", label: "Rst", w: "hidden sm:block sm:w-15" },
 ];
 
-const W_SPARKLINE = "w-[104px]";
+const W_SPARKLINE = "hidden md:block md:w-[104px]";
 const W_STATUS = "w-[90px]";
-const W_UPTIME = "w-[108px]";
+const W_UPTIME = "hidden lg:block lg:w-[108px]";
 const W_ACTIONS = "w-[72px]";
 
 export function ProcessTable() {
@@ -133,28 +133,28 @@ export function ProcessTable() {
           <button
             disabled={busy || onlineCount === 0}
             onClick={() => setRestartConfirm(true)}
-            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-foreground hover:text-primary border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors disabled:opacity-25 disabled:pointer-events-none"
+            className="hidden sm:flex cursor-pointer items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-foreground hover:text-primary border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
             <RotateCw size={10} /> Restart All
           </button>
           <button
             disabled={busy || onlineCount === 0}
             onClick={() => setStopConfirm(true)}
-            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-foreground hover:text-destructive border border-border hover:border-destructive/40 hover:bg-destructive/5 transition-colors disabled:opacity-25 disabled:pointer-events-none"
+            className="hidden sm:flex cursor-pointer items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-foreground hover:text-destructive border border-border hover:border-destructive/40 hover:bg-destructive/5 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
             <Square size={10} /> Stop All
           </button>
           <button
             disabled={busy || stoppedCount === 0}
             onClick={() => setStartConfirm(true)}
-            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-foreground hover:text-success border border-border hover:border-success/40 hover:bg-success/5 transition-colors disabled:opacity-25 disabled:pointer-events-none"
+            className="hidden sm:flex cursor-pointer items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-foreground hover:text-success border border-border hover:border-success/40 hover:bg-success/5 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
             <Play size={10} /> Start All
           </button>
           <button
             disabled={busy || filteredData.length === 0}
             onClick={() => setDeleteConfirm(true)}
-            className="cursor-pointer flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-destructive border border-destructive/40 hover:border-destructive/60 hover:bg-destructive/10 transition-colors disabled:opacity-25 disabled:pointer-events-none"
+            className="hidden md:flex cursor-pointer items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-destructive border border-destructive/40 hover:border-destructive/60 hover:bg-destructive/10 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
             <Trash2 size={10} /> Delete All
           </button>
