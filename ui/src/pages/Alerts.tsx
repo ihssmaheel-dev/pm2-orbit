@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Plus, Trash2, AlertTriangle, Pencil, RotateCcw, Bell, Check } from 'lucide-react';
+import { Plus, Trash2, AlertTriangle, Pencil, RotateCcw, Bell } from 'lucide-react';
 import { Skeleton } from '@/components/shared/Skeleton';
 import { useAlertsStore } from '@/store/alerts';
 import { AlertForm } from '@/components/alerts/AlertForm';
@@ -34,18 +34,11 @@ function formatTime(ts: number): string {
   return d.toLocaleDateString();
 }
 
-function ChannelCheck({ enabled, onChange }: { enabled: boolean; onChange: () => void }) {
+function ChannelDot({ enabled }: { enabled: boolean }) {
   return (
-    <button
-      onClick={onChange}
-      className={`w-4 h-4 rounded border flex items-center justify-center transition-colors cursor-pointer ${
-        enabled
-          ? 'bg-primary border-primary text-white'
-          : 'bg-transparent border-border/40 hover:border-border/60'
-      }`}
-    >
-      {enabled && <Check size={10} strokeWidth={3} />}
-    </button>
+    <span className={`inline-flex items-center justify-center text-[10px] font-medium ${enabled ? 'text-primary' : 'text-muted-foreground/30'}`}>
+      {enabled ? 'On' : '—'}
+    </span>
   );
 }
 
@@ -75,13 +68,6 @@ export function Alerts() {
   const handleClose = () => {
     setFormOpen(false);
     setEditRule(null);
-  };
-
-  const toggleChannel = (rule: AlertRule, channel: string) => {
-    const channels = rule.channels.includes(channel as AlertRule['channels'][number])
-      ? rule.channels.filter((c) => c !== channel)
-      : [...rule.channels, channel];
-    updateRule(rule.id, { channels: channels as AlertRule['channels'] });
   };
 
   return (
@@ -123,9 +109,7 @@ export function Alerts() {
           }`}
         >
           Rules
-          <span className="ml-1.5 text-[10px] font-mono tabular-nums text-muted-foreground/40">
-            {rules.length}
-          </span>
+          <span className="ml-1.5 text-[10px] font-mono tabular-nums text-muted-foreground/40">{rules.length}</span>
         </button>
         <button
           onClick={() => navigate('/alerts/history', { replace: true })}
@@ -136,9 +120,7 @@ export function Alerts() {
           }`}
         >
           History
-          <span className="ml-1.5 text-[10px] font-mono tabular-nums text-muted-foreground/40">
-            {history.length}
-          </span>
+          <span className="ml-1.5 text-[10px] font-mono tabular-nums text-muted-foreground/40">{history.length}</span>
         </button>
       </div>
 
@@ -150,12 +132,13 @@ export function Alerts() {
             <div className="w-16 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Scope</div>
             <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Metric</div>
             <div className="flex-1 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Process</div>
+            <div className="w-16 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Condition</div>
+            <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Threshold</div>
             <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Severity</div>
-            <div className="w-12 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Cond</div>
-            <div className="w-16 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Value</div>
             {CHANNELS.map((ch) => (
               <div key={ch} className="w-14 shrink-0 px-2 text-[10px] font-semibold uppercase tracking-widest text-center">{ch}</div>
             ))}
+            <div className="w-14 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest text-center">Active</div>
             <div className="w-16 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest text-right">Actions</div>
           </div>
 
@@ -168,12 +151,13 @@ export function Alerts() {
                     <div className="w-16 shrink-0 px-3"><Skeleton className="h-4 w-12" /></div>
                     <div className="w-20 shrink-0 px-3"><Skeleton className="h-4 w-14" /></div>
                     <div className="flex-1 shrink-0 px-3"><Skeleton className="h-4 w-24" /></div>
+                    <div className="w-16 shrink-0 px-3"><Skeleton className="h-4 w-6" /></div>
+                    <div className="w-20 shrink-0 px-3"><Skeleton className="h-4 w-8" /></div>
                     <div className="w-20 shrink-0 px-3"><Skeleton className="h-4 w-14" /></div>
-                    <div className="w-12 shrink-0 px-3"><Skeleton className="h-4 w-6" /></div>
-                    <div className="w-16 shrink-0 px-3"><Skeleton className="h-4 w-8" /></div>
                     {CHANNELS.map((ch) => (
-                      <div key={ch} className="w-14 shrink-0 px-2 flex justify-center"><Skeleton className="h-4 w-4" /></div>
+                      <div key={ch} className="w-14 shrink-0 px-2 flex justify-center"><Skeleton className="h-4 w-6" /></div>
                     ))}
+                    <div className="w-14 shrink-0 px-3 flex justify-center"><Skeleton className="h-4 w-8" /></div>
                     <div className="w-16 shrink-0 px-3 flex justify-end"><Skeleton className="h-4 w-12" /></div>
                   </div>
                 ))}
@@ -219,6 +203,16 @@ export function Alerts() {
                       </span>
                     </div>
 
+                    {/* Condition */}
+                    <div className="w-16 shrink-0 px-3">
+                      <span className="text-[12px] font-mono text-muted-foreground/55">{rule.operator}</span>
+                    </div>
+
+                    {/* Threshold */}
+                    <div className="w-20 shrink-0 px-3">
+                      <span className="text-[12px] font-mono font-medium text-foreground/80 tabular-nums">{rule.threshold}</span>
+                    </div>
+
                     {/* Severity */}
                     <div className="w-20 shrink-0 px-3">
                       <span className="inline-flex items-center gap-1.5">
@@ -227,25 +221,27 @@ export function Alerts() {
                       </span>
                     </div>
 
-                    {/* Condition */}
-                    <div className="w-12 shrink-0 px-3">
-                      <span className="text-[12px] font-mono text-muted-foreground/55">{rule.operator}</span>
-                    </div>
-
-                    {/* Value */}
-                    <div className="w-16 shrink-0 px-3">
-                      <span className="text-[12px] font-mono font-medium text-foreground/80 tabular-nums">{rule.threshold}</span>
-                    </div>
-
-                    {/* Channel checkboxes */}
+                    {/* Channel status */}
                     {CHANNELS.map((ch) => (
                       <div key={ch} className="w-14 shrink-0 px-2 flex justify-center">
-                        <ChannelCheck
-                          enabled={rule.channels.includes(ch)}
-                          onChange={() => toggleChannel(rule, ch)}
-                        />
+                        <ChannelDot enabled={rule.channels.includes(ch)} />
                       </div>
                     ))}
+
+                    {/* Active toggle */}
+                    <div className="w-14 shrink-0 px-3 flex justify-center">
+                      <button
+                        onClick={() => updateRule(rule.id, { enabled: !rule.enabled })}
+                        className={`relative w-8 h-[18px] rounded-full transition-colors cursor-pointer ${
+                          rule.enabled ? 'bg-primary' : 'bg-subtle/60'
+                        }`}
+                        title={rule.enabled ? 'Disable rule' : 'Enable rule'}
+                      >
+                        <span className={`absolute top-[2px] left-[2px] w-[14px] h-[14px] rounded-full bg-white transition-transform ${
+                          rule.enabled ? 'translate-x-[14px]' : 'translate-x-0'
+                        }`} />
+                      </button>
+                    </div>
 
                     {/* Actions */}
                     <div className="w-16 shrink-0 px-3 flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
