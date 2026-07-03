@@ -90,12 +90,17 @@ export async function createServer(_opts: ServerOpts) {
     const addr = app.server.address();
     const port = typeof addr === 'string' ? 9823 : (addr?.port ?? 9823);
     const host = `http://127.0.0.1:${port}`;
+    const token = process.env.PM2_ORBIT_TOKEN;
     logger.info('─'.repeat(40));
     logger.info('PM2 Orbit server started successfully');
     logger.info(`→ ${host}`);
     logger.info(`Health: ${host}/api/health`);
     logger.info(`Ping:   ${host}/api/ping`);
     logger.info(`WS:     ws://127.0.0.1:${port}/ws`);
+    if (token) {
+      logger.info(`Token:  ${token}`);
+      logger.info('Use this token in Settings → Security → Auth Token');
+    }
     logger.info('─'.repeat(40));
   });
 

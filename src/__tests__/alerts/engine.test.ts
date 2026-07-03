@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createAlertEngine, type AlertRule, type AlertEvent } from '../../core/alerts/engine';
+import { createAlertEngine, type AlertRule } from '../../core/alerts/engine';
 
 describe('AlertEngine', () => {
   let engine: ReturnType<typeof createAlertEngine>;

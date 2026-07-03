@@ -111,13 +111,21 @@ function loadSettings(): Settings {
           merged[key as keyof Settings] = decrypt(merged[key as keyof Settings] as string) as never;
         }
       }
+      // Auto-generate token if none exists
+      if (!merged.authToken) {
+        merged.authToken = randomBytes(24).toString('hex');
+        saveSettings(merged);
+      }
       settingsCache = merged;
       return merged;
     }
   } catch {
     // ignore
   }
-  settingsCache = { ...DEFAULTS };
+  // First run — generate token
+  const firstRun = { ...DEFAULTS, authToken: randomBytes(24).toString('hex') };
+  saveSettings(firstRun);
+  settingsCache = firstRun;
   return settingsCache;
 }
 
