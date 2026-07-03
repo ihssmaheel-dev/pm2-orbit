@@ -166,6 +166,7 @@ export function createPm2Bridge() {
           if (!activeIds.has(id)) {
             processCache.delete(id);
             lastUpdateMap.delete(id);
+            logBuffers.delete(id);
           }
         }
         resolve();
