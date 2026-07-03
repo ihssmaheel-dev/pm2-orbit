@@ -4,6 +4,19 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.3.1] - 2026-07-03
+
+### Fixed
+- Removed better-sqlite3 from dependencies (requires native compilation without Python)
+- Server now uses in-memory history fallback gracefully
+- Bin script no longer tries to auto-install better-sqlite3
+- Store catches require errors properly
+
+### Changed
+- System fonts instead of self-hosted Exo/JetBrains Mono (smaller package)
+- Moved pm2 to peerDependencies (skips ~100 packages on install)
+- Package size reduced to 731 KB packed, 466 packages
+
 ## [1.3.0] - 2026-07-03
 
 ### Added
