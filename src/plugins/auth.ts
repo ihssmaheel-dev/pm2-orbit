@@ -1,6 +1,6 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 
-const SKIP_PATHS = ['/api/health', '/api/ping'];
+const SKIP_PATHS = ['/api/health', '/api/ping', '/api/settings'];
 
 export function createAuthPlugin() {
   const token = process.env.PM2_ORBIT_TOKEN;
