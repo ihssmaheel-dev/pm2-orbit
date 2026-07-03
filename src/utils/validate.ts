@@ -1,4 +1,5 @@
-const VALID_METRICS = ['cpu', 'memory', 'restarts', 'status'] as const;
+const VALID_METRICS = ['cpu', 'memory', 'restarts', 'status', 'systemCpu', 'systemMemory', 'systemLoad'] as const;
+const VALID_SCOPES = ['process', 'system'] as const;
 const VALID_OPERATORS = ['>', '<', '==', '>=', '<='] as const;
 const VALID_CHANNELS = ['browser', 'webhook', 'slack', 'discord', 'email'] as const;
 
@@ -43,9 +44,11 @@ export function validateAlertRule(body: unknown): Record<string, unknown> | null
 
   return {
     id: b.id,
-    metric: b.metric as 'cpu' | 'memory' | 'restarts' | 'status',
+    scope: (VALID_SCOPES as readonly string[]).includes(b.scope as string) ? b.scope : 'process',
+    metric: b.metric as 'cpu' | 'memory' | 'restarts' | 'status' | 'systemCpu' | 'systemMemory' | 'systemLoad',
     operator: b.operator as '>' | '<' | '==' | '>=' | '<=',
     threshold: b.threshold,
+    severity: (['info', 'warning', 'critical'] as readonly string[]).includes(b.severity as string) ? b.severity : 'warning',
     ...(typeof b.processId === 'number' ? { processId: b.processId } : {}),
     ...(typeof b.processName === 'string' ? { processName: b.processName } : {}),
     enabled: b.enabled !== false,
