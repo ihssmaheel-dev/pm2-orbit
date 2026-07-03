@@ -2,7 +2,7 @@
 
 > High-performance, real-time PM2 monitoring dashboard. Event-driven architecture supporting 1000+ processes with zero configuration.
 
-<!-- Add screenshot here: ![Dashboard](screenshot.png) -->
+<img width="1918" height="932" alt="image" src="https://github.com/user-attachments/assets/ea4c4aac-86ed-455b-96e1-458662c55cb2" />
 
 ## Why PM2 Orbit?
 
@@ -33,6 +33,8 @@ That's it. No config files, no databases, no Docker required. Opens in your brow
 - Regex search with highlight
 - Pause/resume without disconnecting
 - Copy individual lines or download full buffer
+
+<img width="1918" height="936" alt="image" src="https://github.com/user-attachments/assets/d19c1242-024a-4c3e-b4cb-5b31b0118681" />
 
 **System Metrics**
 - Host CPU, memory, load average, network I/O, disk I/O
