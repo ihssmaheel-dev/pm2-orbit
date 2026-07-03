@@ -9,6 +9,7 @@ export interface AlertRule {
   operator: '>' | '<' | '==' | '>=' | '<=';
   threshold: number;
   enabled: boolean;
+  severity: 'info' | 'warning' | 'critical';
   channels: ('browser' | 'webhook' | 'slack' | 'discord' | 'email')[];
   webhookUrl?: string;
   slackWebhook?: string;
@@ -23,6 +24,7 @@ export interface AlertEvent {
   metric: string;
   value: number;
   threshold: number;
+  severity: 'info' | 'warning' | 'critical';
   message: string;
   ts: number;
 }
@@ -135,6 +137,7 @@ export function createAlertEngine() {
           metric: rule.metric,
           value,
           threshold: rule.threshold,
+          severity: (rule as any).severity || 'warning',
           message: `${processName}: ${rule.metric} ${rule.operator} ${rule.threshold} (current: ${value})`,
           ts: Date.now(),
         };

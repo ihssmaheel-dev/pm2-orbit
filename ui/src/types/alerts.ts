@@ -7,6 +7,7 @@ export interface AlertRule {
   threshold: number;
   duration?: number;
   enabled: boolean;
+  severity: 'info' | 'warning' | 'critical';
   channels: ('browser' | 'webhook' | 'slack' | 'discord' | 'email')[];
   webhookUrl?: string;
   slackWebhook?: string;
@@ -21,6 +22,7 @@ export interface AlertEvent {
   metric: string;
   value: number;
   threshold: number;
+  severity: 'info' | 'warning' | 'critical';
   message: string;
   ts: number;
 }

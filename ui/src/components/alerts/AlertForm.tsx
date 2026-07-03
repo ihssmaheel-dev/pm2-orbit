@@ -21,6 +21,7 @@ export function AlertForm({ open, onClose }: AlertFormProps) {
   const [metric, setMetric] = useState<AlertRule['metric']>('cpu');
   const [operator, setOperator] = useState<AlertRule['operator']>('>');
   const [threshold, setThreshold] = useState('');
+  const [severity, setSeverity] = useState<AlertRule['severity']>('warning');
   const [channels, setChannels] = useState<Set<string>>(new Set(['browser']));
   const [channelInfo, setChannelInfo] = useState<Record<string, ChannelInfo> | null>(null);
 
@@ -36,6 +37,7 @@ export function AlertForm({ open, onClose }: AlertFormProps) {
       setMetric('cpu');
       setOperator('>');
       setThreshold('');
+      setSeverity('warning');
       setChannels(new Set(['browser']));
     }
   }, [open]);
@@ -57,6 +59,7 @@ export function AlertForm({ open, onClose }: AlertFormProps) {
       metric,
       operator,
       threshold: parseFloat(threshold),
+      severity,
       enabled: true,
       channels: Array.from(channels) as AlertRule['channels'],
     };
@@ -88,8 +91,23 @@ export function AlertForm({ open, onClose }: AlertFormProps) {
             </div>
           </div>
 
-          <div className="flex gap-2">
-            <div className="flex-1">
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-1 block">Severity</label>
+              <div className="relative">
+                <select
+                  value={severity}
+                  onChange={(e) => setSeverity(e.target.value as AlertRule['severity'])}
+                  className="h-10 w-full appearance-none bg-input border border-border text-foreground text-sm rounded-none focus:outline-none focus:ring-1 focus:ring-ring pl-3 pr-9"
+                >
+                  <option value="info">Info</option>
+                  <option value="warning">Warning</option>
+                  <option value="critical">Critical</option>
+                </select>
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground/60" />
+              </div>
+            </div>
+            <div>
               <label className="text-xs text-muted-foreground uppercase tracking-wider mb-1 block">Condition</label>
               <div className="relative">
                 <select
@@ -106,7 +124,7 @@ export function AlertForm({ open, onClose }: AlertFormProps) {
                 <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground/60" />
               </div>
             </div>
-            <div className="flex-1">
+            <div>
               <label className="text-xs text-muted-foreground uppercase tracking-wider mb-1 block">Threshold</label>
               <Input
                 type="number"
