@@ -4,6 +4,7 @@ import { WSClient } from '@/lib/ws';
 import { useProcessStore } from '@/store/processes';
 import { useLogsStore } from '@/store/logs';
 import { useSystemStore } from '@/store/system';
+import { useAlertsStore } from '@/store/alerts';
 import type { Tick } from '@/types/api';
 
 type WSStatus = 'connecting' | 'connected' | 'disconnected';
@@ -19,6 +20,7 @@ export function useWebSocket() {
   const updateSystem = useSystemStore((s) => s.update);
   const clearLogsRef = useRef(useLogsStore.getState().clearLogs);
   clearLogsRef.current = useLogsStore((s) => s.clearLogs);
+  const addAlertEvent = useAlertsStore((s) => s.addEvent);
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -55,6 +57,16 @@ export function useWebSocket() {
               }
             }
             applyDelta(tick.events);
+          }
+
+          // Handle alert events
+          if (tick.alerts && tick.alerts.length > 0) {
+            for (const alertEvent of tick.alerts) {
+              addAlertEvent(alertEvent);
+              toast.warning(alertEvent.message, {
+                description: `${alertEvent.severity.toUpperCase()} — ${alertEvent.processName}`,
+              });
+            }
           }
 
           updateSystem(tick.system);
@@ -96,6 +108,16 @@ export function useWebSocket() {
               }
             }
             applyDelta(tick.events);
+          }
+
+          // Handle alert events
+          if (tick.alerts && tick.alerts.length > 0) {
+            for (const alertEvent of tick.alerts) {
+              addAlertEvent(alertEvent);
+              toast.warning(alertEvent.message, {
+                description: `${alertEvent.severity.toUpperCase()} — ${alertEvent.processName}`,
+              });
+            }
           }
 
           updateSystem(tick.system);

@@ -1,6 +1,6 @@
 # PM2 Orbit
 
-> High-performance, real-time PM2 monitoring dashboard. Event-driven architecture supporting 1000+ processes with zero configuration.
+> High-performance, real-time PM2 monitoring dashboard. Event-driven architecture supporting 100+ processes with zero configuration.
 
 <img width="1918" height="932" alt="image" src="https://github.com/user-attachments/assets/ea4c4aac-86ed-455b-96e1-458662c55cb2" />
 

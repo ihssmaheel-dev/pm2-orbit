@@ -103,6 +103,7 @@ export function createEventPipeline() {
 
   function evaluateAlerts(tick: Tick) {
     const allRules = alerts.getRules();
+    const firedEvents: import('../alerts/engine').AlertEvent[] = [];
 
     // Evaluate system-level alerts
     const systemMetrics: Record<string, number> = {
@@ -112,6 +113,7 @@ export function createEventPipeline() {
     };
     const systemFired = alerts.evaluateSystem(systemMetrics);
     if (systemFired.length > 0) {
+      firedEvents.push(...systemFired);
       notifyAlerts(systemFired, allRules);
     }
 
@@ -126,8 +128,14 @@ export function createEventPipeline() {
       };
       const fired = alerts.evaluate(proc.id, proc.name, metrics);
       if (fired.length > 0) {
+        firedEvents.push(...fired);
         notifyAlerts(fired, allRules);
       }
+    }
+
+    // Include fired alerts in the tick for frontend
+    if (firedEvents.length > 0) {
+      tick.alerts = firedEvents;
     }
   }
 

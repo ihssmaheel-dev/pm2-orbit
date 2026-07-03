@@ -38,6 +38,7 @@ export interface Tick {
   fullSeq?: number;
   system: SystemSnapshot;
   type?: 'update' | 'reconnect';
+  alerts?: AlertEvent[];
 }
 
 export interface AlertRule {
