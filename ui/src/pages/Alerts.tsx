@@ -269,11 +269,10 @@ export function Alerts() {
       {tabFromUrl === 'history' && (
         <div className="flex flex-col flex-1 min-h-0">
           <div className="flex items-center h-8 px-5 border-b border-border/40 bg-background/40 text-muted-foreground/50 select-none shrink-0">
-            <div className="w-24 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Time</div>
+            <div className="w-28 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Time</div>
             <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Severity</div>
-            <div className="w-32 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Process</div>
             <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Metric</div>
-            <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Value</div>
+            <div className="w-32 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Threshold</div>
             <div className="flex-1 px-3 text-[10px] font-semibold uppercase tracking-widest">Message</div>
           </div>
 
@@ -298,28 +297,39 @@ export function Alerts() {
                       i % 2 === 0 ? 'bg-background/20' : ''
                     }`}
                   >
-                    <div className="w-24 shrink-0 px-3">
+                    {/* Time */}
+                    <div className="w-28 shrink-0 px-3">
                       <span className="text-[11px] font-mono text-muted-foreground/45 tabular-nums">{formatTime(event.ts)}</span>
                     </div>
+
+                    {/* Severity */}
                     <div className="w-20 shrink-0 px-3">
                       <span className="inline-flex items-center gap-1.5">
                         <span className={`w-1.5 h-1.5 rounded-full ${sev.dot}`} />
                         <span className={`text-[11px] font-medium ${sev.txt}`}>{sev.label}</span>
                       </span>
                     </div>
-                    <div className="w-32 shrink-0 px-3">
-                      <span className="text-[12px] font-medium text-foreground block truncate">{event.processName}</span>
-                      <span className="text-[10px] text-muted-foreground/40 font-mono">PID {event.processId}</span>
-                    </div>
+
+                    {/* Metric */}
                     <div className="w-20 shrink-0 px-3">
                       <span className="text-[11px] text-muted-foreground/55">{metricLabels[event.metric] || event.metric}</span>
                     </div>
-                    <div className="w-20 shrink-0 px-3">
-                      <span className="text-[12px] font-mono text-foreground/80 tabular-nums">{typeof event.value === 'number' ? event.value.toFixed(1) : event.value}</span>
-                      <span className="text-[10px] text-muted-foreground/35 font-mono ml-1">/ {event.threshold}</span>
+
+                    {/* Threshold */}
+                    <div className="w-32 shrink-0 px-3">
+                      <span className="text-[12px] font-mono text-foreground/80 tabular-nums">
+                        {typeof event.value === 'number' ? event.value.toFixed(1) : event.value}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground/35 font-mono ml-1.5">
+                        / {event.threshold}
+                      </span>
                     </div>
+
+                    {/* Message */}
                     <div className="flex-1 px-3">
-                      <span className="text-[11px] text-muted-foreground/50 truncate block">{event.message}</span>
+                      <span className="text-[11px] text-muted-foreground/60 leading-snug block">
+                        {event.message}
+                      </span>
                     </div>
                   </div>
                 );

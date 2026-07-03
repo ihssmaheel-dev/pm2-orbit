@@ -1,6 +1,16 @@
 import fs from 'fs';
 import path from 'path';
 
+const metricLabels: Record<string, string> = {
+  cpu: 'CPU',
+  memory: 'Memory',
+  restarts: 'Restarts',
+  status: 'Status',
+  systemCpu: 'System CPU',
+  systemMemory: 'System Memory',
+  systemLoad: 'System Load',
+};
+
 export interface AlertRule {
   id: string;
   processId?: number;
@@ -139,6 +149,8 @@ export function createAlertEngine() {
 
       if (triggered) {
         lastFiredAt.set(rule.id, now);
+        const formattedValue = typeof value === 'number' ? value.toFixed(1) : String(value);
+        const formattedThreshold = typeof rule.threshold === 'number' ? rule.threshold.toFixed(1) : String(rule.threshold);
         const event: AlertEvent = {
           ruleId: rule.id,
           processId,
@@ -147,7 +159,7 @@ export function createAlertEngine() {
           value,
           threshold: rule.threshold,
           severity: (rule as any).severity || 'warning',
-          message: `${processName}: ${rule.metric} ${rule.operator} ${rule.threshold} (current: ${value})`,
+          message: `${processName} — ${metricLabels[rule.metric] || rule.metric} reached ${formattedValue} (threshold: ${rule.operator} ${formattedThreshold})`,
           ts: Date.now(),
         };
         fired.push(event);
@@ -184,6 +196,8 @@ export function createAlertEngine() {
 
       if (triggered) {
         lastFiredAt.set(rule.id, now);
+        const formattedValue = typeof value === 'number' ? value.toFixed(1) : String(value);
+        const metricLabel = metricLabels[rule.metric] || rule.metric;
         const event: AlertEvent = {
           ruleId: rule.id,
           processId: 0,
@@ -192,7 +206,7 @@ export function createAlertEngine() {
           value,
           threshold: rule.threshold,
           severity: (rule as any).severity || 'warning',
-          message: `System: ${rule.metric} ${rule.operator} ${rule.threshold} (current: ${value})`,
+          message: `System ${metricLabel} reached ${formattedValue} (threshold: ${rule.operator} ${rule.threshold})`,
           ts: now,
         };
         fired.push(event);
