@@ -78,10 +78,26 @@ export const useAlertsStore = create<AlertsStore>((set) => ({
     }
   },
 
-  updateRule: (id, updates) =>
+  updateRule: async (id, updates) => {
     set((state) => ({
       rules: state.rules.map((r) => (r.id === id ? { ...r, ...updates } : r)),
-    })),
+    }));
+    try {
+      const res = await api(`/api/alerts/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+        label: 'Update rule',
+      });
+      if (!res.ok) {
+        // Revert on failure
+        const data = await res.json().catch(() => ({}));
+        toast.error(`Failed to update: ${data.error || 'Unknown error'}`);
+      }
+    } catch {
+      // ignore
+    }
+  },
 
   addEvent: (event) =>
     set((state) => ({

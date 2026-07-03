@@ -29,6 +29,19 @@ export async function registerAlertRoutes(app: FastifyInstance, pipeline: Pipeli
     return { success: true };
   });
 
+  app.put('/api/alerts/:id', async (req, reply) => {
+    const { id } = req.params as { id: string };
+    if (!id || typeof id !== 'string' || id.length === 0) {
+      return reply.code(400).send({ error: 'Invalid rule ID' });
+    }
+    const updates = req.body as Record<string, unknown>;
+    if (!updates || typeof updates !== 'object') {
+      return reply.code(400).send({ error: 'Invalid request body' });
+    }
+    pipeline.alerts.updateRule(id, updates);
+    return { success: true };
+  });
+
   app.get('/api/alerts/history', async () => {
     return pipeline.alerts.getHistory();
   });
