@@ -314,15 +314,21 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
       setSelectedProcessId(id);
       setAutoScroll(true);
       autoScrollRef.current = true;
-      // Scroll to bottom after process selection
-      requestAnimationFrame(() => {
-        if (parentRef.current) {
-          parentRef.current.scrollTop = parentRef.current.scrollHeight;
-        }
-      });
     },
     [],
   );
+
+  // Scroll to bottom when process changes
+  useEffect(() => {
+    if (selectedProcessId !== null) {
+      const timer = setTimeout(() => {
+        if (parentRef.current) {
+          parentRef.current.scrollTop = parentRef.current.scrollHeight;
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedProcessId]);
 
   const virtualizer = useVirtualizer({
     count: filteredLogs.length,
