@@ -195,7 +195,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
 
     if (selectedProcessId === null) return result;
 
-    const MAX = 2000;
+    const MAX = 1000;
     const sourceBufs: [number, LogEntry[]][] = [];
 
     for (const [pid, entries] of buffers) {
