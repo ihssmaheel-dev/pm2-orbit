@@ -4,6 +4,22 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.4.0] - 2026-07-04
+
+### Fixed
+- **Status metric never fires** — Pipeline now passes process status to alert evaluation
+- **PUT update has zero validation** — Added field type and value validation on alert rule updates
+- **processName not sent on edit** — AlertForm now includes process name in edit requests
+- **Clear History only clears client state** — Added `DELETE /api/alerts/history` server endpoint
+
+### Added
+- **Alert duration evaluation** — Sustained condition check: alerts only fire after condition holds for N seconds
+- **Cooldown field in UI** — Configurable cooldown per rule (default 60s)
+- **Duration field in UI** — Configurable sustained duration per rule
+- **History persistence to disk** — Alert history saved to `~/.pm2-orbit/alerts-history.json`, survives restarts
+- **History cap 200** — Increased from 50 to 200 events with `truncated` flag in API response
+- **Monotonic log IDs** — Each log entry gets unique ID for SSE diff stability and React key uniqueness
+
 ## [1.3.3] - 2026-07-04
 
 ### Fixed
