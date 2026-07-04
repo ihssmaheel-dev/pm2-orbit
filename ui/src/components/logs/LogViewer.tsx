@@ -514,7 +514,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
 
               return (
                 <div
-                  key={`${log.processId}-${log.ts}`}
+                  key={log.id}
                   className={cn(
                     "flex items-center gap-0 px-4 hover:bg-white/[0.02] dark:hover:bg-white/[0.02] transition-colors group absolute left-0 w-full overflow-hidden cursor-pointer",
                     isErr && "bg-destructive/[0.03] dark:bg-destructive/[0.04]",

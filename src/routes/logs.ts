@@ -58,7 +58,7 @@ export async function registerLogRoutes(app: FastifyInstance, pipeline: Pipeline
 
   app.get('/api/logs/stream', async (req, reply) => {
     const bridge = pipeline.bridge;
-    const lastIndices = new Map<number, number>();
+    const lastPushedMap = new Map<number, number>();
 
     reply.raw.writeHead(200, {
       'Content-Type': 'text/event-stream',
@@ -71,8 +71,8 @@ export async function registerLogRoutes(app: FastifyInstance, pipeline: Pipeline
 
     const allBuffers = bridge.getAllLogBuffers();
     for (const [pid, buf] of allBuffers) {
-      lastIndices.set(pid, buf.length);
-      for (const e of buf) {
+      lastPushedMap.set(pid, buf.totalPushed);
+      for (const e of buf.entries) {
         try { reply.raw.write(`data: ${JSON.stringify(e)}\n\n`); } catch { /* */ }
       }
     }
@@ -86,10 +86,12 @@ export async function registerLogRoutes(app: FastifyInstance, pipeline: Pipeline
         const current = bridge.getAllLogBuffers();
         let hasData = false;
         for (const [pid, buf] of current) {
-          const lastIdx = lastIndices.get(pid) || 0;
-          if (buf.length > lastIdx) {
-            const newEntries = buf.slice(lastIdx);
-            lastIndices.set(pid, buf.length);
+          const lastPushed = lastPushedMap.get(pid) || 0;
+          const count = buf.totalPushed - lastPushed;
+          if (count > 0) {
+            const start = Math.max(0, buf.entries.length - count);
+            const newEntries = buf.entries.slice(start);
+            lastPushedMap.set(pid, buf.totalPushed);
             hasData = true;
             for (const e of newEntries) {
               reply.raw.write(`data: ${JSON.stringify(e)}\n\n`);

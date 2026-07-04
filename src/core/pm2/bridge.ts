@@ -33,6 +33,7 @@ export interface ProcessEvent {
 }
 
 export interface LogEntry {
+  id?: number;
   ts: number;
   processId: number;
   processName: string;
@@ -111,7 +112,7 @@ export function createPm2Bridge() {
   const lastUpdateMap = new Map<number, number>();
   const listeners = new Set<Listener>();
 
-  const logBuffers = new Map<number, LogEntry[]>();
+  const logBuffers = new Map<number, { entries: LogEntry[]; totalPushed: number }>();
   const logListeners = new Set<LogListener>();
   const reconnectListeners = new Set<ReconnectListener>();
 
@@ -122,15 +123,19 @@ export function createPm2Bridge() {
   const EMIT_DEDUP_MS = 300;
   const lastEmitMap = new Map<number, number>();
 
+  let logIdCounter = 0;
+
   function pushLog(entry: LogEntry) {
+    entry.id = logIdCounter++;
     let buf = logBuffers.get(entry.processId);
     if (!buf) {
-      buf = [];
+      buf = { entries: [], totalPushed: 0 };
       logBuffers.set(entry.processId, buf);
     }
-    buf.push(entry);
-    if (buf.length > MAX_LOG_LINES) {
-      buf.splice(0, buf.length - MAX_LOG_LINES);
+    buf.entries.push(entry);
+    buf.totalPushed++;
+    if (buf.entries.length > MAX_LOG_LINES) {
+      buf.entries.splice(0, buf.entries.length - MAX_LOG_LINES);
     }
     for (const fn of logListeners) fn(entry);
   }
@@ -384,10 +389,11 @@ export function createPm2Bridge() {
   }
 
   function getLogBuffer(processId: number): LogEntry[] {
-    return logBuffers.get(processId) || [];
+    const buf = logBuffers.get(processId);
+    return buf ? buf.entries : [];
   }
 
-  function getAllLogBuffers(): Map<number, LogEntry[]> {
+  function getAllLogBuffers(): Map<number, { entries: LogEntry[]; totalPushed: number }> {
     return logBuffers;
   }
 

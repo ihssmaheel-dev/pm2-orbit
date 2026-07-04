@@ -1,11 +1,21 @@
 import { create } from 'zustand';
 
 export interface LogEntry {
+  id?: number;
   ts: number;
   processId: number;
   processName: string;
   stream: 'stdout' | 'stderr';
   message: string;
+}
+
+let nextLogId = 0;
+
+function assignSeqId(entry: LogEntry): LogEntry {
+  if (entry.id === undefined) {
+    entry.id = nextLogId++;
+  }
+  return entry;
 }
 
 interface LogsStore {
@@ -101,8 +111,9 @@ export const useLogsStore = create<LogsStore>((set, get) => ({
   addLog: (entry) => {
     if (get().paused) return;
     if (entry.ts < get().clearedAt) return;
-    lastSeen.set(entry.processId, Date.now());
-    getBuf(pending, entry.processId).push(entry);
+    const seqEntry = assignSeqId(entry);
+    lastSeen.set(seqEntry.processId, Date.now());
+    getBuf(pending, seqEntry.processId).push(seqEntry);
     pendingCount++;
     if (pendingCount >= BATCH_LIMIT) {
       if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
