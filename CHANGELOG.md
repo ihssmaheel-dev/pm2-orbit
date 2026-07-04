@@ -4,7 +4,7 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.4.0] - 2026-07-04
+## [1.4.1] - 2026-07-04
 
 ### Fixed
 - **Status metric never fires** — Pipeline now passes process status to alert evaluation
