@@ -4,6 +4,19 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.3.3] - 2026-07-04
+
+### Fixed
+- **SSE diff stall** — Replaced buffer length tracking with monotonic counter to prevent log stream from stalling after buffer trim
+- **React key collisions** — Added unique monotonic IDs to log entries to prevent garbled display at high throughput
+- **Auto-scroll on process select** — Logs now scroll to bottom when selecting a process
+- **Virtualizer key stability** — Removed index from React keys to prevent unnecessary remounts
+
+### Changed
+- Log buffer reduced to 1000 per process for stable virtualizer rendering
+- Scroll handler throttled via requestAnimationFrame
+- SSE errors now logged instead of silently swallowed
+
 ## [1.3.2] - 2026-07-04
 
 ### Added
