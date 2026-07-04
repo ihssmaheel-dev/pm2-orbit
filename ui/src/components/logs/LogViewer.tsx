@@ -216,17 +216,24 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
 
     if (result.length > MAX) result.splice(0, result.length - MAX);
 
-    if (streamFilter !== "all") {
-      for (let i = result.length - 1; i >= 0; i--) {
-        if (result[i].stream !== streamFilter) result.splice(i, 1);
-      }
-    }
+    // Strip ANSI and filter by search query
+    const q = searchQuery.toLowerCase();
+    for (let i = result.length - 1; i >= 0; i--) {
+      const e = result[i];
+      const clean = ANSI_RE.test(e.message) ? e.message.replace(ANSI_RE, '') : e.message;
 
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      for (let i = result.length - 1; i >= 0; i--) {
-        if (!result[i].message.toLowerCase().includes(q)) result.splice(i, 1);
+      if (streamFilter !== 'all' && e.stream !== streamFilter) {
+        result.splice(i, 1);
+        continue;
       }
+
+      if (q && !clean.toLowerCase().includes(q)) {
+        result.splice(i, 1);
+        continue;
+      }
+
+      // Store cleaned message
+      result[i] = { ...e, message: clean };
     }
 
     return result;
