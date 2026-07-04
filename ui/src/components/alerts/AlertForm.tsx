@@ -31,6 +31,8 @@ export function AlertForm({ open, onClose, editRule }: AlertFormProps) {
   const [processId, setProcessId] = useState<number | ''>('');
   const [channels, setChannels] = useState<Set<string>>(new Set(['browser']));
   const [channelInfo, setChannelInfo] = useState<Record<string, ChannelInfo> | null>(null);
+  const [cooldown, setCooldown] = useState('60');
+  const [duration, setDuration] = useState('');
 
   const processList = useMemo(() => Array.from(processes.values()), [processes]);
 
@@ -51,6 +53,8 @@ export function AlertForm({ open, onClose, editRule }: AlertFormProps) {
       setScope(editRule.scope);
       setProcessId(editRule.processId || '');
       setChannels(new Set(editRule.channels));
+      setCooldown(String((editRule as any).cooldownMs ? Math.round((editRule as any).cooldownMs / 1000) : 60));
+      setDuration(String((editRule as any).duration || ''));
     } else {
       setMetric('cpu');
       setOperator('>');
@@ -83,7 +87,13 @@ export function AlertForm({ open, onClose, editRule }: AlertFormProps) {
         severity,
         channels: Array.from(channels) as AlertRule['channels'],
       };
-      if (processId) updates.processId = processId;
+      if (processId) {
+        updates.processId = processId;
+        const proc = processes.get(processId);
+        if (proc) updates.processName = proc.name;
+      }
+      if (cooldown && !isNaN(parseInt(cooldown))) (updates as any).cooldownMs = parseInt(cooldown) * 1000;
+      if (duration && !isNaN(parseInt(duration))) (updates as any).duration = parseInt(duration);
       updateRule(editRule.id, updates);
     } else {
       const rule: AlertRule = {
@@ -96,7 +106,9 @@ export function AlertForm({ open, onClose, editRule }: AlertFormProps) {
         enabled: true,
         channels: Array.from(channels) as AlertRule['channels'],
         ...(processId ? { processId } : {}),
-      };
+        ...(cooldown && !isNaN(parseInt(cooldown)) ? { cooldownMs: parseInt(cooldown) * 1000 } : {}),
+        ...(duration && !isNaN(parseInt(duration)) ? { duration: parseInt(duration) } : {}),
+      } as AlertRule;
       addRule(rule);
     }
     onClose();
@@ -179,6 +191,27 @@ export function AlertForm({ open, onClose, editRule }: AlertFormProps) {
             </div>
           )}
 
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-1 block">Cooldown (s)</label>
+              <Input
+                type="number"
+                value={cooldown}
+                onChange={(e) => setCooldown(e.target.value)}
+                placeholder="60"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-1 block">Duration (s)</label>
+              <Input
+                type="number"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                placeholder="0 = instant"
+              />
+            </div>
+          </div>
+
           <div className="grid grid-cols-3 gap-2">
             <div>
               <label className="text-xs text-muted-foreground uppercase tracking-wider mb-1 block">Severity</label>
@@ -219,6 +252,27 @@ export function AlertForm({ open, onClose, editRule }: AlertFormProps) {
                 value={threshold}
                 onChange={(e) => setThreshold(e.target.value)}
                 placeholder="e.g. 80"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-1 block">Cooldown (s)</label>
+              <Input
+                type="number"
+                value={cooldown}
+                onChange={(e) => setCooldown(e.target.value)}
+                placeholder="60"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-1 block">Duration (s)</label>
+              <Input
+                type="number"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                placeholder="0 = instant"
               />
             </div>
           </div>

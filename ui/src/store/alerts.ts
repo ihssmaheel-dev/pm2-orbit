@@ -105,5 +105,8 @@ export const useAlertsStore = create<AlertsStore>((set) => ({
       history: [event, ...state.history].slice(0, 50),
     })),
 
-  clearHistory: () => set({ history: [] }),
+  clearHistory: () => {
+    set({ history: [] });
+    api('/api/alerts/history', { method: 'DELETE', silent: true }).catch(() => {});
+  },
 }));

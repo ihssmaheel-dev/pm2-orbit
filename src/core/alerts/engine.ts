@@ -45,6 +45,8 @@ const ALERTS_DIR = path.join(
   '.pm2-orbit',
 );
 const ALERTS_FILE = path.join(ALERTS_DIR, 'alerts.json');
+const HISTORY_FILE = path.join(ALERTS_DIR, 'alerts-history.json');
+const MAX_HISTORY = 200;
 
 function loadRules(): AlertRule[] {
   try {
@@ -68,12 +70,35 @@ function saveRules(rules: AlertRule[]): void {
   }
 }
 
+function loadHistory(): AlertEvent[] {
+  try {
+    if (fs.existsSync(HISTORY_FILE)) {
+      return JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf-8'));
+    }
+  } catch {
+    // ignore
+  }
+  return [];
+}
+
+function saveHistory(history: AlertEvent[]): void {
+  try {
+    if (!fs.existsSync(ALERTS_DIR)) {
+      fs.mkdirSync(ALERTS_DIR, { recursive: true });
+    }
+    fs.writeFileSync(HISTORY_FILE, JSON.stringify(history.slice(0, MAX_HISTORY), null, 2));
+  } catch {
+    // ignore
+  }
+}
+
 export function createAlertEngine() {
   let rules = loadRules();
-  const history: AlertEvent[] = [];
+  let history = loadHistory();
   const pendingEvals = new Map<number, AlertRule[]>();
   const globalRules: AlertRule[] = [];
   const lastFiredAt = new Map<string, number>();
+  const sustainedStart = new Map<string, number>();
 
   function rebuildIndex() {
     pendingEvals.clear();
@@ -148,6 +173,16 @@ export function createAlertEngine() {
       }
 
       if (triggered) {
+        const duration = (rule as any).duration;
+        if (duration && duration > 0) {
+          const start = sustainedStart.get(rule.id) || now;
+          if (!sustainedStart.has(rule.id)) {
+            sustainedStart.set(rule.id, now);
+          }
+          if (now - start < duration * 1000) continue;
+          sustainedStart.delete(rule.id);
+        }
+
         lastFiredAt.set(rule.id, now);
         const formattedValue = typeof value === 'number' ? value.toFixed(1) : String(value);
         const formattedThreshold = typeof rule.threshold === 'number' ? rule.threshold.toFixed(1) : String(rule.threshold);
@@ -164,7 +199,8 @@ export function createAlertEngine() {
         };
         fired.push(event);
         history.unshift(event);
-        if (history.length > 50) history.pop();
+        if (history.length > MAX_HISTORY) history.pop();
+        saveHistory(history);
       }
     }
 
@@ -211,7 +247,8 @@ export function createAlertEngine() {
         };
         fired.push(event);
         history.unshift(event);
-        if (history.length > 50) history.pop();
+        if (history.length > MAX_HISTORY) history.pop();
+        saveHistory(history);
       }
     }
 
@@ -222,10 +259,13 @@ export function createAlertEngine() {
     return [...rules];
   }
 
-  const MAX_HISTORY = 50;
-
   function getHistory(): { events: AlertEvent[]; truncated: boolean } {
     return { events: [...history], truncated: history.length > MAX_HISTORY };
+  }
+
+  function clearHistory(): void {
+    history.length = 0;
+    saveHistory(history);
   }
 
   return {
@@ -237,6 +277,7 @@ export function createAlertEngine() {
     evaluateSystem,
     getRules,
     getHistory,
+    clearHistory,
     MAX_HISTORY,
   };
 }

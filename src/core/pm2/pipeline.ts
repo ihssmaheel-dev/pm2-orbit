@@ -125,6 +125,7 @@ export function createEventPipeline() {
         cpu: proc.cpu,
         memory: proc.memory,
         restarts: proc.restarts,
+        status: proc.status === 'online' ? 1 : 0,
       };
       const fired = alerts.evaluate(proc.id, proc.name, metrics);
       if (fired.length > 0) {
