@@ -10,7 +10,6 @@ export interface LogEntry {
 
 interface LogsStore {
   buffers: Map<number, LogEntry[]>;
-  maxSize: number;
   paused: boolean;
   clearedAt: number;
   addLog: (entry: LogEntry) => void;
@@ -96,7 +95,6 @@ function scheduleFlush(set: (partial: Partial<LogsStore>) => void) {
 
 export const useLogsStore = create<LogsStore>((set, get) => ({
   buffers: new Map(),
-  maxSize: DEFAULT_MAX_SIZE,
   paused: false,
   clearedAt: 0,
 

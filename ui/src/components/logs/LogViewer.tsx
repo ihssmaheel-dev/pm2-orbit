@@ -174,7 +174,10 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
         }
       } catch {}
     };
-    es.onerror = () => {};
+    es.onerror = () => {
+      // SSE auto-reconnects, but log a warning for debugging
+      console.warn('[LogViewer] SSE connection error, will auto-reconnect');
+    };
     return () => es.close();
   }, [addLog]);
 
@@ -239,12 +242,6 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
     return result;
   }, [buffers, processEntries, selectedProcessId, streamFilter, searchQuery]);
 
-  useEffect(() => {
-    if (autoScrollRef.current && parentRef.current) {
-      parentRef.current.scrollTop = parentRef.current.scrollHeight;
-    }
-  }, [filteredLogs]);
-
   const handleScroll = useCallback(() => {
     if (!parentRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = parentRef.current;
@@ -252,6 +249,11 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
     autoScrollRef.current = atBottom;
     setAutoScroll(atBottom);
   }, []);
+
+  // Throttled scroll handler
+  const throttledScroll = useCallback(() => {
+    requestAnimationFrame(handleScroll);
+  }, [handleScroll]);
 
   const scrollToBottom = useCallback(() => {
     setAutoScroll(true);
@@ -460,7 +462,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
         {/* Log content */}
         <div
           ref={parentRef}
-          onScroll={handleScroll}
+          onScroll={throttledScroll}
           className="absolute inset-0 overflow-auto font-mono text-[13px] leading-[1.55] bg-[#0a0e14] dark:bg-[#0a0e14]"
           style={{ fontFamily: "'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace" }}
         >
@@ -512,7 +514,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
 
               return (
                 <div
-                  key={`${log.ts}-${log.processId}-${vr.index}`}
+                  key={`${log.processId}-${log.ts}`}
                   className={cn(
                     "flex items-center gap-0 px-4 hover:bg-white/[0.02] dark:hover:bg-white/[0.02] transition-colors group absolute left-0 w-full overflow-hidden cursor-pointer",
                     isErr && "bg-destructive/[0.03] dark:bg-destructive/[0.04]",
