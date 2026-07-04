@@ -115,6 +115,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
   const [streamFilter, setStreamFilter] = useState<StreamFilter>("all");
   const [selectedProcessId, setSelectedProcessId] = useState<number | null>(null);
   const [isDark, setIsDark] = useState(true);
+  const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
 
   const parentRef = useRef<HTMLDivElement>(null);
   const autoScrollRef = useRef(true);
@@ -506,10 +507,11 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
                 <div
                   key={`${log.ts}-${log.processId}-${vr.index}`}
                   className={cn(
-                    "flex items-center gap-0 px-4 hover:bg-white/[0.02] dark:hover:bg-white/[0.02] transition-colors group absolute left-0 w-full overflow-hidden",
+                    "flex items-center gap-0 px-4 hover:bg-white/[0.02] dark:hover:bg-white/[0.02] transition-colors group absolute left-0 w-full overflow-hidden cursor-pointer",
                     isErr && "bg-destructive/[0.03] dark:bg-destructive/[0.04]",
                   )}
                   style={{ top: vr.start, height: vr.size }}
+                  onClick={() => setSelectedLog({ ...log, message: cleanMsg })}
                 >
                   {/* PM2-style app name prefix */}
                   <span
@@ -598,6 +600,58 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
           </div>
         )}
       </div>
+
+      {/* Log Detail Dialog */}
+      {selectedLog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setSelectedLog(null)}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div
+            className="relative w-full max-w-2xl bg-[#0a0e14] border border-border/50 shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Dialog Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
+              <div className="flex items-center gap-3">
+                <span className={cn(
+                  "text-xs font-mono font-medium",
+                  selectedLog.stream === 'stderr' ? 'text-destructive' : 'text-primary',
+                )}>
+                  {selectedLog.stream === 'stderr' ? 'STDERR' : 'STDOUT'}
+                </span>
+                <span className="text-xs text-muted-foreground">{selectedLog.processName}</span>
+                <span className="text-[10px] text-muted-foreground/50 font-mono">{formatLogTime(selectedLog.ts)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => navigator.clipboard.writeText(selectedLog.message)}
+                  className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-foreground hover:bg-muted border border-border/60 rounded transition-colors cursor-pointer"
+                >
+                  <Copy size={12} /> Copy
+                </button>
+                <button
+                  onClick={() => setSelectedLog(null)}
+                  className="h-7 w-7 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors cursor-pointer"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+
+            {/* Dialog Body */}
+            <div className="p-4 max-h-[60vh] overflow-auto">
+              <pre className="text-[13px] font-mono leading-relaxed whitespace-pre-wrap break-all text-foreground/80">
+                {selectedLog.message}
+              </pre>
+            </div>
+
+            {/* Dialog Footer */}
+            <div className="flex items-center justify-between px-4 py-2 border-t border-border/30 text-[10px] text-muted-foreground">
+              <span>{selectedLog.processName} • {selectedLog.stream}</span>
+              <span>{new Date(selectedLog.ts).toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
