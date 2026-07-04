@@ -4,6 +4,17 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.3.2] - 2026-07-04
+
+### Added
+- Click log line to view full message in dialog with copy button
+- CSP allows inline scripts for theme initialization
+- CORS accepts all origins when running with `--host` flag
+
+### Fixed
+- CSP blocking inline scripts on remote access
+- CORS rejecting requests from non-localhost origins
+
 ## [1.3.1] - 2026-07-03
 
 ### Fixed
