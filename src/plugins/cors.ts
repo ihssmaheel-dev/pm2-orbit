@@ -1,13 +1,20 @@
 import cors from '@fastify/cors';
 import type { FastifyInstance } from 'fastify';
 
-const DEFAULT_ORIGINS = ['http://127.0.0.1:9823', 'http://localhost:9823'];
-
 export async function registerCors(app: FastifyInstance) {
   const envOrigins = process.env.CORS_ORIGINS;
-  const origin = envOrigins
-    ? envOrigins.split(',').map((s) => s.trim()).filter(Boolean)
-    : DEFAULT_ORIGINS;
+  const host = process.env.PM2_ORBIT_HOST;
+
+  let origin: string | string[] | ((origin: string, cb: (err: Error | null, allow?: boolean) => void) => void);
+
+  if (envOrigins) {
+    origin = envOrigins.split(',').map((s) => s.trim()).filter(Boolean);
+  } else if (host && host !== '127.0.0.1' && host !== 'localhost') {
+    // Remote access — allow all origins
+    origin = true;
+  } else {
+    origin = ['http://127.0.0.1:9823', 'http://localhost:9823'];
+  }
 
   await app.register(cors, {
     origin,

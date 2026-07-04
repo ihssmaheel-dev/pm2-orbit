@@ -26,11 +26,14 @@ export async function createServer(_opts: ServerOpts) {
   const distPath = path.join(__dirname, '..', 'dist-ui');
   const isDev = !fs.existsSync(path.join(distPath, 'index.html'));
 
+  // Detect if accessing remotely
+  const isRemote = process.env.PM2_ORBIT_HOST && process.env.PM2_ORBIT_HOST !== '127.0.0.1';
+
   await app.register(fastifyHelmet, {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", 'data:'],
         connectSrc: isDev
@@ -39,6 +42,7 @@ export async function createServer(_opts: ServerOpts) {
         fontSrc: ["'self'", 'data:'],
       },
     },
+    crossOriginEmbedderPolicy: false,
   });
 
   await app.register(fastifyRateLimit, { max: 100, timeWindow: '1 minute' });
