@@ -314,6 +314,12 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
       setSelectedProcessId(id);
       setAutoScroll(true);
       autoScrollRef.current = true;
+      // Scroll to bottom after process selection
+      requestAnimationFrame(() => {
+        if (parentRef.current) {
+          parentRef.current.scrollTop = parentRef.current.scrollHeight;
+        }
+      });
     },
     [],
   );
