@@ -19,7 +19,7 @@ interface LogsStore {
   getLogs: (processId: number) => LogEntry[];
 }
 
-const DEFAULT_MAX_SIZE = 500;
+const DEFAULT_MAX_SIZE = 5000;
 const FLUSH_MS = 250;
 const BATCH_LIMIT = 100;
 

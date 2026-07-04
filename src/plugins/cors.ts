@@ -5,12 +5,11 @@ export async function registerCors(app: FastifyInstance) {
   const envOrigins = process.env.CORS_ORIGINS;
   const host = process.env.PM2_ORBIT_HOST;
 
-  let origin: string | string[] | ((origin: string, cb: (err: Error | null, allow?: boolean) => void) => void);
+  let origin: string | string[] | boolean;
 
   if (envOrigins) {
     origin = envOrigins.split(',').map((s) => s.trim()).filter(Boolean);
   } else if (host && host !== '127.0.0.1' && host !== 'localhost') {
-    // Remote access — allow all origins
     origin = true;
   } else {
     origin = ['http://127.0.0.1:9823', 'http://localhost:9823'];

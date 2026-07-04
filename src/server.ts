@@ -26,9 +26,6 @@ export async function createServer(_opts: ServerOpts) {
   const distPath = path.join(__dirname, '..', 'dist-ui');
   const isDev = !fs.existsSync(path.join(distPath, 'index.html'));
 
-  // Detect if accessing remotely
-  const isRemote = process.env.PM2_ORBIT_HOST && process.env.PM2_ORBIT_HOST !== '127.0.0.1';
-
   await app.register(fastifyHelmet, {
     contentSecurityPolicy: {
       directives: {
@@ -107,7 +104,8 @@ export async function createServer(_opts: ServerOpts) {
     // Check for updates
     fetch('https://registry.npmjs.org/pm2-orbit/latest')
       .then((r) => r.json())
-      .then((data) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .then((data: any) => {
         if (data.version && data.version !== pkg.version) {
           console.log('  \x1b[33m⬆\x1b[0m \x1b[33mUpdate available: v' + data.version + '\x1b[0m');
           console.log('  \x1b[90mRun: npm install -g pm2-orbit@latest\x1b[0m');

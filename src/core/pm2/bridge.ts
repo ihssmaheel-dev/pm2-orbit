@@ -103,7 +103,7 @@ function enrichSnapshots(snapshots: ProcessSnapshot[], siMap: Map<number, { cpu:
   }
 }
 
-const MAX_LOG_LINES = parseInt(process.env.PM2_ORBIT_LOG_BUFFER || '2000', 10);
+const MAX_LOG_LINES = parseInt(process.env.PM2_ORBIT_LOG_BUFFER || '5000', 10);
 
 export function createPm2Bridge() {
   let bus: Pm2Bus | null = null;
