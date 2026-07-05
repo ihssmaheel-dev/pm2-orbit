@@ -9,12 +9,25 @@ export interface LogEntry {
   message: string;
 }
 
+const seenIds = new Set<number>();
+const MAX_SEEN_IDS = 10000;
+
 let nextLogId = 0;
 
 function assignSeqId(entry: LogEntry): LogEntry {
-  if (entry.id === undefined) {
-    entry.id = nextLogId++;
+  if (entry.id !== undefined && entry.id !== null) {
+    // Server-assigned ID — deduplicate
+    if (seenIds.has(entry.id)) return null as any;
+    seenIds.add(entry.id);
+    if (seenIds.size > MAX_SEEN_IDS) {
+      // Clear oldest half
+      const arr = Array.from(seenIds);
+      for (let i = 0; i < arr.length / 2; i++) seenIds.delete(arr[i]);
+    }
+    return entry;
   }
+  // Fallback client-side ID
+  entry.id = nextLogId++;
   return entry;
 }
 
@@ -112,6 +125,7 @@ export const useLogsStore = create<LogsStore>((set, get) => ({
     if (get().paused) return;
     if (entry.ts < get().clearedAt) return;
     const seqEntry = assignSeqId(entry);
+    if (!seqEntry) return; // duplicate
     lastSeen.set(seqEntry.processId, Date.now());
     getBuf(pending, seqEntry.processId).push(seqEntry);
     pendingCount++;

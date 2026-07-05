@@ -8,6 +8,17 @@ type Pipeline = ReturnType<typeof createEventPipeline>;
 const POLL_MS = 500;
 
 export async function registerLogRoutes(app: FastifyInstance, pipeline: Pipeline) {
+  // REST endpoint for initial log history (avoids SSE duplication on reconnect)
+  app.get('/api/logs/history', async () => {
+    const bridge = pipeline.bridge;
+    const allBuffers = bridge.getAllLogBuffers();
+    const result: Record<number, any[]> = {};
+    for (const [pid, buf] of allBuffers) {
+      result[pid] = buf.entries;
+    }
+    return result;
+  });
+
   app.get('/api/logs/:id', async (req, reply) => {
     const { id } = req.params as { id: string };
     const processId = parseIdParam(id);
@@ -69,12 +80,10 @@ export async function registerLogRoutes(app: FastifyInstance, pipeline: Pipeline
 
     reply.raw.write('retry: 2000\n\n');
 
+    // Start tracking from current position — do NOT send historical buffer
     const allBuffers = bridge.getAllLogBuffers();
     for (const [pid, buf] of allBuffers) {
       lastPushedMap.set(pid, buf.totalPushed);
-      for (const e of buf.entries) {
-        try { reply.raw.write(`data: ${JSON.stringify(e)}\n\n`); } catch { /* */ }
-      }
     }
 
     const interval = setInterval(() => {
@@ -89,7 +98,9 @@ export async function registerLogRoutes(app: FastifyInstance, pipeline: Pipeline
           const lastPushed = lastPushedMap.get(pid) || 0;
           const count = buf.totalPushed - lastPushed;
           if (count > 0) {
-            const start = Math.max(0, buf.entries.length - count);
+            // Cap count to buffer size to prevent re-sending old entries
+            const effectiveCount = Math.min(count, buf.entries.length);
+            const start = Math.max(0, buf.entries.length - effectiveCount);
             const newEntries = buf.entries.slice(start);
             lastPushedMap.set(pid, buf.totalPushed);
             hasData = true;
