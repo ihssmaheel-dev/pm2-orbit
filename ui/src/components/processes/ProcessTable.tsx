@@ -43,6 +43,7 @@ export function ProcessTable() {
   const setSq = useUIStore((s) => s.setSearchQuery);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [stopConfirm, setStopConfirm] = useState(false);
   const [startConfirm, setStartConfirm] = useState(false);
   const [restartConfirm, setRestartConfirm] = useState(false);
@@ -159,28 +160,31 @@ export function ProcessTable() {
             onClick={() => setRestartConfirm(true)}
             className="hidden sm:flex cursor-pointer items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-foreground hover:text-primary border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
-            <RotateCw size={10} /> Restart All
+            <RotateCw size={10} className={busy ? "animate-spin" : ""} />
+            {progress ? `${progress.done}/${progress.total}` : 'Restart All'}
           </button>
           <button
             disabled={busy || onlineCount === 0}
             onClick={() => setStopConfirm(true)}
             className="hidden sm:flex cursor-pointer items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-foreground hover:text-destructive border border-border hover:border-destructive/40 hover:bg-destructive/5 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
-            <Square size={10} /> Stop All
+            <Square size={10} />
+            {progress ? `${progress.done}/${progress.total}` : 'Stop All'}
           </button>
           <button
             disabled={busy || stoppedCount === 0}
             onClick={() => setStartConfirm(true)}
             className="hidden sm:flex cursor-pointer items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-foreground hover:text-success border border-border hover:border-success/40 hover:bg-success/5 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
-            <Play size={10} /> Start All
+            <Play size={10} />
+            {progress ? `${progress.done}/${progress.total}` : 'Start All'}
           </button>
           <button
             disabled={busy || filteredData.length === 0}
             onClick={() => setDeleteConfirm(true)}
             className="hidden md:flex cursor-pointer items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-destructive border border-destructive/40 hover:border-destructive/60 hover:bg-destructive/10 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
-            <Trash2 size={10} /> Delete All
+            <Trash2 size={10} /> {progress ? `${progress.done}/${progress.total}` : 'Delete All'}
           </button>
           <div className="relative">
             <Search
@@ -389,11 +393,18 @@ export function ProcessTable() {
           const targets = Array.from(processes.values()).filter((p) => p.status === 'online');
           if (targets.length === 0) return;
           setBusy(true);
-          const results = await Promise.allSettled(targets.map((p) =>
-            api(`/api/processes/${p.id}/action`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'stop' }), silent: true }),
-          ));
+          setProgress({ done: 0, total: targets.length });
+          let ok = 0;
+          for (let i = 0; i < targets.length; i++) {
+            const p = targets[i];
+            try {
+              const res = await api(`/api/processes/${p.id}/action`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'stop' }), silent: true });
+              if (res.ok) ok++;
+            } catch {}
+            setProgress({ done: i + 1, total: targets.length });
+          }
           setBusy(false);
-          const ok = results.filter((r) => r.status === 'fulfilled' && r.value.ok).length;
+          setProgress(null);
           if (ok === targets.length) toast.success(`Stopped ${ok} process${ok !== 1 ? 'es' : ''}`);
           else if (ok > 0) toast.success(`Stopped ${ok} of ${targets.length}`);
           else toast.error(`Failed to stop any process`);
@@ -410,11 +421,18 @@ export function ProcessTable() {
           const targets = Array.from(processes.values()).filter((p) => p.status === 'stopped');
           if (targets.length === 0) return;
           setBusy(true);
-          const results = await Promise.allSettled(targets.map((p) =>
-            api(`/api/processes/${p.id}/action`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'start' }), silent: true }),
-          ));
+          setProgress({ done: 0, total: targets.length });
+          let ok = 0;
+          for (let i = 0; i < targets.length; i++) {
+            const p = targets[i];
+            try {
+              const res = await api(`/api/processes/${p.id}/action`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'start' }), silent: true });
+              if (res.ok) ok++;
+            } catch {}
+            setProgress({ done: i + 1, total: targets.length });
+          }
           setBusy(false);
-          const ok = results.filter((r) => r.status === 'fulfilled' && r.value.ok).length;
+          setProgress(null);
           if (ok === targets.length) toast.success(`Started ${ok} process${ok !== 1 ? 'es' : ''}`);
           else if (ok > 0) toast.success(`Started ${ok} of ${targets.length}`);
           else toast.error(`Failed to start any process`);
@@ -431,11 +449,18 @@ export function ProcessTable() {
           const targets = Array.from(processes.values()).filter((p) => p.status === 'online');
           if (targets.length === 0) return;
           setBusy(true);
-          const results = await Promise.allSettled(targets.map((p) =>
-            api(`/api/processes/${p.id}/action`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'restart' }), silent: true }),
-          ));
+          setProgress({ done: 0, total: targets.length });
+          let ok = 0;
+          for (let i = 0; i < targets.length; i++) {
+            const p = targets[i];
+            try {
+              const res = await api(`/api/processes/${p.id}/action`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'restart' }), silent: true });
+              if (res.ok) ok++;
+            } catch {}
+            setProgress({ done: i + 1, total: targets.length });
+          }
           setBusy(false);
-          const ok = results.filter((r) => r.status === 'fulfilled' && r.value.ok).length;
+          setProgress(null);
           if (ok === targets.length) toast.success(`Restarted ${ok} process${ok !== 1 ? 'es' : ''}`);
           else if (ok > 0) toast.success(`Restarted ${ok} of ${targets.length}`);
           else toast.error(`Failed to restart any process`);
@@ -462,7 +487,7 @@ export function ProcessTable() {
           else toast.error(`Failed to delete any process`);
         }}
         title="Delete All Processes"
-        message={`This will permanently delete all ${filteredData.length} process${filteredData.length !== 1 ? 'es' : ''} from PM2. This cannot be undone. Are you sure?`}
+        message={`This will permanently delete all ${processes.size} process${processes.size !== 1 ? 'es' : ''} from PM2. This cannot be undone. Are you sure?`}
         confirmLabel="Delete All"
         variant="destructive"
       />

@@ -310,6 +310,16 @@ export function createPm2Bridge() {
               lastUpdateMap.set(pid, now);
             }
 
+            if (event.event === 'exit') {
+              const cached = processCache.get(pid);
+              if (cached) {
+                events.push({ type: 'remove', process: { ...cached } });
+                processCache.delete(pid);
+                lastUpdateMap.delete(pid);
+                logBuffers.delete(pid);
+              }
+            }
+
             if (event.event === 'online' || event.event === 'start') {
               await refreshSingleProcess(pid);
               const snap = processCache.get(pid);
