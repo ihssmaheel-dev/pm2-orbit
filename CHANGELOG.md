@@ -4,7 +4,7 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.4.2] - 2026-07-05
+## [1.4.3] - 2026-07-05
 
 ### Fixed
 - **Logs appearing twice** — Removed redundant PM2 bus wildcard listener that caused every log entry to be processed twice
