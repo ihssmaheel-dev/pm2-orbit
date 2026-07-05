@@ -4,6 +4,17 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.4.2] - 2026-07-05
+
+### Fixed
+- **Logs appearing twice** — Removed redundant PM2 bus wildcard listener that caused every log entry to be processed twice
+- **SSE diff stall after buffer trim** — Capped effective count to prevent re-sending entire buffer when `totalPushed` exceeds buffer length
+- **Auto-scroll on process select** — Logs now reliably scroll to bottom when clicking a process (100ms delay for DOM render)
+
+### Changed
+- Removed unused REST `/api/logs/history` endpoint (SSE handles all streaming)
+- Removed `seenIds` dedup set (no longer needed without double-processing)
+
 ## [1.4.1] - 2026-07-04
 
 ### Fixed

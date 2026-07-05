@@ -1,6 +1,6 @@
 {
   "name": "pm2-orbit",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "files": [
     "dist/",
     "dist-ui/",
