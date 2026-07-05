@@ -4,7 +4,7 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.4.7] - 2026-07-05
+## [1.5.0] - 2026-07-05
 
 ### Fixed
 - **Delete All shows wrong count** — Confirm dialog now shows actual process count, not filtered count
