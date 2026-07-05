@@ -4,6 +4,14 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.4.6] - 2026-07-05
+
+### Fixed
+- **Delete All shows wrong count** — Confirm dialog now shows actual process count, not filtered count
+- **Delete All 10s UI delay** — Bridge now emits 'remove' event on process exit, UI updates instantly
+- **Start action calls restart()** — Fixed to use pm2.start() for stopped processes
+- **No progress indicator on bulk ops** — Buttons now show "done/total" counter with spinning icon during operations
+
 ## [1.4.5] - 2026-07-05
 
 ### Fixed
