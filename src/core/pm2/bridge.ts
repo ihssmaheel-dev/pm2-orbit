@@ -348,11 +348,6 @@ export function createPm2Bridge() {
           bus.on('log:out', (data: any) => { handleLogEvent('stdout', data); });
           bus.on('log:err', (data: any) => { handleLogEvent('stderr', data); });
 
-          bus.on('*', (eventName: string, data: any) => {
-            if (eventName === 'log:out') handleLogEvent('stdout', data);
-            else if (eventName === 'log:err') handleLogEvent('stderr', data);
-          });
-
           refreshProcessList().then(() => resolve()).catch(reject);
         });
       });

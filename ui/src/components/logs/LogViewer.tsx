@@ -151,32 +151,6 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
   }, [searchParams]);
 
   useEffect(() => {
-    let disposed = false;
-
-    // Fetch initial history via REST
-    fetch("/api/logs/history")
-      .then((r) => r.json())
-      .then((data) => {
-        if (disposed) return;
-        if (data && typeof data === "object") {
-          for (const [pidStr, entries] of Object.entries(data)) {
-            const pid = Number(pidStr);
-            for (const e of entries as any[]) {
-              addLog({
-                id: e.id,
-                ts: e.ts,
-                processId: pid,
-                processName: e.processName || `PID ${pid}`,
-                stream: e.stream || "stdout",
-                message: e.message ?? "",
-              });
-            }
-          }
-        }
-      })
-      .catch(() => {});
-
-    // Then connect SSE for new entries only
     const es = new EventSource("/api/logs/stream");
     es.onmessage = (event) => {
       try {
@@ -204,10 +178,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
     es.onerror = () => {
       console.warn('[LogViewer] SSE connection error, will auto-reconnect');
     };
-    return () => {
-      disposed = true;
-      es.close();
-    };
+    return () => es.close();
   }, [addLog]);
 
   const processEntries = useMemo(() => {
