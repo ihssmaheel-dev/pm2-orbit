@@ -115,6 +115,10 @@ export async function registerProcessRoutes(app: FastifyInstance, pipeline: Pipe
         });
       });
 
+      if (action === 'delete') {
+        pipeline.bridge.emitRemove(processId);
+      }
+
       return { success: true };
     } catch (err) {
       return reply.code(500).send({ error: (err as Error).message });
