@@ -4,7 +4,10 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.5.1] - 2026-07-05
+## [1.5.2] - 2026-07-05
+
+### Fixed
+- **Processes vanish on restart** — Removed exit-based cache eviction from bus handler (exit fires on restart, not just delete). Delete action now emits remove event directly after PM2 confirms deletion.
 
 ### Fixed
 - **Delete All shows wrong count** — Confirm dialog now shows actual process count, not filtered count
