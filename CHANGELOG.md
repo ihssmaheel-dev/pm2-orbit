@@ -4,7 +4,17 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.6.0] - 2026-07-06
+## [1.6.1] - 2026-07-06
+
+### Fixed
+- **Tag assignment not reflecting in UI** — Tags now update instantly in the process store after assignment, no 5s wait for full sync
+- **Tag filter not working** — Fixed process snapshot merging that was losing tags on delta updates
+- **Tag assignment menu clipped** — Removed overflow-hidden from name cell so dropdown renders properly
+- **TagManager UI** — Redesigned with inline color picker, cleaner layout, toast feedback on CRUD
+
+### Changed
+- Tag assignment menu stays open after toggling a tag (allows assigning multiple tags at once)
+- Up to 3 tag color dots shown on process name (was 2)
 
 ### Added
 - **Process tagging** — Create color-coded tags, assign to processes, filter by tag
