@@ -4,7 +4,15 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.5.4] - 2026-07-06
+## [1.6.0] - 2026-07-06
+
+### Added
+- **Process tagging** — Create color-coded tags, assign to processes, filter by tag
+- **Tag management UI** — Create/edit/delete tags with 8-color palette picker
+- **Tag filter chips** — Click tag chips in the process table toolbar to filter
+- **Tag badges on process rows** — Color dots next to process names, hover tag icon to assign
+- **Tag-aware bulk actions** — Restart/Stop/Start/Delete All target only filtered processes when tag filter is active
+- **Tag persistence** — Tags and assignments stored in `~/.pm2-orbit/tags.json`, survives restarts
 
 ### Fixed
 - **Helmet headers blocking remote access** — Disabled CSP, COEP, COOP, CORP, and Origin-Agent-Cluster headers that caused console errors and blocked inline scripts when accessing from non-localhost origins
