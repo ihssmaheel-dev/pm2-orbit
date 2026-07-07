@@ -4,7 +4,10 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.5.3] - 2026-07-05
+## [1.5.4] - 2026-07-06
+
+### Fixed
+- **Helmet headers blocking remote access** — Disabled CSP, COEP, COOP, CORP, and Origin-Agent-Cluster headers that caused console errors and blocked inline scripts when accessing from non-localhost origins
 
 ### Fixed
 - **Logs repeating on reconnect** — SSE no longer dumps full buffer on connect. Initial history loaded via REST endpoint, SSE only streams new entries.
