@@ -27,19 +27,11 @@ export async function createServer(_opts: ServerOpts) {
   const isDev = !fs.existsSync(path.join(distPath, 'index.html'));
 
   await app.register(fastifyHelmet, {
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", 'data:'],
-        connectSrc: isDev
-          ? ["'self'", 'ws:', 'wss:', 'http://127.0.0.1:5151', 'ws://127.0.0.1:5151']
-          : ["'self'", 'ws:', 'wss:'],
-        fontSrc: ["'self'", 'data:'],
-      },
-    },
+    contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: false,
+    crossOriginResourcePolicy: false,
+    originAgentCluster: false,
   });
 
   await app.register(fastifyRateLimit, { max: 100, timeWindow: '1 minute' });
