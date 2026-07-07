@@ -4,7 +4,10 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.6.3] - 2026-07-06
+## [1.6.4] - 2026-07-06
+
+### Fixed
+- **Infinite tag API calls** — Tag definitions and assignments are fetched once on startup, then stored assignments are re-applied to process snapshots locally after each full sync (zero API calls)
 
 ### Fixed
 - **Tags persist on refresh** — Client now fetches tag assignments from server and merges them into process snapshots locally, eliminating the server-side enrichment race condition
