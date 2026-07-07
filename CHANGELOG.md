@@ -4,7 +4,11 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.6.2] - 2026-07-06
+## [1.6.3] - 2026-07-06
+
+### Fixed
+- **Tags persist on refresh** — Client now fetches tag assignments from server and merges them into process snapshots locally, eliminating the server-side enrichment race condition
+- **fetchAll** fetches both tag definitions and assignments, then applies tags to every process in the store
 
 ### Fixed
 - **Tags disappear on refresh** — fetchTags now runs on WebSocket full sync, ensuring tag definitions are always loaded
