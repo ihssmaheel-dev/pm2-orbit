@@ -83,18 +83,18 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
       } ${pid % 2 === 0 ? "bg-background/20" : ""}`}
     >
       {/* Name */}
-      <div role="cell" className="flex-1 min-w-0 px-3 overflow-hidden">
+      <div role="cell" className="flex-1 min-w-0 px-3 relative">
         <div className="flex items-center gap-1.5 min-w-0">
           <span className="text-[13px] font-medium text-foreground truncate group-hover:text-primary transition-colors duration-75">
             {p.name}
           </span>
           {p.tags && p.tags.length > 0 && (
             <div className="flex gap-0.5 shrink-0">
-              {p.tags.slice(0, 2).map((t) => (
+              {p.tags.slice(0, 3).map((t) => (
                 <span key={t.id} className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: t.color }} />
               ))}
-              {p.tags.length > 2 && (
-                <span className="text-[9px] text-muted-foreground/50">+{p.tags.length - 2}</span>
+              {p.tags.length > 3 && (
+                <span className="text-[9px] text-muted-foreground/50">+{p.tags.length - 3}</span>
               )}
             </div>
           )}
@@ -332,13 +332,13 @@ function TagAssignMenu({
       ? currentIds.filter((id) => id !== tagId)
       : [...currentIds, tagId];
     await assignTags(processName, next);
-    onClose();
+    // Don't close — allow assigning multiple tags
   };
 
   return (
     <div
       ref={ref}
-      className="absolute z-50 mt-1 left-3 bg-popover border border-border/60 shadow-lg py-1 w-44"
+      className="absolute z-50 top-full left-0 mt-1 bg-popover border border-border/60 shadow-xl py-1 w-48"
       onClick={(e) => e.stopPropagation()}
     >
       {tags.length === 0 && (

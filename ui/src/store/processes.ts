@@ -20,6 +20,8 @@ interface ProcessStore {
   selectedId: number | null;
   applyDelta: (events: ProcessEvent[]) => void;
   setAll: (snapshots: ProcessSnapshot[]) => void;
+  updateProcessTags: (processName: string, tags: ProcessSnapshot['tags']) => void;
+  removeTagFromAll: (tagId: string) => void;
   select: (id: number | null) => void;
   getProcess: (id: number) => ProcessSnapshot | undefined;
 }
@@ -27,6 +29,49 @@ interface ProcessStore {
 export const useProcessStore = create<ProcessStore>((set, get) => ({
   processes: new Map(),
   selectedId: null,
+
+  updateProcessTags: (processName, tags) => {
+    set((state) => {
+      const next = new Map(state.processes);
+      let changed = false;
+      for (const [id, proc] of next) {
+        if (proc.name === processName) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const updated: any = { ...proc };
+          if (tags && tags.length > 0) {
+            updated.tags = tags;
+          } else {
+            delete updated.tags;
+          }
+          next.set(id, updated);
+          changed = true;
+        }
+      }
+      return changed ? { processes: next } : {};
+    });
+  },
+
+  removeTagFromAll: (tagId) => {
+    set((state) => {
+      const next = new Map(state.processes);
+      let changed = false;
+      for (const [id, proc] of next) {
+        if (proc.tags && proc.tags.some((t) => t.id === tagId)) {
+          const remaining = proc.tags.filter((t) => t.id !== tagId);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const updated: any = { ...proc };
+          if (remaining.length > 0) {
+            updated.tags = remaining;
+          } else {
+            delete updated.tags;
+          }
+          next.set(id, updated);
+          changed = true;
+        }
+      }
+      return changed ? { processes: next } : {};
+    });
+  },
 
   applyDelta: (events) => {
     set((state) => {
