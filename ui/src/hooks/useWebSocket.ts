@@ -5,6 +5,7 @@ import { useProcessStore } from '@/store/processes';
 import { useLogsStore } from '@/store/logs';
 import { useSystemStore } from '@/store/system';
 import { useAlertsStore } from '@/store/alerts';
+import { useTagsStore } from '@/store/tags';
 import type { Tick } from '@/types/api';
 
 type WSStatus = 'connecting' | 'connected' | 'disconnected';
@@ -21,6 +22,12 @@ export function useWebSocket() {
   const clearLogsRef = useRef(useLogsStore.getState().clearLogs);
   clearLogsRef.current = useLogsStore((s) => s.clearLogs);
   const addAlertEvent = useAlertsStore((s) => s.addEvent);
+  const fetchTags = useTagsStore((s) => s.fetchTags);
+
+  useEffect(() => {
+    // Fetch tags on startup
+    fetchTags();
+  }, [fetchTags]);
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -42,6 +49,8 @@ export function useWebSocket() {
         if (tick.fullSeq !== lastFullSeqRef.current) {
           lastFullSeqRef.current = tick.fullSeq;
           setAll(tick.full);
+          // Re-fetch tags in case they changed
+          fetchTags();
         }
       }
 
@@ -74,7 +83,7 @@ export function useWebSocket() {
       unsubStatus();
       client.disconnect();
     };
-  }, [applyDelta, setAll, updateSystem]);
+  }, [applyDelta, setAll, updateSystem, fetchTags]);
 
   return { status, lastTick: lastTickRef.current };
 }

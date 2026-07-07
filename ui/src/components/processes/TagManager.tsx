@@ -48,22 +48,20 @@ export function TagManager({ open, onClose }: TagManagerProps) {
     toast.success(`Tag "${name}" deleted`);
   };
 
-  const ColorPicker = ({ value, onChange, onClose }: { value: string; onChange: (c: string) => void; onClose: () => void }) => (
-    <div className="absolute z-50 mt-1 bg-popover border border-border/60 shadow-xl p-2 w-[164px]" onClick={(e) => e.stopPropagation()}>
-      <div className="grid grid-cols-6 gap-1.5">
-        {TAG_COLORS.map((c) => (
-          <button
-            key={c}
-            onClick={() => { onChange(c); onClose(); }}
-            className="w-6 h-6 rounded-md border-2 cursor-pointer transition-all hover:scale-110"
-            style={{
-              backgroundColor: c,
-              borderColor: value === c ? '#fff' : 'transparent',
-              boxShadow: value === c ? `0 0 0 1px ${c}` : 'none',
-            }}
-          />
-        ))}
-      </div>
+  const ColorPicker = ({ value, onChange }: { value: string; onChange: (c: string) => void }) => (
+    <div className="flex flex-wrap gap-1.5 p-2 bg-subtle/20 border border-border/30 rounded">
+      {TAG_COLORS.map((c) => (
+        <button
+          key={c}
+          onClick={() => onChange(c)}
+          className="w-7 h-7 rounded-md border-2 cursor-pointer transition-all hover:scale-110"
+          style={{
+            backgroundColor: c,
+            borderColor: value === c ? '#fff' : 'transparent',
+            boxShadow: value === c ? `0 0 0 2px ${c}` : 'none',
+          }}
+        />
+      ))}
     </div>
   );
 
@@ -87,18 +85,10 @@ export function TagManager({ open, onClose }: TagManagerProps) {
                 onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
                 className="flex-1 h-8 text-xs"
               />
-              <div className="relative">
-                <button
-                  onClick={() => setColorPickerOpen(colorPickerOpen === 'new' ? null : 'new')}
-                  className="w-8 h-8 rounded border border-border/40 cursor-pointer flex items-center justify-center hover:border-border/80 transition-colors"
-                  style={{ backgroundColor: `${newColor}20` }}
-                >
-                  <div className="w-4 h-4 rounded" style={{ backgroundColor: newColor }} />
-                </button>
-                {colorPickerOpen === 'new' && (
-                  <ColorPicker value={newColor} onChange={setNewColor} onClose={() => setColorPickerOpen(null)} />
-                )}
-              </div>
+              <div className="w-8 h-8 rounded border border-border/40 cursor-pointer flex items-center justify-center hover:border-border/80 transition-colors shrink-0"
+                style={{ backgroundColor: newColor }}
+                onClick={() => setColorPickerOpen(colorPickerOpen === 'new' ? null : 'new')}
+              />
               <Button
                 onClick={handleCreate}
                 disabled={!newName.trim()}
@@ -107,6 +97,9 @@ export function TagManager({ open, onClose }: TagManagerProps) {
                 <Plus size={12} /> Add
               </Button>
             </div>
+            {colorPickerOpen === 'new' && (
+              <ColorPicker value={newColor} onChange={(c) => { setNewColor(c); setColorPickerOpen(null); }} />
+            )}
           </div>
 
           {/* Existing tags */}
@@ -122,41 +115,41 @@ export function TagManager({ open, onClose }: TagManagerProps) {
             {tags.map((tag) => (
               <div
                 key={tag.id}
-                className="flex items-center gap-2 py-2 px-3 border border-border/20 hover:border-border/50 transition-colors group"
+                className={`border border-border/20 hover:border-border/50 transition-colors group ${
+                  editingId === tag.id ? 'p-2 space-y-2' : 'flex items-center gap-2 py-2 px-3'
+                }`}
               >
                 {editingId === tag.id ? (
                   <>
-                    <div className="relative">
-                      <button
-                        onClick={() => setColorPickerOpen(colorPickerOpen === tag.id ? null : tag.id)}
+                    <div className="flex items-center gap-2">
+                      <div
                         className="w-7 h-7 rounded border border-border/40 cursor-pointer flex items-center justify-center hover:border-border/80 transition-colors shrink-0"
-                        style={{ backgroundColor: `${editColor}20` }}
+                        style={{ backgroundColor: editColor }}
+                        onClick={() => setColorPickerOpen(colorPickerOpen === tag.id ? null : tag.id)}
+                      />
+                      <Input
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="h-7 text-xs flex-1"
+                        onKeyDown={(e) => e.key === 'Enter' && handleUpdate(tag.id)}
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => handleUpdate(tag.id)}
+                        className="h-6 w-6 flex items-center justify-center text-success hover:bg-success/10 rounded cursor-pointer"
                       >
-                        <div className="w-3.5 h-3.5 rounded" style={{ backgroundColor: editColor }} />
+                        <Check size={12} />
                       </button>
-                      {colorPickerOpen === tag.id && (
-                        <ColorPicker value={editColor} onChange={setEditColor} onClose={() => setColorPickerOpen(null)} />
-                      )}
+                      <button
+                        onClick={() => { setEditingId(null); setColorPickerOpen(null); }}
+                        className="h-6 w-6 flex items-center justify-center text-muted-foreground hover:bg-subtle/40 rounded cursor-pointer"
+                      >
+                        <X size={12} />
+                      </button>
                     </div>
-                    <Input
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      className="h-7 text-xs flex-1"
-                      onKeyDown={(e) => e.key === 'Enter' && handleUpdate(tag.id)}
-                      autoFocus
-                    />
-                    <button
-                      onClick={() => handleUpdate(tag.id)}
-                      className="h-6 w-6 flex items-center justify-center text-success hover:bg-success/10 rounded cursor-pointer"
-                    >
-                      <Check size={12} />
-                    </button>
-                    <button
-                      onClick={() => { setEditingId(null); setColorPickerOpen(null); }}
-                      className="h-6 w-6 flex items-center justify-center text-muted-foreground hover:bg-subtle/40 rounded cursor-pointer"
-                    >
-                      <X size={12} />
-                    </button>
+                    {colorPickerOpen === tag.id && (
+                      <ColorPicker value={editColor} onChange={(c) => { setEditColor(c); setColorPickerOpen(null); }} />
+                    )}
                   </>
                 ) : (
                   <>
