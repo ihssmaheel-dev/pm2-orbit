@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, useCallback, useEffect } from "react";
+import { useMemo, useRef, useState, useCallback } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -47,7 +47,6 @@ export function ProcessTable() {
   const tagFilter = useUIStore((s) => s.tagFilter);
   const toggleTagFilter = useUIStore((s) => s.toggleTagFilter);
   const tags = useTagsStore((s) => s.tags);
-  const fetchTags = useTagsStore((s) => s.fetchTags);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
@@ -57,8 +56,6 @@ export function ProcessTable() {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [tagManagerOpen, setTagManagerOpen] = useState(false);
   const parentRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => { fetchTags(); }, [fetchTags]);
 
   const data = useMemo(() => {
     const arr: ProcessSnapshot[] = new Array(processes.size);
@@ -272,7 +269,7 @@ export function ProcessTable() {
         </div>
       )}
 
-      <TagManager open={tagManagerOpen} onClose={() => { setTagManagerOpen(false); fetchTags(); }} />
+      <TagManager open={tagManagerOpen} onClose={() => setTagManagerOpen(false)} />
 
       {/* Table */}
       <div
