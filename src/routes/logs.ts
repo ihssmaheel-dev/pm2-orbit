@@ -8,6 +8,16 @@ type Pipeline = ReturnType<typeof createEventPipeline>;
 const POLL_MS = 500;
 
 export async function registerLogRoutes(app: FastifyInstance, pipeline: Pipeline) {
+  app.get('/api/logs/history', async () => {
+    const bridge = pipeline.bridge;
+    const allBuffers = bridge.getAllLogBuffers();
+    const result: Record<string, unknown[]> = {};
+    for (const [pid, buf] of allBuffers) {
+      result[String(pid)] = buf.entries;
+    }
+    return result;
+  });
+
   app.get('/api/logs/:id', async (req, reply) => {
     const { id } = req.params as { id: string };
     const processId = parseIdParam(id);
@@ -69,12 +79,10 @@ export async function registerLogRoutes(app: FastifyInstance, pipeline: Pipeline
 
     reply.raw.write('retry: 2000\n\n');
 
+    // Start tracking from current position — initial history loaded via REST
     const allBuffers = bridge.getAllLogBuffers();
     for (const [pid, buf] of allBuffers) {
       lastPushedMap.set(pid, buf.totalPushed);
-      for (const e of buf.entries) {
-        try { reply.raw.write(`data: ${JSON.stringify(e)}\n\n`); } catch { /* */ }
-      }
     }
 
     const interval = setInterval(() => {
