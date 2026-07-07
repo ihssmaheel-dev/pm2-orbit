@@ -7,6 +7,7 @@ import type { Tick, ProcessSnapshot } from '../../types';
 import { createStore } from '../persistence/store';
 import { createAlertEngine } from '../alerts/engine';
 import { sendWebhook, sendSlack, sendDiscord, sendEmailNotification } from '../notifications/channels';
+import { getTagsForProcess } from '../persistence/tags';
 
 const FULL_SYNC_INTERVAL = 5000;
 
@@ -154,6 +155,12 @@ export function createEventPipeline() {
     }
   }
 
+  function enrichTags(snapshots: ProcessSnapshot[]): void {
+    for (const snap of snapshots) {
+      snap.tags = getTagsForProcess(snap.name);
+    }
+  }
+
   function buildTick(events: ProcessEvent[], system: ReturnType<typeof readSystem>): Tick | null {
     const now = Date.now();
     const needsFullSync = now - lastFullSync > FULL_SYNC_INTERVAL;
@@ -162,6 +169,7 @@ export function createEventPipeline() {
       lastFullSync = now;
       fullSeq++;
       bridge.list().then((snapshots) => {
+        enrichTags(snapshots);
         populateHistory(events, snapshots);
         const tick: Tick = {
           ts: now,

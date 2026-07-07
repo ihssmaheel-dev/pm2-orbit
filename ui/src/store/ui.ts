@@ -7,8 +7,9 @@ interface UIStore {
   setDetailOpen: (open: boolean) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  statusFilter: string | null;
-  setStatusFilter: (filter: string | null) => void;
+  tagFilter: string[];
+  setTagFilter: (filter: string[]) => void;
+  toggleTagFilter: (tagId: string) => void;
   wsStatus: WSStatus;
   setWsStatus: (status: WSStatus) => void;
 }
@@ -26,8 +27,13 @@ export const useUIStore = create<UIStore>((set) => ({
     localStorage.setItem('pm2-orbit-search', query);
     set({ searchQuery: query });
   },
-  statusFilter: null,
-  setStatusFilter: (filter) => set({ statusFilter: filter }),
+  tagFilter: [],
+  setTagFilter: (filter) => set({ tagFilter: filter }),
+  toggleTagFilter: (tagId) => set((s) => ({
+    tagFilter: s.tagFilter.includes(tagId)
+      ? s.tagFilter.filter((id) => id !== tagId)
+      : [...s.tagFilter, tagId],
+  })),
   wsStatus: 'connecting',
   setWsStatus: (status) => set({ wsStatus: status }),
 }));

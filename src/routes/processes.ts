@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { createEventPipeline } from '../core';
 import { parseIdParam } from '../utils/validate';
+import { getTagsForProcess } from '../core/persistence/tags';
 
 type Pipeline = ReturnType<typeof createEventPipeline>;
 
@@ -12,7 +13,11 @@ const VALID_ACTIONS = ['restart', 'stop', 'start', 'reload', 'delete', 'scale', 
 
 export async function registerProcessRoutes(app: FastifyInstance, pipeline: Pipeline) {
   app.get('/api/processes', async () => {
-    return pipeline.bridge.list();
+    const snapshots = await pipeline.bridge.list();
+    for (const snap of snapshots) {
+      snap.tags = getTagsForProcess(snap.name);
+    }
+    return snapshots;
   });
 
   app.get('/api/processes/:id/env', async (req) => {

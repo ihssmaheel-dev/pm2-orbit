@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, useCallback } from "react";
+import { useMemo, useRef, useState, useCallback, useEffect } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -7,12 +7,15 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Search, X, Square, Play, RotateCw, Trash2, Download } from "lucide-react";
+import { Search, X, Square, Play, RotateCw, Trash2, Download, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { useProcessStore } from "@/store/processes";
 import { useUIStore } from "@/store/ui";
+import { useTagsStore } from "@/store/tags";
 import { ProcessRow } from "./ProcessRow";
+import { TagBadge } from "./TagBadge";
+import { TagManager } from "./TagManager";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import type { ProcessSnapshot } from "@/types/pm2";
 
@@ -41,6 +44,10 @@ export function ProcessTable() {
   const processes = useProcessStore((s) => s.processes);
   const sq = useUIStore((s) => s.searchQuery);
   const setSq = useUIStore((s) => s.setSearchQuery);
+  const tagFilter = useUIStore((s) => s.tagFilter);
+  const toggleTagFilter = useUIStore((s) => s.toggleTagFilter);
+  const tags = useTagsStore((s) => s.tags);
+  const fetchTags = useTagsStore((s) => s.fetchTags);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
@@ -48,7 +55,10 @@ export function ProcessTable() {
   const [startConfirm, setStartConfirm] = useState(false);
   const [restartConfirm, setRestartConfirm] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [tagManagerOpen, setTagManagerOpen] = useState(false);
   const parentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { fetchTags(); }, [fetchTags]);
 
   const data = useMemo(() => {
     const arr: ProcessSnapshot[] = new Array(processes.size);
@@ -60,15 +70,28 @@ export function ProcessTable() {
   const stoppedCount = useMemo(() => data.filter((p) => p.status === 'stopped').length, [data]);
 
   const filteredData = useMemo(() => {
-    if (!sq) return data;
-    const q = sq.toLowerCase();
-    return data.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        String(p.pid).includes(q) ||
-        p.status.toLowerCase().includes(q),
-    );
-  }, [data, sq]);
+    let result = data;
+
+    // Tag filter
+    if (tagFilter.length > 0) {
+      result = result.filter((p) =>
+        p.tags && p.tags.some((t) => tagFilter.includes(t.id)),
+      );
+    }
+
+    // Search filter
+    if (sq) {
+      const q = sq.toLowerCase();
+      result = result.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          String(p.pid).includes(q) ||
+          p.status.toLowerCase().includes(q),
+      );
+    }
+
+    return result;
+  }, [data, sq, tagFilter]);
 
   const table = useReactTable({
     data: filteredData,
@@ -217,6 +240,39 @@ export function ProcessTable() {
           </button>
         </div>
       </div>
+
+      {/* Tag filter bar */}
+      {tags.length > 0 && (
+        <div className="flex items-center gap-1.5 px-5 py-1.5 shrink-0 border-b border-border/30 overflow-x-auto">
+          <Tag size={10} className="text-muted-foreground/50 shrink-0" />
+          {tags.map((tag) => (
+            <TagBadge
+              key={tag.id}
+              tag={tag}
+              active={tagFilter.includes(tag.id)}
+              onClick={() => toggleTagFilter(tag.id)}
+            />
+          ))}
+          <button
+            onClick={() => setTagManagerOpen(true)}
+            className="cursor-pointer text-[10px] text-muted-foreground/50 hover:text-foreground transition-colors ml-1"
+          >
+            Manage
+          </button>
+        </div>
+      )}
+      {tags.length === 0 && (
+        <div className="flex items-center px-5 py-1 shrink-0 border-b border-border/30">
+          <button
+            onClick={() => setTagManagerOpen(true)}
+            className="cursor-pointer flex items-center gap-1 text-[10px] text-muted-foreground/40 hover:text-foreground transition-colors"
+          >
+            <Tag size={9} /> Add tags
+          </button>
+        </div>
+      )}
+
+      <TagManager open={tagManagerOpen} onClose={() => { setTagManagerOpen(false); fetchTags(); }} />
 
       {/* Table */}
       <div
@@ -390,7 +446,9 @@ export function ProcessTable() {
         open={stopConfirm}
         onClose={() => setStopConfirm(false)}
         onConfirm={async () => {
-          const targets = Array.from(processes.values()).filter((p) => p.status === 'online');
+          const targets = tagFilter.length > 0
+            ? filteredData.filter((p) => p.status === 'online')
+            : Array.from(processes.values()).filter((p) => p.status === 'online');
           if (targets.length === 0) return;
           setBusy(true);
           setProgress({ done: 0, total: targets.length });
@@ -418,7 +476,9 @@ export function ProcessTable() {
         open={startConfirm}
         onClose={() => setStartConfirm(false)}
         onConfirm={async () => {
-          const targets = Array.from(processes.values()).filter((p) => p.status === 'stopped');
+          const targets = tagFilter.length > 0
+            ? filteredData.filter((p) => p.status === 'stopped')
+            : Array.from(processes.values()).filter((p) => p.status === 'stopped');
           if (targets.length === 0) return;
           setBusy(true);
           setProgress({ done: 0, total: targets.length });
@@ -446,7 +506,9 @@ export function ProcessTable() {
         open={restartConfirm}
         onClose={() => setRestartConfirm(false)}
         onConfirm={async () => {
-          const targets = Array.from(processes.values()).filter((p) => p.status === 'online');
+          const targets = tagFilter.length > 0
+            ? filteredData.filter((p) => p.status === 'online')
+            : Array.from(processes.values()).filter((p) => p.status === 'online');
           if (targets.length === 0) return;
           setBusy(true);
           setProgress({ done: 0, total: targets.length });
@@ -474,7 +536,9 @@ export function ProcessTable() {
         open={deleteConfirm}
         onClose={() => setDeleteConfirm(false)}
         onConfirm={async () => {
-          const targets = Array.from(processes.values());
+          const targets = tagFilter.length > 0
+            ? filteredData
+            : Array.from(processes.values());
           if (targets.length === 0) return;
           setBusy(true);
           const results = await Promise.allSettled(targets.map((p) =>

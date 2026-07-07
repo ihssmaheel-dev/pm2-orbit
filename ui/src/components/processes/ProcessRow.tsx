@@ -1,9 +1,10 @@
-import { memo, useState } from "react";
-import { RotateCw, Square, Play, Trash2, Clock } from "lucide-react";
+import { memo, useState, useRef, useEffect } from "react";
+import { RotateCw, Square, Play, Trash2, Clock, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { Sparkline } from "./Sparkline";
 import { formatBytes, formatDuration, formatPercent } from "@/lib/format";
 import { useProcessStore } from "@/store/processes";
+import { useTagsStore } from "@/store/tags";
 import { useLiveUptime } from "@/hooks/useLiveUptime";
 import type { ProcessSnapshot, ProcessStatus } from "@/types/pm2";
 
@@ -35,6 +36,7 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
   const select = useProcessStore((s) => s.select);
   const isSel = sel === pid;
   const [ld, setLd] = useState<string | null>(null);
+  const [tagMenuPid, setTagMenuPid] = useState<number | null>(null);
 
   if (!proc) return null;
 
@@ -82,9 +84,38 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
     >
       {/* Name */}
       <div role="cell" className="flex-1 min-w-0 px-3 overflow-hidden">
-        <span className="text-[13px] font-medium text-foreground truncate block group-hover:text-primary transition-colors duration-75">
-          {p.name}
-        </span>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="text-[13px] font-medium text-foreground truncate group-hover:text-primary transition-colors duration-75">
+            {p.name}
+          </span>
+          {p.tags && p.tags.length > 0 && (
+            <div className="flex gap-0.5 shrink-0">
+              {p.tags.slice(0, 2).map((t) => (
+                <span key={t.id} className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: t.color }} />
+              ))}
+              {p.tags.length > 2 && (
+                <span className="text-[9px] text-muted-foreground/50">+{p.tags.length - 2}</span>
+              )}
+            </div>
+          )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setTagMenuPid(tagMenuPid === pid ? null : pid);
+            }}
+            className="opacity-0 group-hover:opacity-60 hover:!opacity-100 cursor-pointer shrink-0 transition-opacity"
+            aria-label="Assign tags"
+          >
+            <Tag size={10} />
+          </button>
+        </div>
+        {tagMenuPid === pid && (
+          <TagAssignMenu
+            processName={p.name}
+            currentTags={p.tags || []}
+            onClose={() => setTagMenuPid(null)}
+          />
+        )}
       </div>
 
       {/* Mode */}
@@ -270,5 +301,67 @@ function ActBtn({
     >
       {icon}
     </button>
+  );
+}
+
+function TagAssignMenu({
+  processName,
+  currentTags,
+  onClose,
+}: {
+  processName: string;
+  currentTags: { id: string }[];
+  onClose: () => void;
+}) {
+  const tags = useTagsStore((s) => s.tags);
+  const assignTags = useTagsStore((s) => s.assignTags);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [onClose]);
+
+  const currentIds = currentTags.map((t) => t.id);
+
+  const toggle = async (tagId: string) => {
+    const next = currentIds.includes(tagId)
+      ? currentIds.filter((id) => id !== tagId)
+      : [...currentIds, tagId];
+    await assignTags(processName, next);
+    onClose();
+  };
+
+  return (
+    <div
+      ref={ref}
+      className="absolute z-50 mt-1 left-3 bg-popover border border-border/60 shadow-lg py-1 w-44"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {tags.length === 0 && (
+        <span className="px-3 py-1.5 text-[11px] text-muted-foreground block">
+          No tags available
+        </span>
+      )}
+      {tags.map((tag) => (
+        <button
+          key={tag.id}
+          onClick={() => toggle(tag.id)}
+          className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] text-foreground hover:bg-subtle/40 cursor-pointer transition-colors"
+        >
+          <span
+            className="w-2.5 h-2.5 rounded-full shrink-0"
+            style={{ backgroundColor: tag.color }}
+          />
+          <span className="flex-1 text-left">{tag.name}</span>
+          {currentIds.includes(tag.id) && (
+            <span className="text-primary text-[10px]">✓</span>
+          )}
+        </button>
+      ))}
+    </div>
   );
 }

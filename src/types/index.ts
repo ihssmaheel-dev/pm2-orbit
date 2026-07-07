@@ -2,6 +2,17 @@ export type ProcessStatus = 'online' | 'stopped' | 'errored' | 'launching' | 'st
 export type ProcessMode = 'fork' | 'cluster';
 export type ProcessAction = 'restart' | 'stop' | 'start' | 'reload' | 'delete' | 'scale';
 
+export interface Tag {
+  id: string;
+  name: string;
+  color: string;
+}
+
+export interface TagData {
+  tags: Tag[];
+  assignments: Record<string, string[]>;
+}
+
 export interface ProcessSnapshot {
   id: number;
   name: string;
@@ -15,6 +26,7 @@ export interface ProcessSnapshot {
   instances: number;
   history: { ts: number[]; cpu: number[]; memory: number[] };
   customMetrics?: Record<string, number>;
+  tags?: Tag[];
 }
 
 export interface ProcessEvent {
