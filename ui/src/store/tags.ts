@@ -10,6 +10,7 @@ interface TagsStore {
   fetchTags: () => Promise<void>;
   fetchAssignments: () => Promise<void>;
   fetchAll: () => Promise<void>;
+  applyAssignmentsToProcesses: () => void;
   createTag: (name: string, color: string) => Promise<Tag | null>;
   updateTag: (id: string, updates: Partial<Pick<Tag, 'name' | 'color'>>) => Promise<void>;
   deleteTag: (id: string) => Promise<void>;
@@ -58,9 +59,23 @@ export const useTagsStore = create<TagsStore>((set, get) => ({
   },
 
   fetchAll: async () => {
-    const tagsPromise = get().fetchTags();
-    await tagsPromise;
+    await get().fetchTags();
     await get().fetchAssignments();
+    get().applyAssignmentsToProcesses();
+  },
+
+  applyAssignmentsToProcesses: () => {
+    const { tags: allTags, assignments } = get();
+    const processes = useProcessStore.getState().processes;
+    for (const [, proc] of processes) {
+      const tagIds = assignments[proc.name];
+      if (tagIds && tagIds.length > 0) {
+        const resolved = resolveTags(tagIds, allTags);
+        useProcessStore.getState().updateProcessTags(proc.name, resolved);
+      } else {
+        useProcessStore.getState().updateProcessTags(proc.name, undefined);
+      }
+    }
   },
 
   createTag: async (name, color) => {
