@@ -23,11 +23,15 @@ export function useWebSocket() {
   clearLogsRef.current = useLogsStore((s) => s.clearLogs);
   const addAlertEvent = useAlertsStore((s) => s.addEvent);
   const fetchAllTags = useTagsStore((s) => s.fetchAll);
-  const applyAssignments = useTagsStore((s) => s.applyAssignmentsToProcesses);
+  const applyAssignmentsRef = useRef(useTagsStore.getState().applyAssignmentsToProcesses);
+  applyAssignmentsRef.current = useTagsStore((s) => s.applyAssignmentsToProcesses);
+  const fetchedRef = useRef(false);
 
   useEffect(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
     fetchAllTags();
-  }, [fetchAllTags]);
+  }, []);
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -50,7 +54,7 @@ export function useWebSocket() {
           lastFullSeqRef.current = tick.fullSeq;
           setAll(tick.full);
           // Re-apply stored tag assignments to new snapshots (no API call)
-          applyAssignments();
+          applyAssignmentsRef.current();
         }
       }
 
@@ -83,7 +87,7 @@ export function useWebSocket() {
       unsubStatus();
       client.disconnect();
     };
-  }, [applyDelta, setAll, updateSystem, applyAssignments]);
+  }, [applyDelta, setAll, updateSystem]);
 
   return { status, lastTick: lastTickRef.current };
 }
