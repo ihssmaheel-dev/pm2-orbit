@@ -5,8 +5,11 @@ import type { Tag } from '@/types/pm2';
 
 interface TagsStore {
   tags: Tag[];
+  assignments: Record<string, string[]>;
   loading: boolean;
   fetchTags: () => Promise<void>;
+  fetchAssignments: () => Promise<void>;
+  fetchAll: () => Promise<void>;
   createTag: (name: string, color: string) => Promise<Tag | null>;
   updateTag: (id: string, updates: Partial<Pick<Tag, 'name' | 'color'>>) => Promise<void>;
   deleteTag: (id: string) => Promise<void>;
@@ -19,10 +22,10 @@ function resolveTags(tagIds: string[], allTags: Tag[]): Tag[] {
 
 export const useTagsStore = create<TagsStore>((set, get) => ({
   tags: [],
+  assignments: {},
   loading: false,
 
   fetchTags: async () => {
-    set({ loading: true });
     try {
       const res = await api('/api/tags', { silent: true });
       if (res.ok) {
@@ -30,7 +33,34 @@ export const useTagsStore = create<TagsStore>((set, get) => ({
         set({ tags });
       }
     } catch { /* */ }
-    set({ loading: false });
+  },
+
+  fetchAssignments: async () => {
+    try {
+      const res = await api('/api/tags/assignments', { silent: true });
+      if (res.ok) {
+        const assignments = await res.json();
+        set({ assignments });
+        // Merge tags into process snapshots client-side
+        const allTags = get().tags;
+        const processes = useProcessStore.getState().processes;
+        for (const [, proc] of processes) {
+          const tagIds = assignments[proc.name];
+          if (tagIds && tagIds.length > 0) {
+            const resolved = resolveTags(tagIds, allTags);
+            useProcessStore.getState().updateProcessTags(proc.name, resolved);
+          } else {
+            useProcessStore.getState().updateProcessTags(proc.name, undefined);
+          }
+        }
+      }
+    } catch { /* */ }
+  },
+
+  fetchAll: async () => {
+    const tagsPromise = get().fetchTags();
+    await tagsPromise;
+    await get().fetchAssignments();
   },
 
   createTag: async (name, color) => {
@@ -73,8 +103,18 @@ export const useTagsStore = create<TagsStore>((set, get) => ({
   assignTags: async (processName, tagIds) => {
     const allTags = get().tags;
     const resolved = resolveTags(tagIds, allTags);
-    // Immediately update the process store
+    // Update local state immediately
     useProcessStore.getState().updateProcessTags(processName, resolved.length > 0 ? resolved : undefined);
+    // Update assignments map
+    set((s) => {
+      const next = { ...s.assignments };
+      if (tagIds.length > 0) {
+        next[processName] = tagIds;
+      } else {
+        delete next[processName];
+      }
+      return { assignments: next };
+    });
     try {
       await api('/api/tags/assign', {
         method: 'POST',
