@@ -4,7 +4,13 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.6.1] - 2026-07-06
+## [1.6.2] - 2026-07-06
+
+### Fixed
+- **Tags disappear on refresh** — fetchTags now runs on WebSocket full sync, ensuring tag definitions are always loaded
+- **Color picker overflow** — Replaced absolute-positioned dropdown with inline grid that stays within dialog bounds
+- **Tag assignment menu clipping** — Fixed overflow-hidden on name cell so dropdown renders properly
+- **Immediate tag reflection** — Tags now update instantly in UI after assignment
 
 ### Fixed
 - **Tag assignment not reflecting in UI** — Tags now update instantly in the process store after assignment, no 5s wait for full sync
