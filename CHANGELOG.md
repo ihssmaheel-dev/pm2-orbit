@@ -4,7 +4,10 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.7.3] - 2026-07-08
+## [1.7.4] - 2026-07-08
+
+### Fixed
+- **Service worker crash** — SW catch handler now always returns a valid Response object instead of undefined. Cache version bumped to v2 to force update on clients
 
 ### Added
 - **User-friendly startup banner** — Shows auth status with masked token, LAN access URL, security warnings for unprotected remote access, and how to pass the token
