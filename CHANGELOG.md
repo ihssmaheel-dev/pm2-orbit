@@ -4,7 +4,10 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.9.1] - 2026-07-08
+## [1.9.2] - 2026-07-08
+
+### Fixed
+- **Env API called infinitely** — useEffect dependency changed from process object reference to process.id, preventing re-fetch on every 2s full sync tick
 
 ### Fixed
 - **Uptime bar shows no data** — Processes now record their initial status on first discovery, so the uptime bar shows data immediately instead of requiring a status change event
