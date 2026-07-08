@@ -36,12 +36,13 @@ export function ProcessDetail() {
 
   useEffect(() => {
     if (process) {
+      setEnvVars({});
       fetch(`/api/processes/${process.id}/env`)
         .then((res) => res.json())
         .then((data) => setEnvVars(data))
         .catch(() => setEnvVars({}));
     }
-  }, [process]);
+  }, [process?.id]);
 
   if (!process) {
     return (
