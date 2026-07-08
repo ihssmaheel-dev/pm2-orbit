@@ -4,7 +4,15 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.7.4] - 2026-07-08
+## [1.8.0] - 2026-07-08
+
+### Added
+- **Process notes** — Add text annotations to processes explaining what they do and who owns them
+- **Note persistence** — Notes saved to `~/.pm2-orbit/notes.json`, survive server restarts
+- **Note indicator in process table** — FileText icon appears next to process names with notes (hover for preview)
+- **Note editor in detail panel** — Click-to-edit textarea in the Overview tab with save/cancel/delete
+- **Note API** — `GET /api/notes`, `PUT /api/notes/:processName`, `DELETE /api/notes/:processName`
+- **Notes merge into snapshots** — Server enriches notes into process data on full sync, client re-applies locally after each sync
 
 ### Fixed
 - **Service worker crash** — SW catch handler now always returns a valid Response object instead of undefined. Cache version bumped to v2 to force update on clients
