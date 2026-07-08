@@ -4,6 +4,7 @@ import { useProcessStore } from '@/store/processes';
 import { useNotesStore } from '@/store/notes';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/shared/Tabs';
 import { Badge } from '@/components/shared/Badge';
+import { UptimeBar } from './UptimeBar';
 import { CpuChart, MemoryChart } from '@/components/charts/Charts';
 import { ActionMenu } from './ActionMenu';
 import { formatBytes, formatDuration } from '@/lib/format';
@@ -114,6 +115,9 @@ export function ProcessDetail() {
                   <StatCard label="Memory" value={isOnline ? formatBytes(process.memory) : '—'} />
                   <StatCard label="Instances" value={String(process.instances)} />
                 </div>
+                {process.statusHistory && process.statusHistory.length > 0 && (
+                  <UptimeBar history={process.statusHistory} />
+                )}
                 <NoteSection processName={process.name} />
               </div>
             </TabsContent>

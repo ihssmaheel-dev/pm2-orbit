@@ -115,6 +115,8 @@ export function createPm2Bridge() {
   const logBuffers = new Map<number, { entries: LogEntry[]; totalPushed: number }>();
   const logListeners = new Set<LogListener>();
   const reconnectListeners = new Set<ReconnectListener>();
+  const statusHistoryMap = new Map<number, { ts: number; status: ProcessStatus }[]>();
+  const MAX_STATUS_HISTORY = 200;
 
   let lastEventTime = 0;
   let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
@@ -138,6 +140,20 @@ export function createPm2Bridge() {
       buf.entries.splice(0, buf.entries.length - MAX_LOG_LINES);
     }
     for (const fn of logListeners) fn(entry);
+  }
+
+  function recordStatusChange(pid: number, status: ProcessStatus) {
+    let hist = statusHistoryMap.get(pid);
+    if (!hist) {
+      hist = [];
+      statusHistoryMap.set(pid, hist);
+    }
+    hist.push({ ts: Date.now(), status });
+    if (hist.length > MAX_STATUS_HISTORY) hist.splice(0, hist.length - MAX_STATUS_HISTORY);
+  }
+
+  function getStatusHistory(pid: number): { ts: number; status: ProcessStatus }[] {
+    return statusHistoryMap.get(pid) || [];
   }
 
   function emitToListeners(events: ProcessEvent[]) {
@@ -305,12 +321,14 @@ export function createPm2Bridge() {
               const cached = processCache.get(pid);
               if (cached) {
                 cached.status = 'stopped';
+                recordStatusChange(pid, 'stopped');
                 events.push({ type: 'update', process: { ...cached } });
               }
               lastUpdateMap.set(pid, now);
             }
 
             if (event.event === 'online' || event.event === 'start') {
+              recordStatusChange(pid, 'online');
               await refreshSingleProcess(pid);
               const snap = processCache.get(pid);
               if (snap) {
@@ -412,6 +430,7 @@ export function createPm2Bridge() {
     getAllLogBuffers,
     disconnect,
     emitRemove,
+    getStatusHistory,
     isConnected: () => bus !== null,
   };
 }

@@ -22,6 +22,7 @@ export interface ProcessSnapshot {
   customMetrics?: Record<string, number>;
   tags?: Tag[];
   note?: string;
+  statusHistory?: { ts: number; status: ProcessStatus }[];
 }
 
 export interface ProcessEvent {

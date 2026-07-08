@@ -19,6 +19,7 @@ export async function registerProcessRoutes(app: FastifyInstance, pipeline: Pipe
       snap.tags = getTagsForProcess(snap.name);
       const note = getNote(snap.name);
       if (note) snap.note = note;
+      snap.statusHistory = pipeline.bridge.getStatusHistory(snap.id);
     }
     return snapshots;
   });

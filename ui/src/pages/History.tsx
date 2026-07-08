@@ -4,6 +4,7 @@ import { api } from '@/lib/api';
 import { useProcessStore } from '@/store/processes';
 import { useSystemStore } from '@/store/system';
 import { CpuChart, MemoryChart, LoadChart } from '@/components/charts/Charts';
+import { UptimeBar } from '@/components/processes/UptimeBar';
 import { formatBytes } from '@/lib/format';
 
 interface ProcessHistory {
@@ -94,6 +95,7 @@ export function History() {
   const lastSys = systemHistory.length > 0 ? systemHistory[systemHistory.length - 1] : null;
   const maxMem = systemHistory.length > 0 ? Math.max(...systemHistory.map((r) => r.memoryTotal > 0 ? Math.round((r.memoryUsed / r.memoryTotal) * 1000) / 10 : 0)) : 0;
   const maxCpu = systemHistory.length > 0 ? Math.max(...systemHistory.map((r) => r.cpu)) : 0;
+  const selectedProcess = selectedProcessId !== null ? processes.get(selectedProcessId) : null;
 
   return (
     <div className="flex flex-col h-full bg-card/30 border border-border/50">
@@ -240,6 +242,11 @@ export function History() {
                   </div>
                   <div className="h-[160px]"><MemoryChart data={processMemData} /></div>
                 </div>
+                {selectedProcess?.statusHistory && selectedProcess.statusHistory.length > 0 && (
+                  <div className="bg-card border border-border p-4 sm:col-span-2">
+                    <UptimeBar history={selectedProcess.statusHistory} />
+                  </div>
+                )}
               </div>
             )
           ) : (

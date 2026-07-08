@@ -161,6 +161,7 @@ export function createEventPipeline() {
       snap.tags = getTagsForProcess(snap.name);
       const note = getNote(snap.name);
       if (note) snap.note = note;
+      snap.statusHistory = bridge.getStatusHistory(snap.id);
     }
   }
 
