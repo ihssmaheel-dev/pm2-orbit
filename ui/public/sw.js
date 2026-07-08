@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pm2-orbit-v1';
+const CACHE_NAME = 'pm2-orbit-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -53,8 +53,9 @@ self.addEventListener('fetch', (event) => {
       });
     }).catch(() => {
       if (event.request.destination === 'document') {
-        return caches.match('/');
+        return caches.match('/').then((r) => r || new Response('Offline', { status: 503 }));
       }
+      return new Response('Offline', { status: 503 });
     })
   );
 });
