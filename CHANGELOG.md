@@ -4,7 +4,11 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.7.0] - 2026-07-06
+## [1.7.1] - 2026-07-08
+
+### Fixed
+- **Auth blocks static assets** — Exempted /assets/*, favicon, sw.js, manifest.json, and .well-known from token auth so the app loads in production with token enabled
+- **Dev mode auth** — Auth hook skipped when running via Vite dev server (dist-ui not built)
 
 ### Security
 - **Auth token enforcement** — Auth hook now validates Bearer token and query param when PM2_ORBIT_TOKEN is set. WebSocket upgrade also checks token
