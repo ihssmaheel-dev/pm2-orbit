@@ -6,20 +6,22 @@ export function createAuthPlugin() {
   const token = process.env.PM2_ORBIT_TOKEN;
   if (!token) return async function noop() {};
 
+  // Detect dev mode — skip auth when Vite proxy is running
+  const isDev = !require('fs').existsSync(require('path').join(__dirname, '..', 'dist-ui', 'index.html'));
+
   return async function authHook(req: FastifyRequest, reply: FastifyReply) {
+    if (isDev) return;
+
     const url = req.url.split('?')[0];
 
-    // Exempt health check and root
     if (EXEMPT_PATHS.includes(url)) return;
 
-    // Check Authorization header
     const authHeader = req.headers.authorization;
     if (authHeader) {
       const provided = authHeader.replace(/^Bearer\s+/i, '');
       if (provided === token) return;
     }
 
-    // Check query param (for SSE/EventSource which can't set headers)
     const queryToken = (req.query as Record<string, string>)?.token;
     if (queryToken === token) return;
 
