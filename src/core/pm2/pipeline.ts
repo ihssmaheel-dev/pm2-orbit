@@ -8,6 +8,7 @@ import { createStore } from '../persistence/store';
 import { createAlertEngine } from '../alerts/engine';
 import { sendWebhook, sendSlack, sendDiscord, sendEmailNotification } from '../notifications/channels';
 import { getTagsForProcess } from '../persistence/tags';
+import { getNote } from '../persistence/notes';
 
 const FULL_SYNC_INTERVAL = 5000;
 
@@ -158,6 +159,8 @@ export function createEventPipeline() {
   function enrichTags(snapshots: ProcessSnapshot[]): void {
     for (const snap of snapshots) {
       snap.tags = getTagsForProcess(snap.name);
+      const note = getNote(snap.name);
+      if (note) snap.note = note;
     }
   }
 

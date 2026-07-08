@@ -22,6 +22,7 @@ interface ProcessStore {
   setAll: (snapshots: ProcessSnapshot[]) => void;
   updateProcessTags: (processName: string, tags: ProcessSnapshot['tags']) => void;
   removeTagFromAll: (tagId: string) => void;
+  updateProcessNote: (pid: number, note: string | undefined) => void;
   select: (id: number | null) => void;
   getProcess: (id: number) => ProcessSnapshot | undefined;
 }
@@ -70,6 +71,23 @@ export const useProcessStore = create<ProcessStore>((set, get) => ({
         }
       }
       return changed ? { processes: next } : {};
+    });
+  },
+
+  updateProcessNote: (pid, note) => {
+    set((state) => {
+      const proc = state.processes.get(pid);
+      if (!proc) return {};
+      const next = new Map(state.processes);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const updated: any = { ...proc };
+      if (note) {
+        updated.note = note;
+      } else {
+        delete updated.note;
+      }
+      next.set(pid, updated);
+      return { processes: next };
     });
   },
 

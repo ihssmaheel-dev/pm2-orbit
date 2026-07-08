@@ -10,6 +10,7 @@ export async function registerRoutes(app: FastifyInstance, pipeline: Pipeline) {
   const { registerAlertRoutes } = await import('./alerts');
   const { registerLogRoutes } = await import('./logs');
   const { registerTagRoutes } = await import('./tags');
+  const { registerNoteRoutes } = await import('./notes');
 
   registerHealthRoutes(app, pipeline);
   registerProcessRoutes(app, pipeline);
@@ -17,4 +18,5 @@ export async function registerRoutes(app: FastifyInstance, pipeline: Pipeline) {
   registerAlertRoutes(app, pipeline);
   registerLogRoutes(app, pipeline);
   registerTagRoutes(app);
+  registerNoteRoutes(app);
 }

@@ -1,5 +1,5 @@
 import { memo, useState, useRef, useEffect } from "react";
-import { RotateCw, Square, Play, Trash2, Clock, Tag } from "lucide-react";
+import { RotateCw, Square, Play, Trash2, Clock, Tag, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Sparkline } from "./Sparkline";
 import { formatBytes, formatDuration, formatPercent } from "@/lib/format";
@@ -97,6 +97,11 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
                 <span className="text-[9px] text-muted-foreground/50">+{p.tags.length - 3}</span>
               )}
             </div>
+          )}
+          {p.note && (
+            <span title={p.note} className="shrink-0 text-muted-foreground/40">
+              <FileText size={10} />
+            </span>
           )}
           <button
             onClick={(e) => {

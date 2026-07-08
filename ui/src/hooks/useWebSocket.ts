@@ -6,6 +6,7 @@ import { useLogsStore } from '@/store/logs';
 import { useSystemStore } from '@/store/system';
 import { useAlertsStore } from '@/store/alerts';
 import { useTagsStore } from '@/store/tags';
+import { useNotesStore } from '@/store/notes';
 import type { Tick } from '@/types/api';
 
 type WSStatus = 'connecting' | 'connected' | 'disconnected';
@@ -25,12 +26,17 @@ export function useWebSocket() {
   const fetchAllTags = useTagsStore((s) => s.fetchAll);
   const applyAssignmentsRef = useRef(useTagsStore.getState().applyAssignmentsToProcesses);
   applyAssignmentsRef.current = useTagsStore((s) => s.applyAssignmentsToProcesses);
+  const fetchNotesRef = useRef(useNotesStore.getState().fetchNotes);
+  fetchNotesRef.current = useNotesStore.getState().fetchNotes;
+  const applyNotesRef = useRef(useNotesStore.getState().applyNotesToProcesses);
+  applyNotesRef.current = useNotesStore.getState().applyNotesToProcesses;
   const fetchedRef = useRef(false);
 
   useEffect(() => {
     if (fetchedRef.current) return;
     fetchedRef.current = true;
     fetchAllTags();
+    fetchNotesRef.current();
   }, []);
 
   useEffect(() => {
@@ -53,8 +59,9 @@ export function useWebSocket() {
         if (tick.fullSeq !== lastFullSeqRef.current) {
           lastFullSeqRef.current = tick.fullSeq;
           setAll(tick.full);
-          // Re-apply stored tag assignments to new snapshots (no API call)
+          // Re-apply stored tag assignments and notes to new snapshots (no API call)
           applyAssignmentsRef.current();
+          applyNotesRef.current();
         }
       }
 

@@ -27,6 +27,7 @@ export interface ProcessSnapshot {
   history: { ts: number[]; cpu: number[]; memory: number[] };
   customMetrics?: Record<string, number>;
   tags?: Tag[];
+  note?: string;
 }
 
 export interface ProcessEvent {

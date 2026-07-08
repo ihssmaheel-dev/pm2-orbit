@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import type { createEventPipeline } from '../core';
 import { parseIdParam } from '../utils/validate';
 import { getTagsForProcess } from '../core/persistence/tags';
+import { getNote } from '../core/persistence/notes';
 
 type Pipeline = ReturnType<typeof createEventPipeline>;
 
@@ -16,6 +17,8 @@ export async function registerProcessRoutes(app: FastifyInstance, pipeline: Pipe
     const snapshots = await pipeline.bridge.list();
     for (const snap of snapshots) {
       snap.tags = getTagsForProcess(snap.name);
+      const note = getNote(snap.name);
+      if (note) snap.note = note;
     }
     return snapshots;
   });

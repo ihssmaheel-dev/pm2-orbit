@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
-import { X, Clock, RotateCw, Hash, Server, Eye, EyeOff, MousePointerClick, Search } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { X, Clock, RotateCw, Hash, Server, Eye, EyeOff, MousePointerClick, Search, FileText } from 'lucide-react';
 import { useProcessStore } from '@/store/processes';
+import { useNotesStore } from '@/store/notes';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/shared/Tabs';
 import { Badge } from '@/components/shared/Badge';
 import { CpuChart, MemoryChart } from '@/components/charts/Charts';
@@ -113,6 +114,7 @@ export function ProcessDetail() {
                   <StatCard label="Memory" value={isOnline ? formatBytes(process.memory) : '—'} />
                   <StatCard label="Instances" value={String(process.instances)} />
                 </div>
+                <NoteSection processName={process.name} />
               </div>
             </TabsContent>
 
@@ -211,6 +213,82 @@ function StatCard({ icon, label, value, color }: { icon?: React.ReactNode; label
       <span className={`text-sm font-mono font-medium ${color || 'text-foreground'} ${value === '—' ? 'text-muted-foreground/30' : ''}`}>
         {value}
       </span>
+    </div>
+  );
+}
+
+function NoteSection({ processName }: { processName: string }) {
+  const notes = useNotesStore((s) => s.notes);
+  const updateNote = useNotesStore((s) => s.updateNote);
+  const deleteNoteAction = useNotesStore((s) => s.deleteNote);
+  const currentNote = notes[processName] || '';
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(currentNote);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    setDraft(currentNote);
+    setEditing(false);
+  }, [processName, currentNote]);
+
+  const save = useCallback(() => {
+    const trimmed = draft.trim();
+    if (trimmed && trimmed !== currentNote) {
+      updateNote(processName, trimmed);
+    } else if (!trimmed && currentNote) {
+      deleteNoteAction(processName);
+    }
+    setEditing(false);
+  }, [draft, currentNote, processName, updateNote, deleteNoteAction]);
+
+  const handleFocus = () => {
+    setEditing(true);
+    setTimeout(() => textareaRef.current?.focus(), 0);
+  };
+
+  return (
+    <div className="bg-subtle/30 border border-border/30">
+      <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border/20">
+        <FileText size={12} className="text-muted-foreground/50" />
+        <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/50">Note</span>
+      </div>
+      <div className="px-3 py-2">
+        {editing ? (
+          <div className="space-y-2">
+            <textarea
+              ref={textareaRef}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Add a note about this process..."
+              rows={3}
+              className="w-full text-xs text-foreground/80 bg-background/50 border border-border/40 p-2 resize-none outline-none focus:border-primary/50 transition-colors placeholder:text-muted-foreground/30"
+            />
+            <div className="flex justify-end gap-1.5">
+              <button
+                onClick={() => { setDraft(currentNote); setEditing(false); }}
+                className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground border border-border/40 hover:border-border/80 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={save}
+                className="h-6 px-2 text-[10px] font-medium text-primary-foreground bg-primary hover:bg-primary/90 transition-colors cursor-pointer"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div
+            onClick={handleFocus}
+            className="min-h-[32px] text-xs text-foreground/60 cursor-text hover:text-foreground/80 transition-colors whitespace-pre-wrap"
+          >
+            {currentNote || (
+              <span className="text-muted-foreground/30 italic">Click to add a note...</span>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
