@@ -4,7 +4,16 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.8.0] - 2026-07-08
+## [1.9.0] - 2026-07-08
+
+### Added
+- **Uptime/downtime visualization** — Color-coded horizontal timeline bar showing process status history (green=online, gray=stopped, red=errored, yellow=launching)
+- **Uptime percentage** — Calculated from status history, color-coded (green ≥99%, yellow ≥95%, red <95%)
+- **Hover tooltips** — Hover any segment to see status, start time, and duration
+- **Status legend** — Color key below the bar
+- **History page integration** — UptimeBar shown below CPU/Memory charts for selected process
+- **ProcessDetail integration** — UptimeBar shown in Overview tab between stats and notes
+- **Status history tracking** — Server tracks status changes in a 200-entry ring buffer per process, included in snapshots
 
 ### Added
 - **Process notes** — Add text annotations to processes explaining what they do and who owns them
