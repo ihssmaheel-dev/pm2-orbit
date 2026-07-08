@@ -1,12 +1,11 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 
-const EXEMPT_PATHS = ['/api/health', '/'];
+const EXEMPT_PREFIXES = ['/api/health', '/', '/assets/', '/favicon', '/sw.js', '/manifest.json', '/.well-known'];
 
 export function createAuthPlugin() {
   const token = process.env.PM2_ORBIT_TOKEN;
   if (!token) return async function noop() {};
 
-  // Detect dev mode — skip auth when Vite proxy is running
   const isDev = !require('fs').existsSync(require('path').join(__dirname, '..', 'dist-ui', 'index.html'));
 
   return async function authHook(req: FastifyRequest, reply: FastifyReply) {
@@ -14,7 +13,7 @@ export function createAuthPlugin() {
 
     const url = req.url.split('?')[0];
 
-    if (EXEMPT_PATHS.includes(url)) return;
+    if (EXEMPT_PREFIXES.some((p) => url === p || url.startsWith(p))) return;
 
     const authHeader = req.headers.authorization;
     if (authHeader) {
