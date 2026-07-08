@@ -4,7 +4,17 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.6.5] - 2026-07-06
+## [1.7.0] - 2026-07-06
+
+### Security
+- **Auth token enforcement** — Auth hook now validates Bearer token and query param when PM2_ORBIT_TOKEN is set. WebSocket upgrade also checks token
+- **SSRF protection** — Test-webhook validates URL protocol (http/https only), blocks internal/private IPs and localhost, adds 10s timeout
+- **PM2 action timeout** — Actions (restart/stop/start/delete) time out after 15s instead of hanging forever
+- **Notification webhook timeout** — All webhook/Slack/Discord fetch calls have 10s timeout
+
+### Fixed
+- **Duplicate Cooldown/Duration fields** — Removed second set of fields in AlertForm that rendered the same inputs twice
+- **AlertHistory index keys** — Changed from `key={i}` to `key={ts-i}` for stable rendering
 
 ### Fixed
 - **Infinite tag API calls** — Tag fetch now runs exactly once on startup via ref guard. Tag assignments are re-applied to process snapshots after each full sync using refs to prevent dependency cascade loops
