@@ -113,14 +113,18 @@ export async function createServer(_opts: ServerOpts) {
     if (req.url === '/ws') {
       // Check WS auth if token is set
       if (token) {
-        const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
-        const queryToken = url.searchParams.get('token');
-        const authHeader = req.headers.authorization;
-        const headerToken = authHeader ? authHeader.replace(/^Bearer\s+/i, '') : null;
-        if (queryToken !== token && headerToken !== token) {
-          socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
-          socket.destroy();
-          return;
+        const wsIp = req.socket.remoteAddress || '';
+        const isLocal = wsIp === '127.0.0.1' || wsIp === '::1' || wsIp === '::ffff:127.0.0.1';
+        if (!isLocal) {
+          const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+          const queryToken = url.searchParams.get('token');
+          const authHeader = req.headers.authorization;
+          const headerToken = authHeader ? authHeader.replace(/^Bearer\s+/i, '') : null;
+          if (queryToken !== token && headerToken !== token) {
+            socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+            socket.destroy();
+            return;
+          }
         }
       }
 

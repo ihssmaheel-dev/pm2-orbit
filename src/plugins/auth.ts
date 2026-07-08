@@ -15,6 +15,11 @@ export function createAuthPlugin() {
 
     if (EXEMPT_PREFIXES.some((p) => url === p || url.startsWith(p))) return;
 
+    // Allow localhost connections without token (local development access)
+    const ip = req.ip || req.socket.remoteAddress || '';
+    const isLocal = ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
+    if (isLocal) return;
+
     const authHeader = req.headers.authorization;
     if (authHeader) {
       const provided = authHeader.replace(/^Bearer\s+/i, '');
