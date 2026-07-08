@@ -13,6 +13,7 @@ export async function sendWebhook(url: string, event: { message: string; process
         threshold: event.threshold,
         ts: Date.now(),
       }),
+      signal: AbortSignal.timeout(10000),
     });
     return res.ok;
   } catch (err) {
@@ -35,6 +36,7 @@ export async function sendSlack(webhookUrl: string, event: { message: string }):
           },
         ],
       }),
+      signal: AbortSignal.timeout(10000),
     });
     return res.ok;
   } catch (err) {
@@ -51,6 +53,7 @@ export async function sendDiscord(webhookUrl: string, event: { message: string }
       body: JSON.stringify({
         content: `:warning: **PM2 Orbit Alert**\n${event.message}`,
       }),
+      signal: AbortSignal.timeout(10000),
     });
     return res.ok;
   } catch (err) {

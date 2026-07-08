@@ -111,6 +111,19 @@ export async function createServer(_opts: ServerOpts) {
 
   app.server.on('upgrade', (req, socket, head) => {
     if (req.url === '/ws') {
+      // Check WS auth if token is set
+      if (token) {
+        const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+        const queryToken = url.searchParams.get('token');
+        const authHeader = req.headers.authorization;
+        const headerToken = authHeader ? authHeader.replace(/^Bearer\s+/i, '') : null;
+        if (queryToken !== token && headerToken !== token) {
+          socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+          socket.destroy();
+          return;
+        }
+      }
+
       const ip = req.socket.remoteAddress || 'unknown';
       const count = wsConnPerIp.get(ip) || 0;
       if (count >= MAX_WS_PER_IP) {

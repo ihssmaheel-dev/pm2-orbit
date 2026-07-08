@@ -114,7 +114,9 @@ export async function registerProcessRoutes(app: FastifyInstance, pipeline: Pipe
       }
 
       await new Promise<void>((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('PM2 action timed out')), 15000);
         actionFn((err: Error | null) => {
+          clearTimeout(timer);
           if (err) reject(err);
           else resolve();
         });

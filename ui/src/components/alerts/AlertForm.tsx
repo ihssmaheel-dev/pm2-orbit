@@ -256,27 +256,6 @@ export function AlertForm({ open, onClose, editRule }: AlertFormProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-1 block">Cooldown (s)</label>
-              <Input
-                type="number"
-                value={cooldown}
-                onChange={(e) => setCooldown(e.target.value)}
-                placeholder="60"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-1 block">Duration (s)</label>
-              <Input
-                type="number"
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-                placeholder="0 = instant"
-              />
-            </div>
-          </div>
-
           <div>
             <label className="text-xs text-muted-foreground uppercase tracking-wider mb-2 block">Notify via</label>
             <div className="space-y-1.5">

@@ -53,7 +53,26 @@ export async function registerHealthRoutes(app: FastifyInstance, pipeline: Pipel
 
   app.post('/api/settings/test-webhook', async (req, reply) => {
     const { url, type } = req.body as { url: string; type: 'slack' | 'discord' | 'webhook' };
-    if (!url) return reply.code(400).send({ error: 'URL is required' });
+    if (!url || typeof url !== 'string') return reply.code(400).send({ error: 'URL is required' });
+
+    // Validate URL — only allow http/https, block internal/private IPs
+    let parsed: URL;
+    try {
+      parsed = new URL(url);
+    } catch {
+      return reply.code(400).send({ error: 'Invalid URL format' });
+    }
+
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return reply.code(400).send({ error: 'Only HTTP/HTTPS URLs allowed' });
+    }
+
+    const hostname = parsed.hostname;
+    const blocked = ['localhost', '127.0.0.1', '0.0.0.0', '::1', '169.254.169.254'];
+    if (blocked.includes(hostname) || hostname.startsWith('10.') || hostname.startsWith('192.168.') ||
+        /^172\.(1[6-9]|2\d|3[01])\./.test(hostname) || hostname.endsWith('.local')) {
+      return reply.code(400).send({ error: 'Internal/private URLs not allowed' });
+    }
 
     try {
       const payload = type === 'slack'
@@ -66,6 +85,7 @@ export async function registerHealthRoutes(app: FastifyInstance, pipeline: Pipel
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(10000),
       });
 
       return { success: res.ok, status: res.status };

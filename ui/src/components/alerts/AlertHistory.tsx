@@ -16,7 +16,7 @@ export function AlertHistory() {
     <div className="space-y-1">
       {history.map((event, i) => (
         <div
-          key={i}
+          key={`${event.ts}-${i}`}
           className="flex items-start gap-3 px-3 py-2 bg-subtle/30 border border-border text-sm"
         >
           <AlertTriangle size={14} className="text-warning mt-0.5 shrink-0" />
