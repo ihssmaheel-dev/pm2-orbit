@@ -58,7 +58,6 @@ export async function createServer(_opts: ServerOpts) {
   const token = process.env.PM2_ORBIT_TOKEN;
   if (token) {
     app.addHook('onRequest', createAuthPlugin());
-    logger.info('Token authentication enabled');
   }
 
   if (!isDev) {
@@ -84,19 +83,42 @@ export async function createServer(_opts: ServerOpts) {
     const port = typeof addr === 'string' ? 9823 : (addr?.port ?? 9823);
     const host = `http://127.0.0.1:${port}`;
     const pkg = require('../package.json');
+    const isRemote = process.env.PM2_ORBIT_HOST && process.env.PM2_ORBIT_HOST !== '127.0.0.1';
+    const remoteHost = isRemote ? `http://${process.env.PM2_ORBIT_HOST}:${port}` : null;
 
     console.log('');
     console.log('  \x1b[1m\x1b[36mPM2 Orbit\x1b[0m \x1b[90mv' + pkg.version + '\x1b[0m');
     console.log('');
     console.log('  \x1b[32m→\x1b[0m ' + host);
+    if (remoteHost) {
+      console.log('  \x1b[32m→\x1b[0m ' + remoteHost + '  \x1b[90m(LAN access)\x1b[0m');
+    }
     console.log('  \x1b[90mHealth:\x1b[0m ' + host + '/api/health');
     console.log('  \x1b[90mWS:    \x1b[0m ws://127.0.0.1:' + port + '/ws');
     console.log('');
 
+    if (token) {
+      const masked = token.slice(0, 4) + '*'.repeat(Math.max(0, token.length - 4));
+      console.log('  \x1b[32m🔒\x1b[0m \x1b[1mAuthentication enabled\x1b[0m');
+      console.log('  \x1b[90mToken:\x1b[0m ' + masked);
+      if (remoteHost) {
+        console.log('');
+        console.log('  \x1b[33m⚠\x1b[0m \x1b[33mRemote access requires token\x1b[0m');
+        console.log('  \x1b[90mPass via header:\x1b[0m Authorization: Bearer ' + masked);
+        console.log('  \x1b[90mOr query param:  \x1b[0m ?token=' + masked);
+      }
+      console.log('');
+    } else {
+      if (remoteHost) {
+        console.log('  \x1b[33m⚠\x1b[0m \x1b[33mNo auth token set — anyone on LAN can access\x1b[0m');
+        console.log('  \x1b[90mSet for security:\x1b[0m PM2_ORBIT_TOKEN=<your-secret>');
+        console.log('');
+      }
+    }
+
     // Check for updates
     fetch('https://registry.npmjs.org/pm2-orbit/latest')
       .then((r) => r.json())
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .then((data: any) => {
         if (data.version && data.version !== pkg.version) {
           console.log('  \x1b[33m⬆\x1b[0m \x1b[33mUpdate available: v' + data.version + '\x1b[0m');
