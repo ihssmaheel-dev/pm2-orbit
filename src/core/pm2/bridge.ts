@@ -246,8 +246,13 @@ export function createPm2Bridge() {
         const now = Date.now();
         const snapshots = list.map((proc) => {
           const snap = procToSnapshot(proc);
+          const hadEntry = processCache.has(snap.id);
           processCache.set(snap.id, snap);
           lastUpdateMap.set(snap.id, now);
+          // Record initial status for new processes (or processes without history)
+          if (!hadEntry || !statusHistoryMap.has(snap.id)) {
+            recordStatusChange(snap.id, snap.status);
+          }
           return snap;
         });
         resolve(snapshots);
