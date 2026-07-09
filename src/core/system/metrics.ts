@@ -14,17 +14,29 @@ export interface SystemSnapshot {
 let prevIdle = 0;
 let prevTotal = 0;
 
-let prevSelfUsage = process.cpuUsage();
-let prevSelfTime = Date.now();
+let prevSelfUsage: { user: number; system: number } | null = null;
+let prevSelfTime = 0;
 
 function computeSelfMetrics(): { cpu: number; memory: number } {
-  const now = Date.now();
+  const now = performance.now();
+  const currentUsage = process.cpuUsage();
+
+  if (prevSelfUsage === null) {
+    // First call — establish baseline, report 0%
+    prevSelfUsage = currentUsage;
+    prevSelfTime = now;
+    return { cpu: 0, memory: process.memoryUsage().rss };
+  }
+
   const elapsedMs = Math.max(1, now - prevSelfTime);
-  const usage = process.cpuUsage(prevSelfUsage);
-  prevSelfUsage = usage;
+  const userDelta = currentUsage.user - prevSelfUsage.user;
+  const systemDelta = currentUsage.system - prevSelfUsage.system;
+  const totalMicros = userDelta + systemDelta;
+
+  prevSelfUsage = currentUsage;
   prevSelfTime = now;
-  const micros = usage.user + usage.system;
-  const cpuPercent = Math.round((micros / (elapsedMs * 1000)) * 1000) / 10;
+
+  const cpuPercent = Math.round((totalMicros / (elapsedMs * 1000)) * 100) / 100;
   const memory = process.memoryUsage().rss;
   return { cpu: Math.max(0, cpuPercent), memory };
 }
