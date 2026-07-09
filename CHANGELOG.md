@@ -4,6 +4,11 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.10.2] - 2026-07-08
+
+### Fixed
+- **Uptime bar disappears after refresh** — statusHistory was lost when refreshProcessList/refreshSingleProcess created new snapshot objects. New snapshots now inherit statusHistory from existing cache entries and always re-attach from the statusHistoryMap
+
 ## [1.10.1] - 2026-07-08
 
 ### Fixed
