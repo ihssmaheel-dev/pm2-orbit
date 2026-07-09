@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import type { createEventPipeline } from '../core';
 import { parseIdParam } from '../utils/validate';
 import { acquireTailer, releaseTailer } from '../core/logs/tailerRegistry';
+import { readHistoricalLogs } from '../core/logs/pm2logreader';
 
 type Pipeline = ReturnType<typeof createEventPipeline>;
 
@@ -12,8 +13,27 @@ export async function registerLogRoutes(app: FastifyInstance, pipeline: Pipeline
     const bridge = pipeline.bridge;
     const allBuffers = bridge.getAllLogBuffers();
     const result: Record<string, unknown[]> = {};
+
     for (const [pid, buf] of allBuffers) {
-      result[String(pid)] = buf.entries;
+      let entries = buf.entries;
+      // If buffer is empty or small, supplement with historical logs from PM2 files
+      if (entries.length < 100) {
+        const snap = (await bridge.list()).find((s) => s.id === pid);
+        if (snap) {
+          const historical = readHistoricalLogs(snap.name, pid, 100);
+          // Merge: historical first, then buffer entries (dedup by message)
+          const seen = new Set(entries.map((e) => e.message));
+          const merged = [...entries];
+          for (const h of historical) {
+            if (!seen.has(h.message)) {
+              merged.unshift(h);
+              seen.add(h.message);
+            }
+          }
+          entries = merged.slice(-1000);
+        }
+      }
+      result[String(pid)] = entries;
     }
     return result;
   });
@@ -79,7 +99,16 @@ export async function registerLogRoutes(app: FastifyInstance, pipeline: Pipeline
 
     reply.raw.write('retry: 2000\n\n');
 
-    // Start tracking from current position — initial history loaded via REST
+    // Send historical logs from PM2 files on initial connection
+    const snapshots = await bridge.list();
+    for (const snap of snapshots) {
+      const historical = readHistoricalLogs(snap.name, snap.id, 100);
+      for (const e of historical) {
+        try { reply.raw.write(`data: ${JSON.stringify(e)}\n\n`); } catch { /* */ }
+      }
+    }
+
+    // Start tracking from current position — initial history loaded above
     const allBuffers = bridge.getAllLogBuffers();
     for (const [pid, buf] of allBuffers) {
       lastPushedMap.set(pid, buf.totalPushed);
