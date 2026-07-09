@@ -4,6 +4,14 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.10.0] - 2026-07-08
+
+### Added
+- **Historical log loading** — When connecting, the last 100 log lines per process are read from PM2's log files (`~/.pm2/logs/`) and displayed immediately, so you see past logs even if pm2-orbit started after PM2
+- **PM2 log file reader** — Reads `*-out.log` and `*-err.log` files, strips ANSI codes, interleaves stdout/stderr in order
+- **Historical logs in SSE stream** — Initial SSE connection sends historical logs before streaming new ones
+- **Historical logs in REST endpoint** — `/api/logs/history` supplements in-memory buffer with PM2 file logs when buffer is small
+
 ## [1.9.2] - 2026-07-08
 
 ### Fixed
