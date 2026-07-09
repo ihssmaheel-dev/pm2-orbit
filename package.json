@@ -1,6 +1,6 @@
 {
   "name": "pm2-orbit",
-  "version": "1.10.2",
+  "version": "1.11.0",
   "files": [
     "dist/",
     "dist-ui/",
@@ -21,7 +21,6 @@
     "typecheck": "tsc --noEmit && cd ui && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "vitest --config vitest.e2e.config.ts",
     "prepare": "husky",
     "prepublishOnly": "npm run build",
     "postinstall": "node -e \"try{require.resolve('pm2')}catch{console.log('\\n  ℹ  Install pm2 for process monitoring: npm install -g pm2\\n')}\""
@@ -79,5 +78,8 @@
     "nodejs",
     "react"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "lint-staged": {
+    "src/**/*.ts": "tsc --noEmit -p tsconfig.json"
+  }
 }

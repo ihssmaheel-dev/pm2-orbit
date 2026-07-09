@@ -4,6 +4,56 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.11.0] - 2026-07-09
+
+### Security
+- **Server binds configurable host** — `PM2_ORBIT_HOST` env var now controls listen address (was hardcoded `127.0.0.1`)
+- **Auth requires token for all routes** — Removed blanket localhost bypass; token required for all API/WebSocket requests when `PM2_ORBIT_TOKEN` is set (localhost WebSocket exempt for frontend)
+- **Constant-time token comparison** — Uses `crypto.timingSafeEqual` to prevent timing side-channel attacks
+- **Header-only token auth** — Query string token (`?token=`) removed; only `Authorization: Bearer` header accepted
+- **CORS locked by default** — Remote access requires explicit `CORS_ORIGINS` env var; no more open origin reflection
+- **Secrets no longer leaked in API** — `PUT /api/settings` returns `getSettingsSafe()` (masked tokens/passwords)
+- **SSRF protection for webhook testing** — DNS resolution + private IP blocking (IPv4/IPv6) before fetching webhook URLs
+- **Runtime token changes take effect** — Auth hook reads `process.env.PM2_ORBIT_TOKEN` at request time, not at startup
+- **Email transporter refresh** — SMTP settings changes now invalidate cached transporter
+
+### Fixed
+- **SQLite crash on transient errors** — `flush()` wrapped in try/catch; disk full/SQLITE_BUSY no longer crashes server
+- **Server crash on unhandled rejections** — `unhandledRejection` now logs warning instead of calling `process.exit(1)`
+- **pm2logreader sort bug** — Stderr entries were sorting with wrong variable (`b.message` instead of `a.message`)
+- **Tailer reads entire log on init** — Now seeks to end of file instead of reading from offset 0
+- **Logger suppresses all levels on invalid LOG_LEVEL** — Invalid values now default to `info`
+- **SSE log stream index invalidation** — Uses `totalPushed` counter instead of absolute index (prevents skipped/duplicated lines)
+- **reconcileStale O(N²)** — Uses Set for O(1) lookup instead of Array.includes()
+- **PUT /api/settings leaks secrets** — Returns masked settings instead of decrypted values
+- **Alert tests clobber real user data** — Tests now use temp directories via `AlertEngineConfig`
+- **Dead code removed** — `store/ticker.ts`, `AlertHistory.tsx`, `log-worker.js`, unused `apiJson` export
+
+### Added
+- **Status history persistence** — New `status_history` SQLite table; uptime bar survives server restarts
+- **True uptime seeding** — Uptime bar reflects real process uptime from PM2 on first discovery
+- **Chart hover crosshair + tooltip** — Vertical crosshair line, visible point markers, tooltip with timestamp + values
+- **Chart theme sync** — Charts recreate on theme switch, refreshing all CSS variable colors
+- **UptimeBar hover improvements** — Crosshair line, cursor-following tooltip, segment highlighting
+- **Tag delete confirmation** — Dialog before deleting tags
+- **Process env endpoint errors** — Returns proper HTTP error codes (400/404/503) instead of empty `{}`
+
+### Changed
+- **Keyboard shortcuts safe** — Removed destructive shortcuts (restart/stop); added modal-open guard
+- **Alert rule types unified** — Single `AlertRule` interface with `severity`, `channels`, `scope`, `cooldownMs`
+- **SystemSnapshot unified** — Added `disk.used`/`disk.total` to match actual sent data
+- **UPlot charts memoized** — Series arrays wrapped in `useMemo`; only recreate on width/height/theme change
+- **ProcessRow selection optimized** — Uses `selectedId === pid` selector; only 2 rows re-render on select
+- **Light mode CSS variables added** — `--success-subtle`, `--warning-subtle`, `--destructive-subtle` for light theme
+- **LogViewer theme-aware** — Removed hardcoded `bg-[#0a0e14]`; uses CSS variables for dark/light support
+
+### DevOps
+- **Docker fixed** — Installs pm2 globally, adds HEALTHCHECK, runs as non-root USER, removed `|| true`
+- **CI runs tests** — Added `npm test` step to GitHub Actions workflow
+- **test:e2e removed** — Broken script removed (no e2e tests exist)
+- **Husky pre-commit** — Functional hook running `npx lint-staged`
+- **.gitignore cleaned** — Removed planning doc exclusions; added `.mimocode/`
+
 ## [1.10.2] - 2026-07-08
 
 ### Fixed

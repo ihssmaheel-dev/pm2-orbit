@@ -42,7 +42,9 @@ function getData(): NotesData {
 
 export function getNote(processName: string): string | null {
   const data = getData();
-  return data.notes[processName] || null;
+  const note = data.notes[processName];
+  if (!note || note.trim().length === 0) return null;
+  return note;
 }
 
 export function getAllNotes(): Record<string, string> {
@@ -51,7 +53,11 @@ export function getAllNotes(): Record<string, string> {
 
 export function setNote(processName: string, note: string): void {
   const data = getData();
-  data.notes[processName] = note;
+  if (!note || note.trim().length === 0) {
+    delete data.notes[processName];
+  } else {
+    data.notes[processName] = note;
+  }
   saveToDisk(data);
   invalidateCache();
 }

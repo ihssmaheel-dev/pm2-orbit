@@ -371,7 +371,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
   }, [filteredLogs.length]);
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0e14] dark:bg-[#0a0e14] bg-background">
+    <div className="flex flex-col h-full bg-background">
       {/* Toolbar */}
       <div className="flex items-center gap-2 px-4 py-2 border-b border-border/50 bg-card/80 shrink-0">
         <Terminal size={14} className="text-primary" />
@@ -460,7 +460,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
       </div>
 
       {/* Process tabs */}
-      <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border/30 bg-[#0c1219] dark:bg-[#0c1219] shrink-0 overflow-x-auto">
+      <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border/30 bg-card/50 shrink-0 overflow-x-auto">
         {processEntries.map((p) => {
           const isSelected = selectedProcessId === p.id;
           const hasLogs = (buffers.get(p.id)?.length ?? 0) > 0;
@@ -502,7 +502,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
         <div
           ref={parentRef}
           onScroll={throttledScroll}
-          className="absolute inset-0 overflow-auto font-mono text-[13px] leading-[1.55] bg-[#0a0e14] dark:bg-[#0a0e14]"
+          className="absolute inset-0 overflow-auto font-mono text-[13px] leading-[1.55] bg-background"
           style={{ fontFamily: "'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace" }}
         >
         {processEntries.length === 0 ? (
@@ -592,7 +592,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
                     title={cleanMsg}
                     className={cn(
                       "flex-1 min-w-0 whitespace-nowrap overflow-hidden text-ellipsis leading-[22px] cursor-default",
-                      isErr ? "text-red-400/90 dark:text-red-400/90" : "text-[#c9d1d9] dark:text-[#c9d1d9] text-foreground",
+                      isErr ? "text-red-400/90 dark:text-red-400/90" : "text-foreground",
                     )}
                   >
                     {searchQuery
@@ -654,7 +654,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setSelectedLog(null)}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           <div
-            className="relative w-full max-w-2xl bg-[#0a0e14] border border-border/50 shadow-2xl overflow-hidden"
+            className="relative w-full max-w-2xl bg-card border border-border/50 shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Dialog Header */}

@@ -2,8 +2,26 @@ import type { FastifyInstance } from 'fastify';
 import type { createEventPipeline } from '../core';
 import { getSettingsSafe, getSettings, updateSettings, applySettingsToEnv } from '../core/persistence/settings';
 import type { NotificationChannel, Settings } from '../core/persistence/settings';
+import dns from 'dns';
 
 type Pipeline = ReturnType<typeof createEventPipeline>;
+
+function isPrivateIP(ip: string): boolean {
+  // IPv4 private ranges
+  if (/^10\./.test(ip)) return true;
+  if (/^172\.(1[6-9]|2\d|3[01])\./.test(ip)) return true;
+  if (/^192\.168\./.test(ip)) return true;
+  if (/^127\./.test(ip)) return true;
+  if (ip === '0.0.0.0') return true;
+  if (/^169\.254\./.test(ip)) return true;
+  // IPv6 private/link-local
+  if (ip === '::1' || ip === '::') return true;
+  if (/^fc00:/i.test(ip)) return true;
+  if (/^fd/i.test(ip)) return true;
+  if (/^fe80:/i.test(ip)) return true;
+  if (/^::ffff:(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/i.test(ip)) return true;
+  return false;
+}
 
 function channelConfigured(ch: NotificationChannel, settings: Settings): boolean {
   switch (ch) {
@@ -68,10 +86,27 @@ export async function registerHealthRoutes(app: FastifyInstance, pipeline: Pipel
     }
 
     const hostname = parsed.hostname;
-    const blocked = ['localhost', '127.0.0.1', '0.0.0.0', '::1', '169.254.169.254'];
-    if (blocked.includes(hostname) || hostname.startsWith('10.') || hostname.startsWith('192.168.') ||
-        /^172\.(1[6-9]|2\d|3[01])\./.test(hostname) || hostname.endsWith('.local')) {
+
+    // Block obvious localhost/metadata endpoints
+    const blockedHosts = ['localhost', '0.0.0.0', '169.254.169.254'];
+    if (blockedHosts.includes(hostname) || hostname.endsWith('.local')) {
       return reply.code(400).send({ error: 'Internal/private URLs not allowed' });
+    }
+
+    // Resolve DNS and check all resolved addresses against private ranges
+    try {
+      const addresses = await dns.promises.resolve4(hostname).catch(() => []);
+      const ipv6Addresses = await dns.promises.resolve6(hostname).catch(() => []);
+      const allAddresses = [...addresses, ...ipv6Addresses];
+
+      for (const addr of allAddresses) {
+        if (isPrivateIP(addr)) {
+          return reply.code(400).send({ error: 'Resolved to private/internal IP — not allowed' });
+        }
+      }
+    } catch {
+      // DNS resolution failed — block the request
+      return reply.code(400).send({ error: 'Could not resolve hostname' });
     }
 
     try {
@@ -131,6 +166,12 @@ export async function registerHealthRoutes(app: FastifyInstance, pipeline: Pipel
     const updated = updateSettings(filtered as Partial<import('../core/persistence/settings').Settings>);
     applySettingsToEnv(updated);
 
-    return { success: true, settings: updated };
+    // Reset email transporter if SMTP settings changed
+    if ('smtpHost' in filtered || 'smtpPort' in filtered || 'smtpUser' in filtered || 'smtpPass' in filtered) {
+      const { resetTransporter } = await import('../core/notifications/email');
+      resetTransporter();
+    }
+
+    return { success: true, settings: getSettingsSafe() };
   });
 }

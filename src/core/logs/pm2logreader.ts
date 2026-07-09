@@ -58,7 +58,7 @@ export function readHistoricalLogs(
 
   // Sort by position (interleaved stdout/stderr from PM2 is sequential)
   entries.sort((a, b) => {
-    const aIdx = a.stream === 'stdout' ? outLines.indexOf(a.message) : errLines.indexOf(b.message);
+    const aIdx = a.stream === 'stdout' ? outLines.indexOf(a.message) : errLines.indexOf(a.message);
     const bIdx = b.stream === 'stdout' ? outLines.indexOf(b.message) : errLines.indexOf(b.message);
     return aIdx - bIdx;
   });

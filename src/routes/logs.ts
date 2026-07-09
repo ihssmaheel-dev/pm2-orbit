@@ -44,8 +44,10 @@ export async function registerLogRoutes(app: FastifyInstance, pipeline: Pipeline
     if (processId === null) return reply.code(400).send({ error: 'Invalid process ID' });
 
     const bridge = pipeline.bridge;
-    const buf = bridge.getLogBuffer(processId);
-    let lastSentIndex = buf.length;
+    const allBuffers = bridge.getAllLogBuffers();
+    const buf = allBuffers.get(processId);
+    // Use totalPushed counter instead of absolute index to avoid invalidation on buffer trim
+    let lastPushed = buf?.totalPushed ?? 0;
 
     reply.raw.writeHead(200, {
       'Content-Type': 'text/event-stream',
@@ -56,8 +58,10 @@ export async function registerLogRoutes(app: FastifyInstance, pipeline: Pipeline
 
     reply.raw.write('retry: 2000\n\n');
 
-    for (const e of buf) {
-      try { reply.raw.write(`data: ${JSON.stringify(e)}\n\n`); } catch { /* */ }
+    if (buf) {
+      for (const e of buf.entries) {
+        try { reply.raw.write(`data: ${JSON.stringify(e)}\n\n`); } catch { /* */ }
+      }
     }
 
     const interval = setInterval(() => {
@@ -66,14 +70,20 @@ export async function registerLogRoutes(app: FastifyInstance, pipeline: Pipeline
           clearInterval(interval);
           return;
         }
-        const current = bridge.getLogBuffer(processId);
-        if (current.length > lastSentIndex) {
-          const newEntries = current.slice(lastSentIndex);
-          lastSentIndex = current.length;
-          for (const e of newEntries) {
-            reply.raw.write(`data: ${JSON.stringify(e)}\n\n`);
+        const currentBufs = bridge.getAllLogBuffers();
+        const currentBuf = currentBufs.get(processId);
+        if (currentBuf) {
+          const count = currentBuf.totalPushed - lastPushed;
+          if (count > 0) {
+            const effectiveCount = Math.min(count, currentBuf.entries.length);
+            const start = Math.max(0, currentBuf.entries.length - effectiveCount);
+            const newEntries = currentBuf.entries.slice(start);
+            lastPushed = currentBuf.totalPushed;
+            for (const e of newEntries) {
+              reply.raw.write(`data: ${JSON.stringify(e)}\n\n`);
+            }
+            return;
           }
-          return;
         }
         reply.raw.write(': keepalive\n\n');
       } catch {

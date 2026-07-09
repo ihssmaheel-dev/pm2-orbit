@@ -1,43 +1,22 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '@/lib/api';
 import { useProcessStore } from '@/store/processes';
 import { useTheme } from '@/hooks/useTheme';
 
 export function useKeyboardShortcuts() {
-  const selectedId = useProcessStore((s) => s.selectedId);
   const select = useProcessStore((s) => s.select);
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
 
+      // Skip shortcuts when a modal/dialog is open
+      if (document.querySelector('[role="dialog"]') || document.querySelector('dialog[open]')) return;
+
       switch (e.key) {
-        case 'r':
-        case 'R':
-          if (selectedId !== null) {
-            api(`/api/processes/${selectedId}/action`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ action: 'restart' }),
-              silent: true,
-            });
-          }
-          break;
-        case 's':
-        case 'S':
-          if (selectedId !== null) {
-            api(`/api/processes/${selectedId}/action`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ action: 'stop' }),
-              silent: true,
-            });
-          }
-          break;
         case '1':
           navigate('/processes');
           break;
@@ -68,5 +47,5 @@ export function useKeyboardShortcuts() {
 
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [selectedId, select, navigate, theme, setTheme]);
+  }, [select, navigate, theme, setTheme]);
 }

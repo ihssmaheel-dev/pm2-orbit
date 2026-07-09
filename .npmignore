@@ -8,12 +8,6 @@ node_modules/
 ecosystem.config.js
 .github/
 Dockerfile
-docker-compose.yml
 .dockerignore
 .editorconfig
 .env*
-GEIST-REDESIGN.md
-PRODUCTION-PLAN.md
-NPM-PUBLISH-PLAN.md
-tasks.md
-doc.md

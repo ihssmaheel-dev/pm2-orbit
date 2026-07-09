@@ -116,6 +116,7 @@ export function createPm2Bridge() {
   const logListeners = new Set<LogListener>();
   const reconnectListeners = new Set<ReconnectListener>();
   const statusHistoryMap = new Map<number, { ts: number; status: ProcessStatus }[]>();
+  const statusChangeListeners = new Set<(pid: number, status: ProcessStatus, ts: number) => void>();
   const MAX_STATUS_HISTORY = 200;
 
   let lastEventTime = 0;
@@ -142,14 +143,17 @@ export function createPm2Bridge() {
     for (const fn of logListeners) fn(entry);
   }
 
-  function recordStatusChange(pid: number, status: ProcessStatus) {
+  function recordStatusChange(pid: number, status: ProcessStatus, ts?: number) {
+    const timestamp = ts || Date.now();
     let hist = statusHistoryMap.get(pid);
     if (!hist) {
       hist = [];
       statusHistoryMap.set(pid, hist);
     }
-    hist.push({ ts: Date.now(), status });
+    hist.push({ ts: timestamp, status });
     if (hist.length > MAX_STATUS_HISTORY) hist.splice(0, hist.length - MAX_STATUS_HISTORY);
+    // Notify listeners of status change
+    for (const fn of statusChangeListeners) fn(pid, status, timestamp);
   }
 
   function getStatusHistory(pid: number): { ts: number; status: ProcessStatus }[] {
@@ -261,7 +265,10 @@ export function createPm2Bridge() {
           lastUpdateMap.set(snap.id, now);
           // Record initial status for new processes (or processes without history)
           if (!hadEntry || !statusHistoryMap.has(snap.id)) {
-            recordStatusChange(snap.id, snap.status);
+            // Seed with true process uptime if available (so uptime bar reflects real uptime)
+            const uptimeMs = snap.uptime || 0;
+            const seedTs = uptimeMs > 0 ? Date.now() - uptimeMs : undefined;
+            recordStatusChange(snap.id, snap.status, seedTs);
           }
           // Always attach statusHistory from the map
           snap.statusHistory = getStatusHistory(snap.id);
@@ -277,13 +284,13 @@ export function createPm2Bridge() {
 
   async function reconcileStale(): Promise<void> {
     const now = Date.now();
-    const staleIds: number[] = [];
+    const staleIds = new Set<number>();
     for (const [id, lastUpdate] of lastUpdateMap) {
       if (now - lastUpdate > STALE_THRESHOLD_MS) {
-        staleIds.push(id);
+        staleIds.add(id);
       }
     }
-    if (staleIds.length === 0) return;
+    if (staleIds.size === 0) return;
 
     // Single pm2.list() call instead of N calls
     if (!pm2Module) return;
@@ -299,7 +306,7 @@ export function createPm2Bridge() {
       for (const proc of list) {
         const p = proc as any;
         const id = p.pm_id as number;
-        if (staleIds.includes(id)) {
+        if (staleIds.has(id)) {
           const snap = procToSnapshot(p);
           processCache.set(id, snap);
           lastUpdateMap.set(id, now2);
@@ -396,6 +403,10 @@ export function createPm2Bridge() {
     return snapshots;
   }
 
+  function getProcessIds(): number[] {
+    return Array.from(processCache.keys());
+  }
+
   function subscribe(fn: Listener): () => void {
     listeners.add(fn);
     return () => listeners.delete(fn);
@@ -416,6 +427,30 @@ export function createPm2Bridge() {
   function subscribeReconnect(fn: ReconnectListener): () => void {
     reconnectListeners.add(fn);
     return () => reconnectListeners.delete(fn);
+  }
+
+  function subscribeStatusChanges(fn: (pid: number, status: ProcessStatus, ts: number) => void): () => void {
+    statusChangeListeners.add(fn);
+    return () => statusChangeListeners.delete(fn);
+  }
+
+  function seedStatusHistory(pid: number, entries: { ts: number; status: ProcessStatus }[]): void {
+    let hist = statusHistoryMap.get(pid);
+    if (!hist) {
+      hist = [];
+      statusHistoryMap.set(pid, hist);
+    }
+    // Merge: keep existing entries, add new ones, sort by timestamp
+    const existing = new Set(hist.map((e) => `${e.ts}-${e.status}`));
+    for (const entry of entries) {
+      const key = `${entry.ts}-${entry.status}`;
+      if (!existing.has(key)) {
+        hist.push(entry);
+        existing.add(key);
+      }
+    }
+    hist.sort((a, b) => a.ts - b.ts);
+    if (hist.length > MAX_STATUS_HISTORY) hist.splice(0, hist.length - MAX_STATUS_HISTORY);
   }
 
   function getLogBuffer(processId: number): LogEntry[] {
@@ -440,9 +475,12 @@ export function createPm2Bridge() {
   return {
     connect,
     list,
+    getProcessIds,
     subscribe,
     subscribeLogs,
     subscribeReconnect,
+    subscribeStatusChanges,
+    seedStatusHistory,
     getLogBuffer,
     getAllLogBuffers,
     disconnect,

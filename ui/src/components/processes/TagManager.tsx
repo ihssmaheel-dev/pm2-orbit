@@ -25,6 +25,8 @@ export function TagManager({ open, onClose }: TagManagerProps) {
   const [editName, setEditName] = useState('');
   const [editColor, setEditColor] = useState('');
   const [colorPickerOpen, setColorPickerOpen] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteConfirmName, setDeleteConfirmName] = useState('');
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
@@ -44,8 +46,16 @@ export function TagManager({ open, onClose }: TagManagerProps) {
   };
 
   const handleDelete = async (id: string, name: string) => {
-    await deleteTag(id);
-    toast.success(`Tag "${name}" deleted`);
+    setDeleteConfirmId(id);
+    setDeleteConfirmName(name);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirmId) return;
+    await deleteTag(deleteConfirmId);
+    toast.success(`Tag "${deleteConfirmName}" deleted`);
+    setDeleteConfirmId(null);
+    setDeleteConfirmName('');
   };
 
   const ColorPicker = ({ value, onChange }: { value: string; onChange: (c: string) => void }) => (
@@ -187,6 +197,29 @@ export function TagManager({ open, onClose }: TagManagerProps) {
           Done
         </Button>
       </DialogFooter>
+
+      {/* Delete confirmation */}
+      {deleteConfirmId && (
+        <Dialog open={true} onClose={() => setDeleteConfirmId(null)}>
+          <DialogHeader>
+            <DialogTitle>Delete Tag</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            <p className="text-sm text-foreground">
+              Are you sure you want to delete <strong>"{deleteConfirmName}"</strong>?
+              This will remove it from all processes.
+            </p>
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDeleteConfirmId(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </Dialog>
+      )}
     </Dialog>
   );
 }

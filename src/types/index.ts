@@ -40,7 +40,7 @@ export interface SystemSnapshot {
   cpu: number;
   memory: { used: number; total: number };
   loadAvg: [number, number, number];
-  disk: { read: number; write: number };
+  disk: { read: number; write: number; used: number; total: number };
   network: { rx: number; tx: number };
   cpuCores: number;
 }
@@ -48,23 +48,35 @@ export interface SystemSnapshot {
 export interface Tick {
   ts: number;
   events: ProcessEvent[];
-  full?: ProcessSnapshot[];
-  fullSeq?: number;
+  full?: ProcessSnapshot[] | undefined;
+  fullSeq?: number | undefined;
   system: SystemSnapshot;
   type?: 'update' | 'reconnect';
   alerts?: AlertEvent[];
 }
 
+export type AlertSeverity = 'info' | 'warning' | 'critical';
+export type AlertScope = 'process' | 'system';
+export type AlertMetric = 'cpu' | 'memory' | 'restarts' | 'status' | 'systemCpu' | 'systemMemory' | 'systemLoad';
+export type NotificationChannel = 'browser' | 'webhook' | 'slack' | 'discord' | 'email';
+
 export interface AlertRule {
   id: string;
   processId?: number;
   processName?: string;
-  metric: 'cpu' | 'memory' | 'restarts' | 'status';
+  scope: AlertScope;
+  metric: AlertMetric;
   operator: '>' | '<' | '==' | '>=' | '<=';
   threshold: number;
-  duration?: number;
   enabled: boolean;
-  channels?: ('browser' | 'webhook' | 'slack' | 'discord' | 'email')[];
+  severity: AlertSeverity;
+  channels: NotificationChannel[];
+  webhookUrl?: string;
+  slackWebhook?: string;
+  discordWebhook?: string;
+  emailTo?: string;
+  cooldownMs?: number;
+  duration?: number;
 }
 
 export interface AlertEvent {
@@ -74,6 +86,7 @@ export interface AlertEvent {
   metric: string;
   value: number;
   threshold: number;
+  severity: AlertSeverity;
   message: string;
   ts: number;
 }

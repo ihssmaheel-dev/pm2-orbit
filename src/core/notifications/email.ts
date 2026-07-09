@@ -54,3 +54,7 @@ export async function sendEmail(subject: string, body: string): Promise<boolean>
 export function isEmailConfigured(): boolean {
   return !!nodemailer && !!process.env.SMTP_HOST && !!process.env.SMTP_FROM && !!process.env.SMTP_TO;
 }
+
+export function resetTransporter(): void {
+  transporter = null;
+}

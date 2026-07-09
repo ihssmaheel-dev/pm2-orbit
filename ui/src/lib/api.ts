@@ -27,9 +27,4 @@ async function api(url: string, options: ApiOptions = {}): Promise<Response> {
   return res;
 }
 
-export async function apiJson<T>(url: string, options: ApiOptions = {}): Promise<T> {
-  const res = await api(url, options);
-  return res.json();
-}
-
 export { api };

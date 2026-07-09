@@ -3,7 +3,7 @@ import { createPm2Bridge, type ProcessEvent } from './bridge';
 import { BufferStore } from './buffer';
 import { readSystem, startMetricsCollector, stopMetricsCollector } from '../system/metrics';
 import { WebSocketServer, WebSocket } from 'ws';
-import type { Tick, ProcessSnapshot } from '../../types';
+import type { Tick, ProcessSnapshot, ProcessStatus } from '../../types';
 import { createStore } from '../persistence/store';
 import { createAlertEngine } from '../alerts/engine';
 import { sendWebhook, sendSlack, sendDiscord, sendEmailNotification } from '../notifications/channels';
@@ -30,7 +30,12 @@ export function createEventPipeline() {
     const data = JSON.stringify(tick);
     for (const client of clients) {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(data);
+        try {
+          client.send(data);
+        } catch {
+          // Dead socket — clean up
+          clients.delete(client);
+        }
       }
     }
   }
@@ -212,6 +217,30 @@ export function createEventPipeline() {
   function start(): void {
     startMetricsCollector();
 
+    // Subscribe to status changes and persist them
+    bridge.subscribeStatusChanges((pid, status, ts) => {
+      if (persistence) {
+        persistence.pushStatusHistory({ ts, processId: pid, status });
+      }
+    });
+
+    // Load persisted status history synchronously and seed the bridge
+    // Uses getProcessIds() which reads from the synchronous processCache
+    if (persistence) {
+      try {
+        const processIds = bridge.getProcessIds();
+        for (const pid of processIds) {
+          const rows = persistence.getStatusHistory(pid, 168); // 7 days
+          if (rows.length > 0) {
+            const entries = rows.map((r) => ({ ts: r.ts, status: r.status as ProcessStatus }));
+            bridge.seedStatusHistory(pid, entries);
+          }
+        }
+      } catch {
+        // Ignore errors loading status history
+      }
+    }
+
     bridge.subscribeReconnect(() => {
       const reconnectTick: Tick = {
         ts: Date.now(),
@@ -253,7 +282,6 @@ export function createEventPipeline() {
 
       const now = Date.now();
       const snapshots = await bridge.list();
-      fullSeq++;
 
       for (const snap of snapshots) {
         buffer.push(snap.id, now, snap.cpu, snap.memory);
@@ -286,11 +314,18 @@ export function createEventPipeline() {
         });
       }
 
+      // Only send full snapshot every FULL_SYNC_INTERVAL
+      const needsFullSync = now - lastFullSync > FULL_SYNC_INTERVAL;
+      if (needsFullSync) {
+        lastFullSync = now;
+        fullSeq++;
+      }
+
       const tick: Tick = {
         ts: now,
         events: [],
-        full: snapshots,
-        fullSeq,
+        full: needsFullSync ? snapshots : undefined,
+        fullSeq: needsFullSync ? fullSeq : undefined,
         system,
       };
 

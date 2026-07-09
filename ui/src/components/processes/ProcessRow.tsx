@@ -32,9 +32,8 @@ const CFG: Record<ProcessStatus, { label: string; dot: string; txt: string }> =
 
 export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
   const proc = useProcessStore((s) => s.processes.get(pid));
-  const sel = useProcessStore((s) => s.selectedId);
+  const isSel = useProcessStore((s) => s.selectedId === pid);
   const select = useProcessStore((s) => s.select);
-  const isSel = sel === pid;
   const [ld, setLd] = useState<string | null>(null);
   const [tagMenuPid, setTagMenuPid] = useState<number | null>(null);
 

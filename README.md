@@ -49,7 +49,7 @@ That's it. No config files, no databases, no Docker required. Opens in your brow
 - Alert history with severity levels
 
 **Developer Experience**
-- Keyboard shortcuts: `R` restart, `S` stop, `End` scroll to bottom, `Ctrl+K` command palette
+- Keyboard shortcuts: `End` scroll to bottom, `Ctrl+K` command palette
 - Command palette for fuzzy process search and quick actions
 - Dark / Light / System theme with smooth transitions
 - Export/import settings as JSON
@@ -99,6 +99,7 @@ Examples:
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `PM2_ORBIT_PORT` | Server port | `9823` |
+| `PM2_ORBIT_HOST` | Host to bind to | `127.0.0.1` |
 | `PM2_ORBIT_TOKEN` | Bearer auth token (required for non-localhost) | — |
 | `PM2_ORBIT_LOG_BUFFER` | Max log lines per process | `2000` |
 | `LOG_LEVEL` | Logger level: `debug`, `info`, `warn`, `error` | `info` |
@@ -129,9 +130,11 @@ Notifications can be configured via environment variables **or** the Settings UI
 # Build
 docker build -t pm2-orbit .
 
-# Run (mount PM2 socket for process access)
-docker run -p 9823:9823 -v /run/pm2.sock:/run/pm2.sock pm2-orbit
+# Run
+docker run -p 9823:9823 pm2-orbit
 ```
+
+For process monitoring in Docker, you'll need to mount the PM2 socket or use a different approach (e.g., running PM2 inside the container).
 
 ---
 
@@ -174,7 +177,7 @@ PM2 Bridge
     │
     ├──► Alert Engine (rule evaluation, per-process indexed)
     │
-    ├──► SQLite Store (optional, 24h retention)
+    ├──► SQLite Store (optional, requires `npm i better-sqlite3`, 24h retention)
     │
     └──► WebSocket Broadcaster
               │
@@ -206,14 +209,16 @@ PM2 Bridge
 
 ## Security
 
-- Bearer token authentication via `PM2_ORBIT_TOKEN`
-- CORS locked to localhost by default
+- Bearer token authentication via `PM2_ORBIT_TOKEN` (required for all API routes when set)
+- CORS locked to localhost by default; explicit `CORS_ORIGINS` required for remote access
 - Rate limiting: 100 requests/minute per IP
 - WebSocket connection limiting: 5 per IP
 - Helmet security headers (XSS, CSP, HSTS)
 - Environment variables masked in UI by default
 - Process name sanitization in file paths
 - Request ID tracking for audit trails
+- Constant-time token comparison (timing-safe)
+- SSRF protection for webhook testing (DNS resolution + private IP blocking)
 
 ---
 

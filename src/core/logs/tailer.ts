@@ -110,9 +110,20 @@ export function createLogTailer(processId: number, processName: string, logPaths
     outPath = resolveLogPath('out');
     errPath = resolveLogPath('err');
     logger.debug(`[tailer] processId=${processId} name=${processName} out=${outPath} err=${errPath}`);
-    readNewLines(outPath, 'stdout');
-    readNewLines(errPath, 'stderr');
-    logger.debug(`[tailer] buffer after init: ${buffer.length} entries`);
+    // Seek to end of existing log files to avoid reading entire history
+    seekToEnd(outPath);
+    seekToEnd(errPath);
+    logger.debug(`[tailer] initialized, tailing from end of files`);
+  }
+
+  function seekToEnd(filePath: string) {
+    try {
+      if (!fs.existsSync(filePath)) return;
+      const stat = fs.statSync(filePath);
+      filePositions[filePath] = stat.size;
+    } catch {
+      // ignore
+    }
   }
 
   function poll() {

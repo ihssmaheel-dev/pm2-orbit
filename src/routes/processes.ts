@@ -24,19 +24,19 @@ export async function registerProcessRoutes(app: FastifyInstance, pipeline: Pipe
     return snapshots;
   });
 
-  app.get('/api/processes/:id/env', async (req) => {
+  app.get('/api/processes/:id/env', async (req, reply) => {
     const { id } = req.params as { id: string };
     const processId = parseIdParam(id);
-    if (processId === null) return {};
+    if (processId === null) return reply.code(400).send({ error: 'Invalid process ID' });
 
     try {
-      if (!pm2Module) return {};
+      if (!pm2Module) return reply.code(503).send({ error: 'PM2 not available' });
       return new Promise((resolve) => {
         pm2Module.list((err: Error | null, list: unknown[]) => {
-          if (err) return resolve({});
+          if (err) return resolve(reply.code(500).send({ error: 'Failed to list processes' }));
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const proc = list.find((p: any) => p.pm_id === processId);
-          if (!proc) return resolve({});
+          if (!proc) return resolve(reply.code(404).send({ error: 'Process not found' }));
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const env = (proc as any).pm2_env || {};
           const envVars: Record<string, string> = {};

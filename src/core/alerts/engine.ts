@@ -44,14 +44,25 @@ const ALERTS_DIR = path.join(
   process.env.HOME || process.env.USERPROFILE || '',
   '.pm2-orbit',
 );
-const ALERTS_FILE = path.join(ALERTS_DIR, 'alerts.json');
-const HISTORY_FILE = path.join(ALERTS_DIR, 'alerts-history.json');
 const MAX_HISTORY = 200;
 
-function loadRules(): AlertRule[] {
+export interface AlertEngineConfig {
+  dir?: string;
+}
+
+function getPaths(config?: AlertEngineConfig) {
+  const dir = config?.dir || ALERTS_DIR;
+  return {
+    dir,
+    alertsFile: path.join(dir, 'alerts.json'),
+    historyFile: path.join(dir, 'alerts-history.json'),
+  };
+}
+
+function loadRules(alertsFile: string): AlertRule[] {
   try {
-    if (fs.existsSync(ALERTS_FILE)) {
-      return JSON.parse(fs.readFileSync(ALERTS_FILE, 'utf-8'));
+    if (fs.existsSync(alertsFile)) {
+      return JSON.parse(fs.readFileSync(alertsFile, 'utf-8'));
     }
   } catch {
     // ignore
@@ -59,21 +70,21 @@ function loadRules(): AlertRule[] {
   return [];
 }
 
-function saveRules(rules: AlertRule[]): void {
+function saveRules(rules: AlertRule[], dir: string, alertsFile: string): void {
   try {
-    if (!fs.existsSync(ALERTS_DIR)) {
-      fs.mkdirSync(ALERTS_DIR, { recursive: true });
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
     }
-    fs.writeFileSync(ALERTS_FILE, JSON.stringify(rules, null, 2));
+    fs.writeFileSync(alertsFile, JSON.stringify(rules, null, 2));
   } catch {
     // ignore
   }
 }
 
-function loadHistory(): AlertEvent[] {
+function loadHistory(historyFile: string): AlertEvent[] {
   try {
-    if (fs.existsSync(HISTORY_FILE)) {
-      return JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf-8'));
+    if (fs.existsSync(historyFile)) {
+      return JSON.parse(fs.readFileSync(historyFile, 'utf-8'));
     }
   } catch {
     // ignore
@@ -81,20 +92,21 @@ function loadHistory(): AlertEvent[] {
   return [];
 }
 
-function saveHistory(history: AlertEvent[]): void {
+function saveHistory(history: AlertEvent[], dir: string, historyFile: string): void {
   try {
-    if (!fs.existsSync(ALERTS_DIR)) {
-      fs.mkdirSync(ALERTS_DIR, { recursive: true });
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
     }
-    fs.writeFileSync(HISTORY_FILE, JSON.stringify(history.slice(0, MAX_HISTORY), null, 2));
+    fs.writeFileSync(historyFile, JSON.stringify(history.slice(0, MAX_HISTORY), null, 2));
   } catch {
     // ignore
   }
 }
 
-export function createAlertEngine() {
-  let rules = loadRules();
-  let history = loadHistory();
+export function createAlertEngine(config?: AlertEngineConfig) {
+  const paths = getPaths(config);
+  let rules = loadRules(paths.alertsFile);
+  let history = loadHistory(paths.historyFile);
   const pendingEvals = new Map<number, AlertRule[]>();
   const globalRules: AlertRule[] = [];
   const lastFiredAt = new Map<string, number>();
@@ -120,19 +132,19 @@ export function createAlertEngine() {
 
   function addRule(rule: AlertRule): void {
     rules.push(rule);
-    saveRules(rules);
+    saveRules(rules, paths.dir, paths.alertsFile);
     rebuildIndex();
   }
 
   function removeRule(id: string): void {
     rules = rules.filter((r) => r.id !== id);
-    saveRules(rules);
+    saveRules(rules, paths.dir, paths.alertsFile);
     rebuildIndex();
   }
 
   function clearRules(): void {
     rules = [];
-    saveRules(rules);
+    saveRules(rules, paths.dir, paths.alertsFile);
     rebuildIndex();
     lastFiredAt.clear();
     history.length = 0;
@@ -142,7 +154,7 @@ export function createAlertEngine() {
     const rule = rules.find((r) => r.id === id);
     if (rule) {
       Object.assign(rule, updates);
-      saveRules(rules);
+      saveRules(rules, paths.dir, paths.alertsFile);
       rebuildIndex();
     }
   }
@@ -200,7 +212,7 @@ export function createAlertEngine() {
         fired.push(event);
         history.unshift(event);
         if (history.length > MAX_HISTORY) history.pop();
-        saveHistory(history);
+        saveHistory(history, paths.dir, paths.historyFile);
       }
     }
 
@@ -248,7 +260,7 @@ export function createAlertEngine() {
         fired.push(event);
         history.unshift(event);
         if (history.length > MAX_HISTORY) history.pop();
-        saveHistory(history);
+        saveHistory(history, paths.dir, paths.historyFile);
       }
     }
 
@@ -265,7 +277,7 @@ export function createAlertEngine() {
 
   function clearHistory(): void {
     history.length = 0;
-    saveHistory(history);
+    saveHistory(history, paths.dir, paths.historyFile);
   }
 
   return {

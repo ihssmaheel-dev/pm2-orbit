@@ -134,15 +134,20 @@ export async function createServer(_opts: ServerOpts) {
   app.server.on('upgrade', (req, socket, head) => {
     if (req.url === '/ws') {
       // Check WS auth if token is set
-      if (token) {
+      // Localhost connections are allowed without token (frontend served from same machine)
+      const currentToken = process.env.PM2_ORBIT_TOKEN;
+      if (currentToken) {
         const wsIp = req.socket.remoteAddress || '';
         const isLocal = wsIp === '127.0.0.1' || wsIp === '::1' || wsIp === '::ffff:127.0.0.1';
         if (!isLocal) {
-          const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
-          const queryToken = url.searchParams.get('token');
           const authHeader = req.headers.authorization;
           const headerToken = authHeader ? authHeader.replace(/^Bearer\s+/i, '') : null;
-          if (queryToken !== token && headerToken !== token) {
+          const provided = headerToken || '';
+          const valid = provided.length === currentToken.length && crypto.timingSafeEqual(
+            Buffer.from(provided, 'utf8'),
+            Buffer.from(currentToken, 'utf8'),
+          );
+          if (!valid) {
             socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
             socket.destroy();
             return;
@@ -170,7 +175,7 @@ export async function createServer(_opts: ServerOpts) {
             fullSeq: 1,
             system: require('./core/system/metrics').readSystem(),
           }));
-        });
+        }).catch(() => {});
 
         const decrement = () => {
           pipeline.clients.delete(ws);
@@ -212,13 +217,22 @@ export async function createServer(_opts: ServerOpts) {
       logger.warn('better-sqlite3 native bindings not available — using in-memory history');
       return; // Don't exit, continue without SQLite
     }
+    // Transient IO/DB errors are recoverable — log and continue
+    if (err.message && (
+      err.message.includes('SQLITE') ||
+      err.message.includes('EBUSY') ||
+      err.message.includes('ENOSPC') ||
+      err.message.includes('EACCES')
+    )) {
+      logger.warn(`Transient error (recoverable): ${err.message}`);
+      return;
+    }
     logger.error('Uncaught exception:', err);
     process.exit(1);
   });
 
   process.on('unhandledRejection', (reason) => {
-    logger.error('Unhandled rejection:', reason);
-    process.exit(1);
+    logger.warn('Unhandled rejection (non-fatal):', reason);
   });
 
   return app;
@@ -226,8 +240,9 @@ export async function createServer(_opts: ServerOpts) {
 
 if (require.main === module) {
   const port = parseInt(process.env.PM2_ORBIT_PORT || '9823', 10);
+  const host = process.env.PM2_ORBIT_HOST || '127.0.0.1';
   createServer({ port })
-    .then((app) => app.listen({ port, host: '127.0.0.1' }))
+    .then((app) => app.listen({ port, host }))
     .catch((err) => {
       logger.error('Failed to start:', err.message);
       process.exit(1);

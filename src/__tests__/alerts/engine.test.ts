@@ -1,12 +1,20 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createAlertEngine, type AlertRule } from '../../core/alerts/engine';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 
 describe('AlertEngine', () => {
   let engine: ReturnType<typeof createAlertEngine>;
+  let tmpDir: string;
 
   beforeEach(() => {
-    engine = createAlertEngine();
-    engine.clearRules();
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pm2-orbit-test-'));
+    engine = createAlertEngine({ dir: tmpDir });
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
   describe('addRule / removeRule', () => {
@@ -43,6 +51,24 @@ describe('AlertEngine', () => {
       engine.addRule(rule);
       engine.removeRule('test-1');
       expect(engine.getRules()).toHaveLength(0);
+    });
+
+    it('should persist rules to disk', () => {
+      const rule: AlertRule = {
+        id: 'test-1',
+        scope: 'process',
+        metric: 'cpu',
+        operator: '>',
+        threshold: 80,
+        severity: 'warning',
+        enabled: true,
+        channels: ['browser'],
+      };
+
+      engine.addRule(rule);
+      const data = JSON.parse(fs.readFileSync(path.join(tmpDir, 'alerts.json'), 'utf-8'));
+      expect(data).toHaveLength(1);
+      expect(data[0].id).toBe('test-1');
     });
   });
 
@@ -96,11 +122,11 @@ describe('AlertEngine', () => {
       };
 
       engine.addRule(rule);
-      
+
       // First fire should work
       const fired1 = engine.evaluate(0, 'test-process', { cpu: 90 });
       expect(fired1).toHaveLength(1);
-      
+
       // Second fire immediately should be blocked by cooldown
       const fired2 = engine.evaluate(0, 'test-process', { cpu: 95 });
       expect(fired2).toHaveLength(0);
@@ -176,10 +202,30 @@ describe('AlertEngine', () => {
 
       engine.addRule(rule);
       engine.evaluate(0, 'test-process', { cpu: 90 });
-      
+
       const history = engine.getHistory();
       expect(history.events).toHaveLength(1);
-      expect(history.events[0].message).toContain('cpu > 80');
+      expect(history.events[0].message).toContain('CPU reached 90.0');
+    });
+
+    it('should persist history to disk', () => {
+      const rule: AlertRule = {
+        id: 'test-1',
+        scope: 'process',
+        metric: 'cpu',
+        operator: '>',
+        threshold: 80,
+        severity: 'warning',
+        enabled: true,
+        channels: ['browser'],
+      };
+
+      engine.addRule(rule);
+      engine.evaluate(0, 'test-process', { cpu: 90 });
+
+      const data = JSON.parse(fs.readFileSync(path.join(tmpDir, 'alerts-history.json'), 'utf-8'));
+      expect(data).toHaveLength(1);
+      expect(data[0].message).toContain('CPU reached 90.0');
     });
   });
 });

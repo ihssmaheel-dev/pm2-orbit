@@ -7,11 +7,11 @@ dist-ui/
 .DS_Store
 coverage/
 .vite/
-tasks.md
-doc.md
-STATUS.md
 test-servers/
 ecosystem.config.js
-PRODUCTION-PLAN.md
-NPM-PUBLISH-PLAN.md
 .mimocode/
+NPM-PUBLISH-PLAN.md
+PRODUCTION-PLAN.md
+STATUS.md
+doc.md
+tasks.md
