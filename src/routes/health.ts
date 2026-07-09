@@ -55,6 +55,7 @@ export async function registerHealthRoutes(app: FastifyInstance, pipeline: Pipel
       processes: (await pipeline.bridge.list()).length,
       nodeVersion: process.version,
       pm2Version,
+      self: { cpu: 0, memory: process.memoryUsage().rss },
     };
   });
 

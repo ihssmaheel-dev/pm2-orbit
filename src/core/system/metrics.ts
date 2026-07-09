@@ -8,10 +8,26 @@ export interface SystemSnapshot {
   disk: { read: number; write: number; used: number; total: number };
   network: { rx: number; tx: number };
   cpuCores: number;
+  self: { cpu: number; memory: number };
 }
 
 let prevIdle = 0;
 let prevTotal = 0;
+
+let prevSelfUsage = process.cpuUsage();
+let prevSelfTime = Date.now();
+
+function computeSelfMetrics(): { cpu: number; memory: number } {
+  const now = Date.now();
+  const elapsedMs = Math.max(1, now - prevSelfTime);
+  const usage = process.cpuUsage(prevSelfUsage);
+  prevSelfUsage = usage;
+  prevSelfTime = now;
+  const micros = usage.user + usage.system;
+  const cpuPercent = Math.round((micros / (elapsedMs * 1000)) * 1000) / 10;
+  const memory = process.memoryUsage().rss;
+  return { cpu: Math.max(0, cpuPercent), memory };
+}
 
 let diskCache = { read: 0, write: 0 };
 let diskSpaceCache = { used: 0, total: 0 };
@@ -184,5 +200,6 @@ function computeSystemSnapshot(): SystemSnapshot {
     disk: { ...diskCache, ...diskSpaceCache },
     network: networkCache,
     cpuCores: cpus.length,
+    self: computeSelfMetrics(),
   };
 }

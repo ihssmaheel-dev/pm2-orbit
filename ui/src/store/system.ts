@@ -8,6 +8,7 @@ const defaultSystem: SystemSnapshot = {
   disk: { read: 0, write: 0, used: 0, total: 0 },
   network: { rx: 0, tx: 0 },
   cpuCores: 0,
+  self: { cpu: 0, memory: 0 },
 };
 
 interface SystemStore {

@@ -6,4 +6,5 @@ export interface SystemSnapshot {
   disk: { read: number; write: number; used: number; total: number };
   network: { rx: number; tx: number };
   cpuCores: number;
+  self: { cpu: number; memory: number };
 }
