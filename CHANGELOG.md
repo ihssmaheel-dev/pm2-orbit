@@ -9,137 +9,166 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 - **Env API called infinitely** — useEffect dependency changed from process object reference to process.id, preventing re-fetch on every 2s full sync tick
 
+## [1.9.1] - 2026-07-08
+
 ### Fixed
-- **Uptime bar shows no data** — Processes now record their initial status on first discovery, so the uptime bar shows data immediately instead of requiring a status change event
+- **Uptime bar shows no data** — Processes now record their initial status on first discovery, so the uptime bar shows data immediately
+
+## [1.9.0] - 2026-07-08
 
 ### Added
 - **Uptime/downtime visualization** — Color-coded horizontal timeline bar showing process status history (green=online, gray=stopped, red=errored, yellow=launching)
-- **Uptime percentage** — Calculated from status history, color-coded (green ≥99%, yellow ≥95%, red <95%)
+- **Uptime percentage** — Calculated from status history, color-coded (green >=99%, yellow >=95%, red <95%)
 - **Hover tooltips** — Hover any segment to see status, start time, and duration
 - **Status legend** — Color key below the bar
-- **History page integration** — UptimeBar shown below CPU/Memory charts for selected process
-- **ProcessDetail integration** — UptimeBar shown in Overview tab between stats and notes
-- **Status history tracking** — Server tracks status changes in a 200-entry ring buffer per process, included in snapshots
+- **Status history tracking** — Server tracks status changes in a 200-entry ring buffer per process
+
+## [1.8.0] - 2026-07-08
 
 ### Added
 - **Process notes** — Add text annotations to processes explaining what they do and who owns them
 - **Note persistence** — Notes saved to `~/.pm2-orbit/notes.json`, survive server restarts
-- **Note indicator in process table** — FileText icon appears next to process names with notes (hover for preview)
+- **Note indicator in process table** — FileText icon appears next to process names with notes
 - **Note editor in detail panel** — Click-to-edit textarea in the Overview tab with save/cancel/delete
 - **Note API** — `GET /api/notes`, `PUT /api/notes/:processName`, `DELETE /api/notes/:processName`
-- **Notes merge into snapshots** — Server enriches notes into process data on full sync, client re-applies locally after each sync
+
+## [1.7.4] - 2026-07-08
 
 ### Fixed
-- **Service worker crash** — SW catch handler now always returns a valid Response object instead of undefined. Cache version bumped to v2 to force update on clients
+- **Service worker crash** — SW catch handler now always returns a valid Response object. Cache version bumped to v2
+
+## [1.7.3] - 2026-07-08
 
 ### Added
-- **User-friendly startup banner** — Shows auth status with masked token, LAN access URL, security warnings for unprotected remote access, and how to pass the token
+- **User-friendly startup banner** — Shows auth status with masked token, LAN access URL, security warnings, and how to pass the token
+
+## [1.7.2] - 2026-07-08
 
 ### Fixed
-- **Auth blocks localhost connections** — HTTP and WebSocket auth now allow connections from 127.0.0.1/::1 without token, so the app works locally with PM2_ORBIT_TOKEN set
+- **Auth blocks localhost connections** — HTTP and WebSocket auth now allow connections from 127.0.0.1/::1 without token
+
+## [1.7.1] - 2026-07-08
 
 ### Fixed
-- **Auth blocks static assets** — Exempted /assets/*, favicon, sw.js, manifest.json, and .well-known from token auth so the app loads in production with token enabled
-- **Dev mode auth** — Auth hook skipped when running via Vite dev server (dist-ui not built)
+- **Auth blocks static assets** — Exempted /assets/*, favicon, sw.js, manifest.json, and .well-known from token auth
+- **Dev mode auth** — Auth hook skipped when running via Vite dev server
+
+## [1.7.0] - 2026-07-06
 
 ### Security
-- **Auth token enforcement** — Auth hook now validates Bearer token and query param when PM2_ORBIT_TOKEN is set. WebSocket upgrade also checks token
-- **SSRF protection** — Test-webhook validates URL protocol (http/https only), blocks internal/private IPs and localhost, adds 10s timeout
-- **PM2 action timeout** — Actions (restart/stop/start/delete) time out after 15s instead of hanging forever
+- **Auth token enforcement** — Auth hook validates Bearer token and query param when PM2_ORBIT_TOKEN is set. WebSocket upgrade also checks token
+- **SSRF protection** — Test-webhook validates URL protocol, blocks internal/private IPs, adds 10s timeout
+- **PM2 action timeout** — Actions (restart/stop/start/delete) time out after 15s
 - **Notification webhook timeout** — All webhook/Slack/Discord fetch calls have 10s timeout
 
 ### Fixed
-- **Duplicate Cooldown/Duration fields** — Removed second set of fields in AlertForm that rendered the same inputs twice
+- **Duplicate Cooldown/Duration fields** — Removed second set of fields in AlertForm
 - **AlertHistory index keys** — Changed from `key={i}` to `key={ts-i}` for stable rendering
 
-### Fixed
-- **Infinite tag API calls** — Tag fetch now runs exactly once on startup via ref guard. Tag assignments are re-applied to process snapshots after each full sync using refs to prevent dependency cascade loops
+## [1.6.5] - 2026-07-06
 
 ### Fixed
-- **Infinite tag API calls** — Tag definitions and assignments are fetched once on startup, then stored assignments are re-applied to process snapshots locally after each full sync (zero API calls)
+- **Infinite tag API calls** — Tag fetch runs exactly once on startup via ref guard, then re-applies locally after each full sync
+
+## [1.6.4] - 2026-07-06
 
 ### Fixed
-- **Tags persist on refresh** — Client now fetches tag assignments from server and merges them into process snapshots locally, eliminating the server-side enrichment race condition
-- **fetchAll** fetches both tag definitions and assignments, then applies tags to every process in the store
+- **Duplicate tag API calls** — Single fetch point in useWebSocket, removed redundant calls from ProcessTable and TagManager
+
+## [1.6.3] - 2026-07-06
 
 ### Fixed
-- **Tags disappear on refresh** — fetchTags now runs on WebSocket full sync, ensuring tag definitions are always loaded
-- **Color picker overflow** — Replaced absolute-positioned dropdown with inline grid that stays within dialog bounds
-- **Tag assignment menu clipping** — Fixed overflow-hidden on name cell so dropdown renders properly
-- **Immediate tag reflection** — Tags now update instantly in UI after assignment
+- **Tags persist on refresh** — Client fetches tag assignments from server and merges them into process snapshots locally, eliminating server enrichment race condition
+
+## [1.6.2] - 2026-07-06
 
 ### Fixed
-- **Tag assignment not reflecting in UI** — Tags now update instantly in the process store after assignment, no 5s wait for full sync
-- **Tag filter not working** — Fixed process snapshot merging that was losing tags on delta updates
-- **Tag assignment menu clipped** — Removed overflow-hidden from name cell so dropdown renders properly
-- **TagManager UI** — Redesigned with inline color picker, cleaner layout, toast feedback on CRUD
+- **Tags disappear on refresh** — fetchTags runs on WebSocket full sync
+- **Color picker overflow** — Replaced absolute-positioned dropdown with inline grid
+- **Tag assignment menu clipping** — Removed overflow-hidden from name cell
+- **Immediate tag reflection** — Tags update instantly in UI after assignment
+
+## [1.6.1] - 2026-07-06
+
+### Fixed
+- **Tag assignment not reflecting in UI** — Tags update instantly in process store after assignment
+- **Tag filter not working** — Fixed process snapshot merging losing tags on delta updates
+- **TagManager UI** — Redesigned with inline color picker, cleaner layout
 
 ### Changed
-- Tag assignment menu stays open after toggling a tag (allows assigning multiple tags at once)
-- Up to 3 tag color dots shown on process name (was 2)
+- Tag assignment menu stays open after toggling (allows multiple assignments)
+- Up to 3 tag color dots shown on process name
+
+## [1.6.0] - 2026-07-06
 
 ### Added
 - **Process tagging** — Create color-coded tags, assign to processes, filter by tag
 - **Tag management UI** — Create/edit/delete tags with 8-color palette picker
-- **Tag filter chips** — Click tag chips in the process table toolbar to filter
-- **Tag badges on process rows** — Color dots next to process names, hover tag icon to assign
+- **Tag filter chips** — Click tag chips in process table toolbar to filter
 - **Tag-aware bulk actions** — Restart/Stop/Start/Delete All target only filtered processes when tag filter is active
-- **Tag persistence** — Tags and assignments stored in `~/.pm2-orbit/tags.json`, survives restarts
+- **Tag persistence** — Tags and assignments stored in `~/.pm2-orbit/tags.json`
+
+## [1.5.4] - 2026-07-06
 
 ### Fixed
-- **Helmet headers blocking remote access** — Disabled CSP, COEP, COOP, CORP, and Origin-Agent-Cluster headers that caused console errors and blocked inline scripts when accessing from non-localhost origins
+- **Helmet headers blocking remote access** — Disabled CSP, COEP, COOP, CORP, and Origin-Agent-Cluster headers for remote access
+
+## [1.5.3] - 2026-07-05
 
 ### Fixed
-- **Logs repeating on reconnect** — SSE no longer dumps full buffer on connect. Initial history loaded via REST endpoint, SSE only streams new entries.
+- **Logs repeating on reconnect** — SSE no longer dumps full buffer on connect
+
+## [1.5.2] - 2026-07-05
 
 ### Fixed
-- **Processes vanish on restart** — Removed exit-based cache eviction from bus handler (exit fires on restart, not just delete). Delete action now emits remove event directly after PM2 confirms deletion.
+- **Processes vanish on restart** — Removed exit-based cache eviction. Delete action now emits remove event directly
+
+## [1.5.0] - 2026-07-05
 
 ### Fixed
-- **Delete All shows wrong count** — Confirm dialog now shows actual process count, not filtered count
-- **Delete All 10s UI delay** — Bridge now emits 'remove' event on process exit, UI updates instantly
-- **Start action calls restart()** — Fixed to use pm2.start() for stopped processes
-- **No progress indicator on bulk ops** — Buttons now show "done/total" counter with spinning icon during operations
+- **Delete All shows wrong count** — Confirm dialog shows actual process count
+- **Delete All 10s UI delay** — Bridge emits 'remove' event on process exit
+- **Start action calls restart()** — Fixed to use pm2.start()
+- **No progress indicator on bulk ops** — Buttons show "done/total" counter with spinning icon
 
 ## [1.4.5] - 2026-07-05
 
 ### Fixed
-- **Logs appearing twice** — Removed redundant PM2 bus wildcard listener that caused every log entry to be processed twice
-- **SSE diff stall after buffer trim** — Capped effective count to prevent re-sending entire buffer when `totalPushed` exceeds buffer length
-- **Auto-scroll on process select** — Logs now reliably scroll to bottom when clicking a process (100ms delay for DOM render)
+- **Logs appearing twice** — Removed redundant PM2 bus wildcard listener
+- **SSE diff stall after buffer trim** — Capped effective count to prevent re-sending entire buffer
+- **Auto-scroll on process select** — Logs reliably scroll to bottom (100ms delay)
 
 ### Changed
-- Removed unused REST `/api/logs/history` endpoint (SSE handles all streaming)
-- Removed `seenIds` dedup set (no longer needed without double-processing)
+- Removed unused REST `/api/logs/history` endpoint
 
 ## [1.4.1] - 2026-07-04
 
 ### Fixed
 - **Status metric never fires** — Pipeline now passes process status to alert evaluation
-- **PUT update has zero validation** — Added field type and value validation on alert rule updates
-- **processName not sent on edit** — AlertForm now includes process name in edit requests
+- **PUT update has zero validation** — Added field type and value validation
+- **processName not sent on edit** — AlertForm includes process name in edit requests
 - **Clear History only clears client state** — Added `DELETE /api/alerts/history` server endpoint
 
 ### Added
-- **Alert duration evaluation** — Sustained condition check: alerts only fire after condition holds for N seconds
-- **Cooldown field in UI** — Configurable cooldown per rule (default 60s)
-- **Duration field in UI** — Configurable sustained duration per rule
-- **History persistence to disk** — Alert history saved to `~/.pm2-orbit/alerts-history.json`, survives restarts
-- **History cap 200** — Increased from 50 to 200 events with `truncated` flag in API response
-- **Monotonic log IDs** — Each log entry gets unique ID for SSE diff stability and React key uniqueness
+- **Alert duration evaluation** — Sustained condition check
+- **Cooldown field in UI** — Configurable per rule
+- **Duration field in UI** — Configurable per rule
+- **History persistence to disk** — Alert history saved to `~/.pm2-orbit/alerts-history.json`
+- **History cap 200** — Increased from 50 with `truncated` flag
+- **Monotonic log IDs** — Unique ID per log entry for SSE diff stability
 
 ## [1.3.3] - 2026-07-04
 
 ### Fixed
-- **SSE diff stall** — Replaced buffer length tracking with monotonic counter to prevent log stream from stalling after buffer trim
-- **React key collisions** — Added unique monotonic IDs to log entries to prevent garbled display at high throughput
-- **Auto-scroll on process select** — Logs now scroll to bottom when selecting a process
-- **Virtualizer key stability** — Removed index from React keys to prevent unnecessary remounts
+- **SSE diff stall** — Monotonic counter instead of buffer length tracking
+- **React key collisions** — Unique monotonic IDs prevent garbled display
+- **Auto-scroll on process select** — Logs scroll to bottom
+- **Virtualizer key stability** — Removed index from React keys
 
 ### Changed
-- Log buffer reduced to 1000 per process for stable virtualizer rendering
+- Log buffer reduced to 1000 per process
 - Scroll handler throttled via requestAnimationFrame
-- SSE errors now logged instead of silently swallowed
+- SSE errors logged instead of silently swallowed
 
 ## [1.3.2] - 2026-07-04
 
@@ -155,141 +184,80 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [1.3.1] - 2026-07-03
 
 ### Fixed
-- Removed better-sqlite3 from dependencies (requires native compilation without Python)
-- Server now uses in-memory history fallback gracefully
-- Bin script no longer tries to auto-install better-sqlite3
-- Store catches require errors properly
+- Removed better-sqlite3 from dependencies (requires native compilation)
+- Server uses in-memory history fallback gracefully
 
 ### Changed
-- System fonts instead of self-hosted Exo/JetBrains Mono (smaller package)
-- Moved pm2 to peerDependencies (skips ~100 packages on install)
-- Package size reduced to 731 KB packed, 466 packages
+- System fonts instead of self-hosted Exo/JetBrains Mono
+- Moved pm2 to peerDependencies
+- Package size reduced to 731 KB packed
 
 ## [1.3.0] - 2026-07-03
 
 ### Added
 - Alert rule editing with pre-filled form and server persistence
-- Alert rule enable/disable toggle in table
-- Scale controls dialog for cluster-mode processes
-- Process-specific alert rules (target individual processes)
-- Disk usage percentage in system metrics cards
-- History retention and log buffer size settings in UI
+- Alert rule enable/disable toggle
+- Scale controls for cluster-mode processes
+- Process-specific alert rules
+- Disk usage percentage in system cards
 - CSV export for process list
-- Real-time chart updates via WebSocket system metrics
-- Test suite with 28 unit tests (alert engine, buffer, validation)
-- Alert cooldown (60s) to prevent notification spam
-- Alert severity levels (info, warning, critical)
+- Real-time chart updates via WebSocket
+- Alert cooldown (60s) and severity levels
 - Aggregate system resource alerts
-- WebSocket authentication support
+- PWA support
+- Command palette (Ctrl+K)
+- Keyboard shortcuts
 - API documentation
-- CHANGELOG.md
 
 ### Fixed
-- Alert rule editing now persists to server (was only local state)
-- Dialog button text changes to "Update Rule" when editing
-- X-axis removed from charts (Now/Peak stats in header suffice)
-- Chart real-time data debouncing prevents duplicate/zigzag lines
-- Alert evaluation in 2s tick interval (was missing system alerts)
-- Consistent headers across Logs, Alerts, History, Settings pages
-- Alert action buttons always visible (no hover required)
-- History table redesigned with wider threshold column
-- Duplicate code cleanup in History page
+- Alert rule editing now persists to server
+- X-axis removed from charts
+- Chart real-time data debouncing
+- Alert evaluation in 2s tick interval
+- Consistent headers across pages
+- ProcessRow re-render cascade (60% fewer re-renders)
+- PowerShell execSync blocking event loop
+- PM2 stale reconciliation (single IPC call)
 
 ### Changed
-- Removed auto-token auth system (was causing 401 errors)
-- Reverted to token-in-Settings approach for auth
-
-### Added
-- **PWA support** — Install PM2 Orbit as a standalone app from your browser
-- **Alert severity levels** — Info, Warning, Critical with visual indicators
-- **Aggregate system alerts** — Alert on total CPU, memory, load (not just per-process)
-- **Webhook test button** — Verify Slack, Discord, and webhook URLs before saving
-- **Alert cooldown** — 60-second cooldown per rule to prevent notification spam
-- **PM2 reconnect notification** — Toast when daemon recovers from disconnection
-- **Search persistence** — Process search query saved across sessions
-- **Export/import settings** — Backup and restore configuration as JSON
-- **Responsive layout** — Mobile-friendly table with hidden columns on small screens
-- **Toast notifications** — Feedback on all process actions (restart, stop, start, delete)
-- **Keyboard navigation** — Arrow keys, j/k, Enter in process table
-- **Skip navigation** — Accessible skip-to-content link for keyboard users
-- **Live region** — Screen reader announcements for connection status
-- **ARIA roles** — Tabs, Dialog, and interactive components
-- **Focus visible styles** — Clear keyboard focus indicators
-- **Theme transition** — Smooth 150ms color transition on theme switch
-- **Meta tags** — Open Graph and Twitter card metadata
-- **PR template** — GitHub pull request checklist
-- **API documentation** — Complete REST and WebSocket reference
-- **CHANGELOG.md** — Version history documentation
-
-### Fixed
-- **ProcessRow re-render cascade** — 60% fewer re-renders via shallow comparison
-- **PowerShell execSync** — Async execution prevents 3s event loop freezes on Windows
-- **PM2 stale reconciliation** — Single IPC call instead of N parallel calls
-- **Log buffer memory leak** — Cleaned up for removed processes
-- **Fastify 5 compatibility** — All plugins upgraded to v9+
-- **Button visibility** — Brighter text and better hover states
-
-### Changed
-- SQLite WAL checkpoint every 50 flushes for better performance
-- Responsive breakpoints for mobile/tablet layouts
-- Notification bell now navigates to alerts history
+- Removed auto-token auth system
+- SQLite WAL checkpoint every 50 flushes
 
 ## [1.0.6] - 2026-07-03
 
 ### Added
-- Alert cooldown (60s default) to prevent notification spam
-- PM2 reconnect toast notification when daemon recovers
-- Webhook test button in Settings for Slack, Discord, and generic webhooks
-- Search query persistence across sessions (localStorage)
-- Alert severity levels (info, warning, critical)
-- Aggregate system resource alerts (CPU, memory, load)
-- ARIA roles on Tabs, Dialog components
-- Keyboard navigation in process table (Arrow keys, j/k, Enter)
-- Focus visible styles for accessibility
-- Skip navigation link for keyboard users
-- Live region for connection status announcements
-- Smooth color transitions for process status changes
-- Toast notifications for all process actions
-- Theme CSS transition (150ms)
-- Open Graph and Twitter card meta tags
-- PR template
-- .dockerignore
-- SQLite WAL checkpoint every 50 flushes
+- Alert cooldown, severity levels, aggregate alerts
+- Webhook test button in Settings
+- Search query persistence
+- Toast notifications for process actions
+- ARIA roles, keyboard navigation, focus styles
 
 ### Fixed
-- ProcessRow re-render cascade (60% fewer re-renders)
-- PowerShell execSync blocking event loop on Windows
-- PM2 stale process reconciliation (single IPC call instead of N)
-- Log buffer memory leak for removed processes
-- Button text visibility in process table
-
-### Changed
-- Upgraded all Fastify plugins to v9+ for Fastify 5 compatibility
-- Responsive breakpoints for mobile/tablet layouts
+- ProcessRow re-render cascade
+- PowerShell execSync blocking event loop
+- PM2 stale reconciliation
+- Log buffer memory leak
 
 ## [1.0.5] - 2026-07-02
 
 ### Added
-- PWA support — installable as standalone app
+- PWA support
 - Service worker for offline static asset caching
-- GitHub logo link in header
-- Notification bell navigates to alerts history
 
 ## [1.0.4] - 2026-07-02
 
 ### Fixed
-- Updated all Fastify plugins for Fastify 5 compatibility
-- Regenerated lockfile with correct dependency versions
+- Fastify 5 plugin compatibility
 
 ## [1.0.3] - 2026-07-02
 
 ### Fixed
-- Rebuilt with @fastify/helmet v13 for Fastify 5
+- @fastify/helmet v13 rebuild
 
 ## [1.0.2] - 2026-07-02
 
 ### Fixed
-- Upgraded @fastify/helmet to v13 for Fastify 5 compatibility
+- @fastify/helmet v13 upgrade
 
 ## [1.0.1] - 2026-07-02
 
@@ -302,13 +270,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Features
 - Event-driven PM2 monitoring via `pm2.launchBus()`
 - Real-time process table with virtual scrolling (1000+ processes)
-- Per-process CPU/memory sparklines with 120-point history
+- Per-process CPU/memory sparklines
 - Live log viewer with ANSI stripping and regex search
 - System metrics: CPU, memory, load, network, disk I/O
 - Historical charts with 1h / 6h / 24h time ranges
-- Alert engine with multi-channel notifications (Slack, Discord, webhook, email)
+- Alert engine with multi-channel notifications
 - Dark / Light / System theme
-- Command palette (Ctrl+K)
-- Keyboard shortcuts
+- Command palette, keyboard shortcuts
 - Docker support
 - Export/import settings
