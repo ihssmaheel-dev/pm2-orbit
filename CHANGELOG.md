@@ -4,6 +4,19 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.11.1] - 2026-07-09
+
+### Fixed
+- **Self CPU metrics inflated** — `prevSelfUsage` was captured at module load time, causing first delta to include all CPU since server start. Now uses lazy initialization with baseline established on first call
+- **Self CPU precision** — Switched from `Date.now()` to `performance.now()` for sub-ms accuracy; explicit delta calculation instead of implicit `process.cpuUsage(prev)`
+- **Uptime bar disappears on refresh** — Status history now seeded from persistence in `enrichTags` on first encounter per process; initial WebSocket snapshot includes `statusHistory`
+- **Uptime bar appears late** — Status history loaded synchronously via `getProcessIds()` instead of async `bridge.list()`; `seededPids` Set prevents redundant disk reads
+
+### Added
+- **Self metrics in StatusBar** — Footer now shows PM2 Orbit's own CPU% and memory (RSS), updated live every 2s via WebSocket
+- **Self metrics in health endpoint** — `/api/health` returns `self: { cpu, memory }` for disconnected fallback
+- **SystemSnapshot.self type** — Added `self: { cpu: number; memory: number }` to backend and frontend types
+
 ## [1.11.0] - 2026-07-09
 
 ### Security
