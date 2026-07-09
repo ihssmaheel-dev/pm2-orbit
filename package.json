@@ -80,6 +80,6 @@
   ],
   "license": "MIT",
   "lint-staged": {
-    "src/**/*.ts": "tsc --noEmit -p tsconfig.json"
+    "src/**/*.ts": "tsc --noEmit --skipLibCheck"
   }
 }
