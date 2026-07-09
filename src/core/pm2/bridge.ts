@@ -221,8 +221,13 @@ export function createPm2Bridge() {
         const proc = list.find((p: any) => p.pm_id === id);
         if (proc) {
           const snap = procToSnapshot(proc);
+          const existing = processCache.get(id);
+          if (existing?.statusHistory) {
+            snap.statusHistory = existing.statusHistory;
+          }
           processCache.set(id, snap);
           lastUpdateMap.set(id, Date.now());
+          snap.statusHistory = getStatusHistory(id);
         }
         resolve();
       });
@@ -247,12 +252,19 @@ export function createPm2Bridge() {
         const snapshots = list.map((proc) => {
           const snap = procToSnapshot(proc);
           const hadEntry = processCache.has(snap.id);
+          // Preserve existing statusHistory from previous cache entry
+          const existing = processCache.get(snap.id);
+          if (existing?.statusHistory) {
+            snap.statusHistory = existing.statusHistory;
+          }
           processCache.set(snap.id, snap);
           lastUpdateMap.set(snap.id, now);
           // Record initial status for new processes (or processes without history)
           if (!hadEntry || !statusHistoryMap.has(snap.id)) {
             recordStatusChange(snap.id, snap.status);
           }
+          // Always attach statusHistory from the map
+          snap.statusHistory = getStatusHistory(snap.id);
           return snap;
         });
         resolve(snapshots);
