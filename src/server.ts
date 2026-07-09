@@ -168,6 +168,10 @@ export async function createServer(_opts: ServerOpts) {
         pipeline.clients.add(ws);
 
         pipeline.bridge.list().then((snapshots) => {
+          // Attach status history to each snapshot
+          for (const snap of snapshots) {
+            snap.statusHistory = pipeline.bridge.getStatusHistory(snap.id);
+          }
           ws.send(JSON.stringify({
             ts: Date.now(),
             events: [],

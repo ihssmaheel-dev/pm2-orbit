@@ -161,7 +161,27 @@ export function createEventPipeline() {
     }
   }
 
+  const seededPids = new Set<number>();
+
   function enrichTags(snapshots: ProcessSnapshot[]): void {
+    // Seed status history from persistence on first encounter
+    if (persistence) {
+      for (const snap of snapshots) {
+        if (!seededPids.has(snap.id)) {
+          seededPids.add(snap.id);
+          try {
+            const rows = persistence.getStatusHistory(snap.id, 168); // 7 days
+            if (rows.length > 0) {
+              const entries = rows.map((r) => ({ ts: r.ts, status: r.status as ProcessStatus }));
+              bridge.seedStatusHistory(snap.id, entries);
+            }
+          } catch {
+            // Ignore errors
+          }
+        }
+      }
+    }
+
     for (const snap of snapshots) {
       snap.tags = getTagsForProcess(snap.name);
       const note = getNote(snap.name);
@@ -224,24 +244,25 @@ export function createEventPipeline() {
       }
     });
 
-    // Load persisted status history synchronously and seed the bridge
-    // Uses getProcessIds() which reads from the synchronous processCache
-    if (persistence) {
-      try {
-        const processIds = bridge.getProcessIds();
-        for (const pid of processIds) {
-          const rows = persistence.getStatusHistory(pid, 168); // 7 days
-          if (rows.length > 0) {
-            const entries = rows.map((r) => ({ ts: r.ts, status: r.status as ProcessStatus }));
-            bridge.seedStatusHistory(pid, entries);
-          }
-        }
-      } catch {
-        // Ignore errors loading status history
-      }
-    }
-
+    // Load persisted status history after bridge connects and populates processCache
+    // The bridge.subscribe callback fires when events arrive, which means the cache is populated
     bridge.subscribeReconnect(() => {
+      // Re-load status history after reconnect
+      if (persistence) {
+        try {
+          const processIds = bridge.getProcessIds();
+          for (const pid of processIds) {
+            const rows = persistence.getStatusHistory(pid, 168); // 7 days
+            if (rows.length > 0) {
+              const entries = rows.map((r) => ({ ts: r.ts, status: r.status as ProcessStatus }));
+              bridge.seedStatusHistory(pid, entries);
+            }
+          }
+        } catch {
+          // Ignore errors loading status history
+        }
+      }
+
       const reconnectTick: Tick = {
         ts: Date.now(),
         events: [],
