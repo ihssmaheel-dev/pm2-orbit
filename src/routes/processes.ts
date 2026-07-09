@@ -107,7 +107,7 @@ export async function registerProcessRoutes(app: FastifyInstance, pipeline: Pipe
       const actionFn = {
         restart: (cb: (err: Error | null) => void) => pm2Module.restart(processId, cb),
         stop: (cb: (err: Error | null) => void) => pm2Module.stop(processId, cb),
-        start: (cb: (err: Error | null) => void) => pm2Module.start(processId, cb),
+        start: (cb: (err: Error | null) => void) => pm2Module.restart(processId, cb),
         reload: (cb: (err: Error | null) => void) => pm2Module.reload(processId, cb),
         delete: (cb: (err: Error | null) => void) => pm2Module.delete(processId, cb),
         flush: (cb: (err: Error | null) => void) => pm2Module.flush(processId, cb),
