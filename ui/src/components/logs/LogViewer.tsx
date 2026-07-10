@@ -483,10 +483,24 @@ export function LogViewer({ initialProcessId }: { initialProcessId?: number }) {
               )}
             >
               {tags && tags.length > 0 && (
-                <span
-                  className="absolute top-0 right-0 w-0 h-0 border-t-[10px] border-l-[10px] border-t-transparent border-l-transparent"
-                  style={{ borderTopColor: tags[0].color, borderLeftColor: 'transparent' }}
-                />
+                <span className="absolute top-0 right-0 w-0 h-0">
+                  {tags.length >= 2 && (
+                    <span
+                      className="absolute -top-[1px] -right-[1px] w-0 h-0"
+                      style={{
+                        borderTop: '8px solid transparent',
+                        borderLeft: `8px solid ${tags[1].color}`,
+                      }}
+                    />
+                  )}
+                  <span
+                    className="absolute top-0 right-0 w-0 h-0"
+                    style={{
+                      borderTop: '10px solid transparent',
+                      borderLeft: `10px solid ${tags[0].color}`,
+                    }}
+                  />
+                </span>
               )}
               <span className={cn(
                 "w-1.5 h-1.5 rounded-full shrink-0 transition-colors",

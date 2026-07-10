@@ -334,11 +334,16 @@ function TagAssignMenu({
   const currentIds = currentTags.map((t) => t.id);
 
   const toggle = async (tagId: string) => {
-    const next = currentIds.includes(tagId)
-      ? currentIds.filter((id) => id !== tagId)
-      : [...currentIds, tagId];
+    let next: string[];
+    if (currentIds.includes(tagId)) {
+      next = currentIds.filter((id) => id !== tagId);
+    } else if (currentIds.length >= 2) {
+      // Max 2 tags per process — replace the last one
+      next = [...currentIds.slice(0, 1), tagId];
+    } else {
+      next = [...currentIds, tagId];
+    }
     await assignTags(processName, next);
-    // Don't close — allow assigning multiple tags
   };
 
   return (
