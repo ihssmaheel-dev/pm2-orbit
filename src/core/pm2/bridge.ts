@@ -4,27 +4,30 @@ import { logger } from '../../utils/logger';
 let pm2Module: typeof import('pm2') | null = null;
 
 try {
-  // Method 1: Direct require (works when pm2 is in node_modules or globally linked)
+  // Method 1: Direct require (works when pm2 is in node_modules)
   pm2Module = require('pm2');
 } catch {
+  // Method 2: Try npm global directory (where pm2 is typically installed)
   try {
-    // Method 2: Use module.createRequire from __dirname (works in bundled output)
-    const { createRequire } = require('module');
-    const path = require('path');
-    const globalRequire = createRequire(path.join(__dirname, '..', 'package.json'));
-    pm2Module = globalRequire('pm2');
-  } catch {
-    // Method 3: Try requiring from common global paths
-    try {
-      const paths = require('module').globalPaths;
-      for (const p of paths) {
-        try {
-          pm2Module = require(p + '/pm2');
-          break;
-        } catch {}
-      }
-    } catch {}
-  }
+    const { execSync } = require('child_process');
+    const globalRoot = execSync('npm root -g', { encoding: 'utf-8', timeout: 5000 }).trim();
+    if (globalRoot) {
+      pm2Module = require(globalRoot + '/pm2');
+    }
+  } catch {}
+}
+
+// Method 3: Fallback to module.globalPaths
+if (!pm2Module) {
+  try {
+    const paths = require('module').globalPaths;
+    for (const p of paths) {
+      try {
+        pm2Module = require(p + '/pm2');
+        break;
+      } catch {}
+    }
+  } catch {}
 }
 
 // systeminformation for per-process CPU/memory (more reliable than PM2 monit)
