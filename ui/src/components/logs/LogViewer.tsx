@@ -484,7 +484,10 @@ export function LogViewer({ initialProcessId }: { initialProcessId?: number }) {
                 "w-2 h-2 rounded-full shrink-0 transition-colors",
                 isSelected ? "bg-primary" : isOnline ? "bg-success" : isStopped ? "bg-warning/70" : "bg-muted-foreground/30",
               )} />
-              <span className="truncate max-w-[100px]">
+              <span title={p.name} className={cn(
+                "shrink-0 transition-all",
+                isSelected ? "max-w-none font-medium" : "max-w-[120px] truncate",
+              )}>
                 {p.name}
                 {processEntries.filter((e) => e.name === p.name).length > 1 && (
                   <span className="text-muted-foreground/50 ml-1">#{p.id}</span>
