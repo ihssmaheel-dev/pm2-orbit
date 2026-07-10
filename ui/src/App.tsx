@@ -31,7 +31,7 @@ function AppInner() {
         position="bottom-right"
         toastOptions={{
           className: '!bg-card !border !border-border/70 !text-foreground !shadow-lg !shadow-black/30 !rounded-none !font-sans',
-          style: { fontFamily: 'Exo, sans-serif' },
+          style: { fontFamily: 'Inter, system-ui, sans-serif' },
         }}
       />
     </>

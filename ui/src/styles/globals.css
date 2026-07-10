@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'Exo', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
   --radius: 0px;
   --radius-sm: 0px;
@@ -155,7 +155,7 @@
 
 /* Base styles */
 body {
-  font-family: 'Exo', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   font-weight: 400;
   font-style: normal;
   font-variant: normal;
@@ -163,8 +163,8 @@ body {
   font-optical-sizing: auto;
   font-stretch: 100%;
   font-variation-settings: normal;
-  font-feature-settings: normal;
-  font-size: 16px;
+  font-feature-settings: 'tnum' 1;
+  font-size: 14px;
   line-height: 1.5;
   text-transform: none;
   text-decoration: none;
