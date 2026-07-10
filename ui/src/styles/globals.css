@@ -95,13 +95,13 @@
 /* Light Mode — Soft White */
 .light {
   --background: #f5f6f8;
-  --foreground: #1a1f2e;
+  --foreground: #0f172a;
   --card: #fafbfc;
-  --card-foreground: #1a1f2e;
+  --card-foreground: #0f172a;
   --popover: #fafbfc;
-  --popover-foreground: #1a1f2e;
+  --popover-foreground: #0f172a;
   --muted: #f0f1f3;
-  --muted-foreground: #3d4654;
+  --muted-foreground: #1e293b;
   --subtle: #e8eaed;
   --input: #fafbfc;
   --border: #d1d5db;
