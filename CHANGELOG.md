@@ -4,6 +4,20 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.11.4] - 2026-07-11
+
+### Changed
+- **Command palette redesigned** — Modern, clean layout with per-process grouping. Each process gets its own section with status label, Open Logs, View in Processes, and status-specific actions (Restart/Stop for running, Start for stopped). Grouped by process name with #id for same-name instances.
+- **ConnectionDot** — Added pulse animation for connected state
+- **Header** — Tighter nav spacing, subtle hover backgrounds on icon buttons, vertical divider before connection indicator
+- **StatusBar** — Added process count indicator, cleaner left/center/right grouping
+- **ProcessRow** — Removed zebra striping, added left border highlight on selection, smoother transitions
+
+### Fixed
+- **Command palette hover for same-name processes** — Added `proc-{id}` prefix to value strings to prevent cmdk cross-highlighting between cluster instances
+- **Scrollbars hidden** — All scrollbars across the app are now completely hidden (scrollbar-width: none + display: none)
+- **Scrollbar arrows removed** — Force-hidden via CSS to prevent default browser arrows
+
 ## [1.11.3] - 2026-07-10
 
 ### Fixed
