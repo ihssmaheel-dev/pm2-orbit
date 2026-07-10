@@ -203,7 +203,7 @@ textarea:focus-visible {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--background);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -213,6 +213,33 @@ textarea:focus-visible {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--muted-foreground);
+}
+
+/* Thin scrollbar utility */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 0;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+.scrollbar-thumb-border::-webkit-scrollbar-thumb {
+  background: var(--border);
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 /* Dialog backdrop */

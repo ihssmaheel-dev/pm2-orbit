@@ -462,7 +462,7 @@ export function LogViewer({ initialProcessId }: { initialProcessId?: number }) {
       </div>
 
       {/* Process tabs */}
-      <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border/30 bg-card/50 shrink-0 overflow-x-auto">
+      <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-border/40 bg-card/50 shrink-0 overflow-x-auto scrollbar-thin">
         {processEntries.map((p) => {
           const isSelected = selectedProcessId === p.id;
           const hasLogs = (buffers.get(p.id)?.length ?? 0) > 0;
@@ -474,29 +474,29 @@ export function LogViewer({ initialProcessId }: { initialProcessId?: number }) {
               key={p.id}
               onClick={() => { navigate(`/logs/${p.id}`); selectProcess(p.id); }}
               className={cn(
-                "flex items-center gap-2 px-3 py-1.5 text-[12px] font-mono transition-all cursor-pointer shrink-0 rounded-sm border",
+                "flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-mono transition-all cursor-pointer shrink-0 rounded border",
                 isSelected
-                  ? "bg-primary/15 border-primary/50 text-primary shadow-sm shadow-primary/10"
-                  : "border-border/30 text-muted-foreground/70 hover:text-foreground hover:border-border/60 hover:bg-subtle/20",
+                  ? "bg-primary/10 border-primary/40 text-primary shadow-sm shadow-primary/5"
+                  : "border-border/50 text-muted-foreground/70 hover:text-foreground hover:border-border/80 hover:bg-subtle/20",
               )}
             >
               <span className={cn(
-                "w-2 h-2 rounded-full shrink-0 transition-colors",
+                "w-1.5 h-1.5 rounded-full shrink-0 transition-colors",
                 isSelected ? "bg-primary" : isOnline ? "bg-success" : isStopped ? "bg-warning/70" : "bg-muted-foreground/30",
               )} />
               <span title={p.name} className={cn(
                 "shrink-0 transition-all",
-                isSelected ? "max-w-none font-medium" : "max-w-[120px] truncate",
+                isSelected ? "max-w-none font-medium" : "max-w-[100px] truncate",
               )}>
                 {p.name}
                 {processEntries.filter((e) => e.name === p.name).length > 1 && (
-                  <span className="text-muted-foreground/50 ml-1">#{p.id}</span>
+                  <span className="text-muted-foreground/50 ml-0.5">#{p.id}</span>
                 )}
               </span>
               {hasLogs && (
                 <span className={cn(
                   "text-[9px] font-mono tabular-nums px-1 leading-3",
-                  isSelected ? "bg-primary/20 text-primary" : "bg-subtle/60 text-muted-foreground/50",
+                  isSelected ? "bg-primary/15 text-primary" : "bg-subtle/60 text-muted-foreground/50",
                 )}>
                   {buffers.get(p.id)?.length ?? 0}
                 </span>
@@ -512,7 +512,7 @@ export function LogViewer({ initialProcessId }: { initialProcessId?: number }) {
         <div
           ref={parentRef}
           onScroll={throttledScroll}
-          className="absolute inset-0 overflow-auto font-mono text-[13px] leading-[1.55] bg-background"
+          className="absolute inset-0 overflow-auto font-mono text-[13px] leading-[1.55] bg-background scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent"
           style={{ fontFamily: "'IBM Plex Mono', 'Cascadia Code', 'Fira Code', monospace" }}
         >
         {processEntries.length === 0 ? (
