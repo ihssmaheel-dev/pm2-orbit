@@ -8,9 +8,10 @@ try {
   pm2Module = require('pm2');
 } catch {
   try {
-    // Method 2: Use module.createRequire to resolve from parent directories
+    // Method 2: Use module.createRequire from __dirname (works in bundled output)
     const { createRequire } = require('module');
-    const globalRequire = createRequire(require.resolve('../../package.json'));
+    const path = require('path');
+    const globalRequire = createRequire(path.join(__dirname, '..', 'package.json'));
     pm2Module = globalRequire('pm2');
   } catch {
     // Method 3: Try requiring from common global paths
