@@ -37,12 +37,16 @@ export async function registerHealthRoutes(app: FastifyInstance, pipeline: Pipel
   app.get('/api/health', async () => {
     let pm2Version = 'unknown';
     try {
-      const pm2Pkg = require('../../node_modules/pm2/package.json');
+      const pm2Pkg = require('pm2/package.json');
       pm2Version = pm2Pkg.version;
     } catch {
       try {
-        const pm2Pkg = require('pm2/package.json');
-        pm2Version = pm2Pkg.version;
+        const { execSync } = require('child_process');
+        const globalRoot = execSync('npm root -g', { encoding: 'utf-8', timeout: 5000 }).trim();
+        if (globalRoot) {
+          const pm2Pkg = require(globalRoot + '/pm2/package.json');
+          pm2Version = pm2Pkg.version;
+        }
       } catch {
         // pm2 not installed
       }

@@ -8,7 +8,23 @@ type Pipeline = ReturnType<typeof createEventPipeline>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let pm2Module: any = null;
-try { pm2Module = require('pm2'); } catch { /* pm2 not installed */ }
+try {
+  pm2Module = require('pm2');
+} catch {
+  try {
+    const { execSync } = require('child_process');
+    const globalRoot = execSync('npm root -g', { encoding: 'utf-8', timeout: 5000 }).trim();
+    if (globalRoot) pm2Module = require(globalRoot + '/pm2');
+  } catch {}
+}
+if (!pm2Module) {
+  try {
+    const paths = require('module').globalPaths;
+    for (const p of paths) {
+      try { pm2Module = require(p + '/pm2'); break; } catch {}
+    }
+  } catch {}
+}
 
 const VALID_ACTIONS = ['restart', 'stop', 'start', 'reload', 'delete', 'scale', 'flush'];
 
