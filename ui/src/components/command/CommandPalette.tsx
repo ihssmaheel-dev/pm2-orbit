@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Command } from 'cmdk';
 import {
   Search, RotateCw, Square, Play, Terminal, Bell, Settings, LayoutGrid,
-  RefreshCw, Moon, Sun, ArrowRight,
+  RefreshCw, Moon, Sun, ArrowRight, Cpu,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useProcessStore } from '@/store/processes';
@@ -19,10 +19,10 @@ const STATUS_CONFIG: Record<ProcessStatus, { label: string; dot: string }> = {
 };
 
 const ACTION_ICONS: Record<string, React.ReactNode> = {
-  restart: <RotateCw size={13} />,
-  stop: <Square size={13} />,
-  start: <Play size={13} />,
-  reload: <RefreshCw size={13} />,
+  restart: <RotateCw size={12} />,
+  stop: <Square size={12} />,
+  start: <Play size={12} />,
+  reload: <RefreshCw size={12} />,
 };
 
 const ACTION_LABELS: Record<string, string> = {
@@ -90,83 +90,85 @@ export function CommandPalette() {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[12vh]">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh]">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-background/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
         onClick={close}
       />
 
       {/* Palette */}
       <Command
-        className="relative w-full max-w-[540px] bg-card border border-border/60 shadow-2xl overflow-hidden rounded-lg"
+        className="relative w-full max-w-[560px] bg-card border border-border/50 shadow-2xl overflow-hidden"
         loop
         onKeyDown={(e: React.KeyboardEvent) => {
           if (e.key === 'Escape') close();
         }}
       >
         {/* Search */}
-        <div className="flex items-center gap-3 px-4 h-12 border-b border-border/30">
-          <Search size={15} className="text-primary/70 shrink-0" />
+        <div className="flex items-center gap-3 px-5 h-13 border-b border-border/30">
+          <Search size={16} className="text-primary shrink-0" />
           <Command.Input
             ref={inputRef as React.RefObject<HTMLInputElement>}
             value={query}
             onValueChange={setQuery}
-            placeholder="Search pages, processes, actions..."
-            className="flex-1 bg-transparent text-[13px] text-foreground placeholder:text-muted-foreground/30 focus:outline-none"
+            placeholder="Type a command or search..."
+            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/30 focus:outline-none"
           />
-          <kbd className="text-[9px] font-mono text-muted-foreground/30 bg-subtle/40 border border-border/20 px-1.5 py-[2px] leading-none shrink-0 rounded">
-            esc
-          </kbd>
+          <div className="flex items-center gap-1">
+            <kbd className="text-[10px] font-mono text-muted-foreground/40 bg-subtle/40 border border-border/20 px-1.5 py-0.5 leading-none shrink-0 rounded-sm">
+              esc
+            </kbd>
+          </div>
         </div>
 
         {/* Results */}
-        <Command.List className="max-h-[420px] overflow-auto py-1.5">
-          <Command.Empty className="py-12 text-center">
-            <div className="text-[13px] text-muted-foreground/40">No results found</div>
+        <Command.List className="max-h-[440px] overflow-auto py-2">
+          <Command.Empty className="py-16 text-center">
+            <div className="text-sm text-muted-foreground/40">No results found</div>
           </Command.Empty>
 
-          {/* ─── Pages ─── */}
-          <CommandGroup heading="Pages">
+          {/* ─── Navigation ─── */}
+          <CommandGroup heading="Navigation">
             <CommandItem
               icon={<LayoutGrid size={14} />}
               label="Processes"
-              value="pages processes navigate"
+              value="nav processes"
               shortcut="1"
               onSelect={() => { navigate('/processes'); close(); }}
             />
             <CommandItem
               icon={<Terminal size={14} />}
               label="Logs"
-              value="pages logs navigate"
+              value="nav logs"
               shortcut="2"
               onSelect={() => { navigate('/logs'); close(); }}
             />
             <CommandItem
               icon={<Bell size={14} />}
               label="Alerts"
-              value="pages alerts navigate"
+              value="nav alerts"
               shortcut="3"
               onSelect={() => { navigate('/alerts'); close(); }}
             />
             <CommandItem
               icon={<LayoutGrid size={14} />}
               label="History"
-              value="pages history navigate"
+              value="nav history"
               shortcut="4"
               onSelect={() => { navigate('/history'); close(); }}
             />
             <CommandItem
               icon={<Settings size={14} />}
               label="Settings"
-              value="pages settings navigate"
+              value="nav settings"
               shortcut="5"
               onSelect={() => { navigate('/settings'); close(); }}
             />
           </CommandGroup>
 
-          {/* ─── Theme ─── */}
-          <CommandGroup heading="Theme">
+          {/* ─── Appearance ─── */}
+          <CommandGroup heading="Appearance">
             <CommandItem
               icon={theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
               label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
@@ -175,11 +177,10 @@ export function CommandPalette() {
             />
           </CommandGroup>
 
-          {/* ─── Per-Process Groups (unique key per process) ─── */}
+          {/* ─── Processes ─── */}
           {processList.map((proc) => {
             const st = STATUS_CONFIG[proc.status];
             const actions = getActionsForStatus(proc.status);
-            // Check if there are other processes with the same name
             const sameNameCount = processList.filter((p) => p.name === proc.name).length;
             const headingLabel = sameNameCount > 1
               ? `${proc.name} #${proc.id} — ${st.label}`
@@ -218,10 +219,10 @@ export function CommandPalette() {
         </Command.List>
 
         {/* Footer */}
-        <div className="flex items-center gap-4 px-4 h-8 border-t border-border/30 bg-subtle/10">
-          <FooterHint keys={['↑', '↓']} label="navigate" />
-          <FooterHint keys={['↵']} label="select" />
-          <FooterHint keys={['esc']} label="close" />
+        <div className="flex items-center gap-5 px-5 h-9 border-t border-border/30 bg-subtle/5">
+          <FooterHint keys={['↑', '↓']} label="Navigate" />
+          <FooterHint keys={['↵']} label="Select" />
+          <FooterHint keys={['esc']} label="Close" />
         </div>
       </Command>
     </div>
@@ -234,7 +235,7 @@ function CommandGroup({ heading, children }: { heading: string; children: React.
   return (
     <Command.Group
       heading={heading}
-      className="mb-0.5 [&_[cmdk-group-heading]]:px-4 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-[0.1em] [&_[cmdk-group-heading]]:text-muted-foreground/40"
+      className="mb-1 mt-1 first:mt-0 last:mb-0 [&_[cmdk-group-heading]]:px-5 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-[0.12em] [&_[cmdk-group-heading]]:text-muted-foreground/40 [&_[cmdk-group-heading]]:border-t [&_[cmdk-group-heading]]:border-border/20 first:[&_[cmdk-group-heading]]:border-t-0"
     >
       {children}
     </Command.Group>
@@ -262,28 +263,28 @@ function CommandItem({
     <Command.Item
       value={value}
       onSelect={onSelect}
-      className="flex items-center gap-3 mx-2 px-3 py-1.5 text-[13px] cursor-pointer rounded-md group data-[selected=true]:bg-primary/10 data-[selected=true]:text-foreground transition-colors duration-75"
+      className="flex items-center gap-3 mx-2 px-3 py-2 text-[13px] cursor-pointer rounded-lg group data-[selected=true]:bg-primary/10 data-[selected=true]:text-foreground transition-all duration-100"
     >
-      <span className={`w-5 flex items-center justify-center shrink-0 transition-colors ${
+      <span className={`w-6 h-6 flex items-center justify-center shrink-0 rounded-md transition-colors ${
         destructive
-          ? 'text-destructive/50 group-data-[selected=true]:text-destructive'
-          : 'text-muted-foreground/30 group-data-[selected=true]:text-primary'
+          ? 'bg-destructive/10 text-destructive/60 group-data-[selected=true]:bg-destructive/15 group-data-[selected=true]:text-destructive'
+          : 'bg-subtle/40 text-muted-foreground/40 group-data-[selected=true]:bg-primary/15 group-data-[selected=true]:text-primary'
       }`}>
         {icon}
       </span>
       <div className="flex-1 min-w-0 flex items-center gap-2">
         <span className={destructive
           ? 'text-destructive/80 group-data-[selected=true]:text-destructive'
-          : 'text-foreground/70 group-data-[selected=true]:text-foreground'
+          : 'text-foreground/80 group-data-[selected=true]:text-foreground'
         }>
           {label}
         </span>
         {hint && (
-          <span className="text-[11px] text-muted-foreground/30">{hint}</span>
+          <span className="text-[11px] text-muted-foreground/35">{hint}</span>
         )}
       </div>
       {shortcut && (
-        <kbd className="text-[9px] font-mono text-muted-foreground/25 bg-subtle/40 border border-border/20 px-1.5 py-[2px] leading-none shrink-0 rounded group-data-[selected=true]:border-border/40 group-data-[selected=true]:text-muted-foreground/50">
+        <kbd className="text-[10px] font-mono text-muted-foreground/30 bg-subtle/50 border border-border/30 px-1.5 py-0.5 leading-none shrink-0 rounded-sm group-data-[selected=true]:border-border/50 group-data-[selected=true]:text-muted-foreground/60">
           {shortcut}
         </kbd>
       )}
@@ -295,11 +296,11 @@ function FooterHint({ keys, label }: { keys: string[]; label: string }) {
   return (
     <span className="flex items-center gap-1">
       {keys.map((key, i) => (
-        <kbd key={i} className="font-mono text-[9px] text-muted-foreground/30 bg-subtle/40 border border-border/20 px-1 py-[1px] leading-none rounded">
+        <kbd key={i} className="font-mono text-[10px] text-muted-foreground/30 bg-subtle/40 border border-border/20 px-1.5 py-0.5 leading-none rounded-sm">
           {key}
         </kbd>
       ))}
-      <span className="text-[10px] text-muted-foreground/30 ml-0.5">{label}</span>
+      <span className="text-[11px] text-muted-foreground/35 ml-1">{label}</span>
     </span>
   );
 }
