@@ -4,15 +4,25 @@ import { logger } from '../../utils/logger';
 let pm2Module: typeof import('pm2') | null = null;
 
 try {
-  // Try require.resolve first to find globally installed pm2
-  const pm2Path = require.resolve('pm2');
-  pm2Module = require(pm2Path);
+  // Method 1: Direct require (works when pm2 is in node_modules or globally linked)
+  pm2Module = require('pm2');
 } catch {
   try {
-    // Fallback: direct require (works when pm2 is in node_modules)
-    pm2Module = require('pm2');
+    // Method 2: Use module.createRequire to resolve from parent directories
+    const { createRequire } = require('module');
+    const globalRequire = createRequire(require.resolve('../../package.json'));
+    pm2Module = globalRequire('pm2');
   } catch {
-    // pm2 not installed — bridge will use mock data
+    // Method 3: Try requiring from common global paths
+    try {
+      const paths = require('module').globalPaths;
+      for (const p of paths) {
+        try {
+          pm2Module = require(p + '/pm2');
+          break;
+        } catch {}
+      }
+    } catch {}
   }
 }
 
