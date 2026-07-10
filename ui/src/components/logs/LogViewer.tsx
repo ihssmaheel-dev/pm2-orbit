@@ -463,7 +463,7 @@ export function LogViewer({ initialProcessId }: { initialProcessId?: number }) {
 
       {/* Process tabs */}
       <div className="relative border-b border-border/40 bg-card/50 shrink-0">
-        <div className="flex items-center gap-1.5 px-3 py-1.5 overflow-x-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'var(--primary) transparent' }}>
+        <div className="flex items-center gap-1.5 px-3 py-1.5 overflow-x-auto">
           {processEntries.map((p) => {
           const isSelected = selectedProcessId === p.id;
           const hasLogs = (buffers.get(p.id)?.length ?? 0) > 0;
@@ -521,7 +521,7 @@ export function LogViewer({ initialProcessId }: { initialProcessId?: number }) {
         <div
           ref={parentRef}
           onScroll={throttledScroll}
-          className="absolute inset-0 overflow-auto font-mono text-[13px] leading-[1.55] bg-background scrollbar-thin"
+          className="absolute inset-0 overflow-auto font-mono text-[13px] leading-[1.55] bg-background"
           style={{ fontFamily: "'IBM Plex Mono', 'Cascadia Code', 'Fira Code', monospace" }}
         >
         {processEntries.length === 0 ? (
