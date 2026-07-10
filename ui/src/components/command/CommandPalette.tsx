@@ -131,35 +131,35 @@ export function CommandPalette() {
             <CommandItem
               icon={<LayoutGrid size={14} />}
               label="Processes"
-              value="processes navigate"
+              value="pages processes navigate"
               shortcut="1"
               onSelect={() => { navigate('/processes'); close(); }}
             />
             <CommandItem
               icon={<Terminal size={14} />}
               label="Logs"
-              value="logs navigate"
+              value="pages logs navigate"
               shortcut="2"
               onSelect={() => { navigate('/logs'); close(); }}
             />
             <CommandItem
               icon={<Bell size={14} />}
               label="Alerts"
-              value="alerts navigate"
+              value="pages alerts navigate"
               shortcut="3"
               onSelect={() => { navigate('/alerts'); close(); }}
             />
             <CommandItem
               icon={<LayoutGrid size={14} />}
               label="History"
-              value="history navigate"
+              value="pages history navigate"
               shortcut="4"
               onSelect={() => { navigate('/history'); close(); }}
             />
             <CommandItem
               icon={<Settings size={14} />}
               label="Settings"
-              value="settings navigate"
+              value="pages settings navigate"
               shortcut="5"
               onSelect={() => { navigate('/settings'); close(); }}
             />
@@ -175,33 +175,35 @@ export function CommandPalette() {
             />
           </CommandGroup>
 
-          {/* ─── Per-Process Groups ─── */}
+          {/* ─── Per-Process Groups (unique key per process) ─── */}
           {processList.map((proc) => {
             const st = STATUS_CONFIG[proc.status];
             const actions = getActionsForStatus(proc.status);
+            // Check if there are other processes with the same name
+            const sameNameCount = processList.filter((p) => p.name === proc.name).length;
+            const headingLabel = sameNameCount > 1
+              ? `${proc.name} #${proc.id} — ${st.label}`
+              : `${proc.name} — ${st.label}`;
             return (
-              <CommandGroup key={proc.id} heading={`${proc.name} — ${st.label}`}>
-                {/* Open Logs */}
+              <CommandGroup key={`proc-${proc.id}`} heading={headingLabel}>
                 <CommandItem
                   icon={<Terminal size={13} />}
                   label="Open Logs"
-                  value={`${proc.name} logs open`}
+                  value={`proc-${proc.id} ${proc.name} logs open`}
                   onSelect={() => { navigate(`/logs/${proc.id}`); close(); }}
                 />
-                {/* Open in Processes */}
                 <CommandItem
                   icon={<ArrowRight size={13} />}
                   label="View in Processes"
-                  value={`${proc.name} view process`}
+                  value={`proc-${proc.id} ${proc.name} view process`}
                   onSelect={() => { select(proc.id); navigate('/processes'); close(); }}
                 />
-                {/* Process actions */}
                 {actions.map((action) => (
                   <CommandItem
                     key={action}
                     icon={ACTION_ICONS[action]}
                     label={ACTION_LABELS[action]}
-                    value={`${proc.name} ${action} action`}
+                    value={`proc-${proc.id} ${proc.name} ${action} action`}
                     destructive={action === 'stop'}
                     onSelect={() => {
                       runAction(proc.id, action);
@@ -232,7 +234,7 @@ function CommandGroup({ heading, children }: { heading: string; children: React.
   return (
     <Command.Group
       heading={heading}
-      className="mb-1 [&_[cmdk-group-heading]]:px-4 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-[0.1em] [&_[cmdk-group-heading]]:text-muted-foreground/40"
+      className="mb-0.5 [&_[cmdk-group-heading]]:px-4 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-[0.1em] [&_[cmdk-group-heading]]:text-muted-foreground/40"
     >
       {children}
     </Command.Group>
