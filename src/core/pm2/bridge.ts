@@ -4,9 +4,16 @@ import { logger } from '../../utils/logger';
 let pm2Module: typeof import('pm2') | null = null;
 
 try {
-  pm2Module = require('pm2');
+  // Try require.resolve first to find globally installed pm2
+  const pm2Path = require.resolve('pm2');
+  pm2Module = require(pm2Path);
 } catch {
-  // pm2 not installed — bridge will use mock data
+  try {
+    // Fallback: direct require (works when pm2 is in node_modules)
+    pm2Module = require('pm2');
+  } catch {
+    // pm2 not installed — bridge will use mock data
+  }
 }
 
 // systeminformation for per-process CPU/memory (more reliable than PM2 monit)
