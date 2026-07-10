@@ -462,8 +462,9 @@ export function LogViewer({ initialProcessId }: { initialProcessId?: number }) {
       </div>
 
       {/* Process tabs */}
-      <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-border/40 bg-card/50 shrink-0 overflow-x-auto scrollbar-thin">
-        {processEntries.map((p) => {
+      <div className="relative border-b border-border/40 bg-card/50 shrink-0">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 overflow-x-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'var(--primary) transparent' }}>
+          {processEntries.map((p) => {
           const isSelected = selectedProcessId === p.id;
           const hasLogs = (buffers.get(p.id)?.length ?? 0) > 0;
           const proc = processes.get(p.id);
@@ -511,6 +512,7 @@ export function LogViewer({ initialProcessId }: { initialProcessId?: number }) {
             </button>
           );
         })}
+        </div>
       </div>
 
       {/* Log content wrapper */}
