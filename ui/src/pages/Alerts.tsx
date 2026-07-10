@@ -129,14 +129,14 @@ export function Alerts() {
             <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Scope</div>
             <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Metric</div>
             <div className="flex-1 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Process</div>
-            <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Condition</div>
+            <div className="w-24 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Condition</div>
             <div className="w-24 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Threshold</div>
             <div className="w-24 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Severity</div>
             {CHANNELS.map((ch) => (
-              <div key={ch} className="w-16 shrink-0 px-2 text-[10px] font-semibold uppercase tracking-widest text-center">{ch}</div>
+              <div key={ch} className="w-20 shrink-0 px-2 text-[10px] font-semibold uppercase tracking-widest text-center">{ch}</div>
             ))}
-            <div className="w-14 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest text-center">Active</div>
-            <div className="w-16 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest text-right">Actions</div>
+            <div className="w-18 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest text-center">Active</div>
+            <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest text-right">Actions</div>
           </div>
 
           {/* Data rows */}
@@ -148,14 +148,14 @@ export function Alerts() {
                     <div className="w-20 shrink-0 px-3"><Skeleton className="h-4 w-12" /></div>
                     <div className="w-20 shrink-0 px-3"><Skeleton className="h-4 w-14" /></div>
                     <div className="flex-1 shrink-0 px-3"><Skeleton className="h-4 w-24" /></div>
-                    <div className="w-20 shrink-0 px-3"><Skeleton className="h-4 w-8" /></div>
+                    <div className="w-24 shrink-0 px-3"><Skeleton className="h-4 w-8" /></div>
                     <div className="w-24 shrink-0 px-3"><Skeleton className="h-4 w-10" /></div>
                     <div className="w-24 shrink-0 px-3"><Skeleton className="h-4 w-14" /></div>
                     {CHANNELS.map((ch) => (
-                      <div key={ch} className="w-16 shrink-0 px-2 flex justify-center"><Skeleton className="h-4 w-6" /></div>
+                      <div key={ch} className="w-20 shrink-0 px-2 flex justify-center"><Skeleton className="h-4 w-6" /></div>
                     ))}
-                    <div className="w-14 shrink-0 px-3 flex justify-center"><Skeleton className="h-4 w-8" /></div>
-                    <div className="w-16 shrink-0 px-3 flex justify-end"><Skeleton className="h-4 w-12" /></div>
+                    <div className="w-18 shrink-0 px-3 flex justify-center"><Skeleton className="h-4 w-8" /></div>
+                    <div className="w-20 shrink-0 px-3 flex justify-end"><Skeleton className="h-4 w-12" /></div>
                   </div>
                 ))}
               </div>

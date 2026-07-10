@@ -20,12 +20,22 @@ export default defineConfig({
     cssCodeSplit: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom'],
-          'table-virtual': ['@tanstack/react-table', '@tanstack/react-virtual'],
-          'charts': ['uplot'],
-          'icons': ['lucide-react'],
-          'cmdk': ['cmdk'],
+        manualChunks(id) {
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            return 'react-vendor';
+          }
+          if (id.includes('@tanstack/react-table') || id.includes('@tanstack/react-virtual')) {
+            return 'table-virtual';
+          }
+          if (id.includes('node_modules/uplot')) {
+            return 'charts';
+          }
+          if (id.includes('node_modules/lucide-react')) {
+            return 'icons';
+          }
+          if (id.includes('node_modules/cmdk')) {
+            return 'cmdk';
+          }
         },
       },
     },
