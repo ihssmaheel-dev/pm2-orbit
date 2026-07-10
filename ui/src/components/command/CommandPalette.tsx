@@ -3,19 +3,33 @@ import { useNavigate } from 'react-router-dom';
 import { Command } from 'cmdk';
 import {
   Search, RotateCw, Square, Play, Terminal, Bell, Settings, LayoutGrid,
-  RefreshCw, Moon, Sun, FileText, Trash2, ArrowRight,
+  RefreshCw, Moon, Sun, ArrowRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useProcessStore } from '@/store/processes';
 import { useTheme } from '@/hooks/useTheme';
 import type { ProcessStatus } from '@/types/pm2';
 
-const STATUS_CONFIG: Record<ProcessStatus, { label: string; color: string; actions: string[] }> = {
-  online: { label: 'Running', color: 'text-success', actions: ['restart', 'reload', 'stop'] },
-  stopped: { label: 'Stopped', color: 'text-muted-foreground', actions: ['start'] },
-  errored: { label: 'Errored', color: 'text-destructive', actions: ['restart'] },
-  launching: { label: 'Starting', color: 'text-warning', actions: [] },
-  stopping: { label: 'Stopping', color: 'text-warning', actions: [] },
+const STATUS_CONFIG: Record<ProcessStatus, { label: string; dot: string }> = {
+  online: { label: 'Running', dot: 'bg-success' },
+  stopped: { label: 'Stopped', dot: 'bg-muted-foreground/30' },
+  errored: { label: 'Errored', dot: 'bg-destructive' },
+  launching: { label: 'Starting', dot: 'bg-warning' },
+  stopping: { label: 'Stopping', dot: 'bg-warning' },
+};
+
+const ACTION_ICONS: Record<string, React.ReactNode> = {
+  restart: <RotateCw size={13} />,
+  stop: <Square size={13} />,
+  start: <Play size={13} />,
+  reload: <RefreshCw size={13} />,
+};
+
+const ACTION_LABELS: Record<string, string> = {
+  restart: 'Restart',
+  stop: 'Stop',
+  start: 'Start',
+  reload: 'Reload',
 };
 
 export function CommandPalette() {
@@ -28,8 +42,6 @@ export function CommandPalette() {
   const navigate = useNavigate();
 
   const processList = useMemo(() => Array.from(processes.values()), [processes]);
-  const onlineCount = useMemo(() => processList.filter((p) => p.status === 'online').length, [processList]);
-  const stoppedCount = useMemo(() => processList.filter((p) => p.status === 'stopped').length, [processList]);
 
   const close = useCallback(() => {
     setOpen(false);
@@ -46,6 +58,15 @@ export function CommandPalette() {
       return res.ok;
     } catch {
       return false;
+    }
+  }, []);
+
+  const getActionsForStatus = useCallback((status: ProcessStatus): string[] => {
+    switch (status) {
+      case 'online': return ['restart', 'stop'];
+      case 'stopped': return ['start'];
+      case 'errored': return ['restart'];
+      default: return [];
     }
   }, []);
 
@@ -100,12 +121,12 @@ export function CommandPalette() {
         </div>
 
         {/* Results */}
-        <Command.List className="max-h-[400px] overflow-auto py-1.5">
+        <Command.List className="max-h-[420px] overflow-auto py-1.5">
           <Command.Empty className="py-12 text-center">
             <div className="text-[13px] text-muted-foreground/40">No results found</div>
           </Command.Empty>
 
-          {/* ─── Navigate ─── */}
+          {/* ─── Pages ─── */}
           <CommandGroup heading="Pages">
             <CommandItem
               icon={<LayoutGrid size={14} />}
@@ -148,115 +169,50 @@ export function CommandPalette() {
           <CommandGroup heading="Theme">
             <CommandItem
               icon={theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
-              label={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+              label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               value="theme toggle"
               onSelect={() => { setTheme(theme === 'dark' ? 'light' : 'dark'); close(); }}
             />
           </CommandGroup>
 
-          {/* ─── Processes (with status + open logs) ─── */}
-          {processList.length > 0 && (
-            <CommandGroup heading={`Processes (${processList.length})`}>
-              {processList.map((proc) => {
-                const st = STATUS_CONFIG[proc.status];
-                return (
-                  <CommandItem
-                    key={proc.id}
-                    value={`${proc.name} process PID ${proc.pid} ${proc.status}`}
-                    icon={
-                      <span className={`w-2 h-2 rounded-full shrink-0 ${
-                        proc.status === 'online' ? 'bg-success' :
-                        proc.status === 'errored' ? 'bg-destructive' :
-                        proc.status === 'stopped' ? 'bg-muted-foreground/30' :
-                        'bg-warning'
-                      }`} />
-                    }
-                    label={proc.name}
-                    hint={st.label}
-                    onSelect={() => { select(proc.id); navigate('/processes'); close(); }}
-                    trailing={
-                      <span
-                        onClick={(e) => { e.stopPropagation(); navigate(`/logs/${proc.id}`); close(); }}
-                        className="text-primary/50 hover:text-primary transition-colors cursor-pointer"
-                        title="Open logs"
-                      >
-                        <Terminal size={12} />
-                      </span>
-                    }
-                  />
-                );
-              })}
-            </CommandGroup>
-          )}
-
-          {/* ─── Bulk Actions ─── */}
-          {processList.length > 0 && (
-            <CommandGroup heading="Bulk Actions">
-              {onlineCount > 0 && (
-                <>
-                  <CommandItem
-                    icon={<RotateCw size={14} />}
-                    label="Restart All"
-                    value="restart all bulk"
-                    hint={`${onlineCount} running`}
-                    onSelect={async () => {
-                      close();
-                      const targets = processList.filter((p) => p.status === 'online');
-                      const results = await Promise.allSettled(targets.map((p) => runAction(p.id, 'restart')));
-                      const ok = results.filter((r) => r.status === 'fulfilled' && r.value).length;
-                      if (ok > 0) toast.success(`Restarted ${ok} process${ok !== 1 ? 'es' : ''}`);
-                      else toast.error('Failed to restart');
-                    }}
-                  />
-                  <CommandItem
-                    icon={<Square size={14} />}
-                    label="Stop All"
-                    value="stop all bulk"
-                    hint={`${onlineCount} running`}
-                    destructive
-                    onSelect={async () => {
-                      close();
-                      const targets = processList.filter((p) => p.status === 'online');
-                      const results = await Promise.allSettled(targets.map((p) => runAction(p.id, 'stop')));
-                      const ok = results.filter((r) => r.status === 'fulfilled' && r.value).length;
-                      if (ok > 0) toast.success(`Stopped ${ok} process${ok !== 1 ? 'es' : ''}`);
-                      else toast.error('Failed to stop');
-                    }}
-                  />
-                  <CommandItem
-                    icon={<RefreshCw size={14} />}
-                    label="Reload All"
-                    value="reload all bulk"
-                    hint={`${onlineCount} running`}
-                    onSelect={async () => {
-                      close();
-                      const targets = processList.filter((p) => p.status === 'online');
-                      const results = await Promise.allSettled(targets.map((p) => runAction(p.id, 'reload')));
-                      const ok = results.filter((r) => r.status === 'fulfilled' && r.value).length;
-                      if (ok > 0) toast.success(`Reloaded ${ok} process${ok !== 1 ? 'es' : ''}`);
-                      else toast.error('Failed to reload');
-                    }}
-                  />
-                </>
-              )}
-              {stoppedCount > 0 && (
+          {/* ─── Per-Process Groups ─── */}
+          {processList.map((proc) => {
+            const st = STATUS_CONFIG[proc.status];
+            const actions = getActionsForStatus(proc.status);
+            return (
+              <CommandGroup key={proc.id} heading={`${proc.name} — ${st.label}`}>
+                {/* Open Logs */}
                 <CommandItem
-                  icon={<Play size={14} />}
-                  label="Start All"
-                  value="start all bulk"
-                  hint={`${stoppedCount} stopped`}
-                  onSelect={async () => {
-                    close();
-                    const targets = processList.filter((p) => p.status === 'stopped');
-                    const results = await Promise.allSettled(targets.map((p) => runAction(p.id, 'start')));
-                    const ok = results.filter((r) => r.status === 'fulfilled' && r.value).length;
-                    if (ok > 0) toast.success(`Started ${ok} process${ok !== 1 ? 'es' : ''}`);
-                    else toast.error('Failed to start');
-                  }}
+                  icon={<Terminal size={13} />}
+                  label="Open Logs"
+                  value={`${proc.name} logs open`}
+                  onSelect={() => { navigate(`/logs/${proc.id}`); close(); }}
                 />
-              )}
-            </CommandGroup>
-          )}
+                {/* Open in Processes */}
+                <CommandItem
+                  icon={<ArrowRight size={13} />}
+                  label="View in Processes"
+                  value={`${proc.name} view process`}
+                  onSelect={() => { select(proc.id); navigate('/processes'); close(); }}
+                />
+                {/* Process actions */}
+                {actions.map((action) => (
+                  <CommandItem
+                    key={action}
+                    icon={ACTION_ICONS[action]}
+                    label={ACTION_LABELS[action]}
+                    value={`${proc.name} ${action} action`}
+                    destructive={action === 'stop'}
+                    onSelect={() => {
+                      runAction(proc.id, action);
+                      toast.success(`${ACTION_LABELS[action]} "${proc.name}"`);
+                      close();
+                    }}
+                  />
+                ))}
+              </CommandGroup>
+            );
+          })}
         </Command.List>
 
         {/* Footer */}
@@ -291,7 +247,6 @@ function CommandItem({
   shortcut,
   destructive,
   onSelect,
-  trailing,
 }: {
   value: string;
   icon: React.ReactNode;
@@ -300,13 +255,12 @@ function CommandItem({
   shortcut?: string;
   destructive?: boolean;
   onSelect: () => void;
-  trailing?: React.ReactNode;
 }) {
   return (
     <Command.Item
       value={value}
       onSelect={onSelect}
-      className="flex items-center gap-3 mx-2 px-3 py-2 text-[13px] cursor-pointer rounded-md group data-[selected=true]:bg-primary/10 data-[selected=true]:text-foreground transition-colors duration-75"
+      className="flex items-center gap-3 mx-2 px-3 py-1.5 text-[13px] cursor-pointer rounded-md group data-[selected=true]:bg-primary/10 data-[selected=true]:text-foreground transition-colors duration-75"
     >
       <span className={`w-5 flex items-center justify-center shrink-0 transition-colors ${
         destructive
@@ -326,9 +280,6 @@ function CommandItem({
           <span className="text-[11px] text-muted-foreground/30">{hint}</span>
         )}
       </div>
-      {trailing && (
-        <span className="shrink-0 mr-1">{trailing}</span>
-      )}
       {shortcut && (
         <kbd className="text-[9px] font-mono text-muted-foreground/25 bg-subtle/40 border border-border/20 px-1.5 py-[2px] leading-none shrink-0 rounded group-data-[selected=true]:border-border/40 group-data-[selected=true]:text-muted-foreground/50">
           {shortcut}
