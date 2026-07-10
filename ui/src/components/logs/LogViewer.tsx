@@ -488,16 +488,16 @@ export function LogViewer({ initialProcessId }: { initialProcessId?: number }) {
                     <span
                       className="absolute -top-[1px] -right-[1px] w-0 h-0"
                       style={{
-                        borderTop: '8px solid transparent',
-                        borderLeft: `8px solid ${tags[1].color}`,
+                        borderTop: `8px solid ${tags[1].color}`,
+                        borderRight: '8px solid transparent',
                       }}
                     />
                   )}
                   <span
                     className="absolute top-0 right-0 w-0 h-0"
                     style={{
-                      borderTop: '10px solid transparent',
-                      borderLeft: `10px solid ${tags[0].color}`,
+                      borderTop: `10px solid ${tags[0].color}`,
+                      borderRight: '10px solid transparent',
                     }}
                   />
                 </span>
