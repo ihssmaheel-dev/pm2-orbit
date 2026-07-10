@@ -469,6 +469,7 @@ export function LogViewer({ initialProcessId }: { initialProcessId?: number }) {
           const proc = processes.get(p.id);
           const isOnline = proc?.status === 'online';
           const isStopped = proc?.status === 'stopped';
+          const tags = proc?.tags;
           return (
             <button
               key={p.id}
@@ -493,6 +494,11 @@ export function LogViewer({ initialProcessId }: { initialProcessId?: number }) {
                   <span className="text-muted-foreground/50 ml-0.5">#{p.id}</span>
                 )}
               </span>
+              {tags && tags.length > 0 && (
+                <svg width="6" height="6" viewBox="0 0 6 6" className="shrink-0" style={{ color: tags[0].color }}>
+                  <polygon points="3,6 0,0 6,0" fill="currentColor" />
+                </svg>
+              )}
               {hasLogs && (
                 <span className={cn(
                   "text-[9px] font-mono tabular-nums px-1 leading-3",
