@@ -79,9 +79,9 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
           select(isSel ? null : pid);
         }
       }}
-      className={`flex items-center px-5 cursor-pointer transition-colors duration-75 group border-b border-border/10 outline-none focus-visible:ring-1 focus-visible:ring-primary ${
-        isSel ? "bg-primary/4" : "hover:bg-subtle/20"
-      } ${pid % 2 === 0 ? "bg-background/20" : ""}`}
+      className={`flex items-center px-5 cursor-pointer transition-all duration-100 group border-b border-border/20 outline-none focus-visible:ring-1 focus-visible:ring-primary ${
+        isSel ? "bg-primary/5 border-l-2 border-l-primary" : "hover:bg-subtle/15"
+      }`}
     >
       {/* Name */}
       <div role="cell" className="flex-1 min-w-0 px-3 relative">

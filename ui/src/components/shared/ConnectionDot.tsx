@@ -7,12 +7,17 @@ interface ConnectionDotProps {
 
 export function ConnectionDot({ connected, className }: ConnectionDotProps) {
   return (
-    <div
-      className={cn(
-        'w-2 h-2 rounded-full transition-colors',
-        connected ? 'bg-success' : 'bg-destructive',
-        className,
+    <span className="relative flex h-2 w-2 shrink-0">
+      {connected && (
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75" />
       )}
-    />
+      <span
+        className={cn(
+          'relative inline-flex h-2 w-2 rounded-full transition-colors',
+          connected ? 'bg-success' : 'bg-destructive',
+          className,
+        )}
+      />
+    </span>
   );
 }
