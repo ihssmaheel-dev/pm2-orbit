@@ -475,12 +475,18 @@ export function LogViewer({ initialProcessId }: { initialProcessId?: number }) {
               key={p.id}
               onClick={() => { navigate(`/logs/${p.id}`); selectProcess(p.id); }}
               className={cn(
-                "flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-mono transition-all cursor-pointer shrink-0 rounded border",
+                "relative flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-mono transition-all cursor-pointer shrink-0 rounded border",
                 isSelected
                   ? "bg-primary/10 border-primary/40 text-primary shadow-sm shadow-primary/5"
                   : "border-border/50 text-muted-foreground/70 hover:text-foreground hover:border-border/80 hover:bg-subtle/20",
               )}
             >
+              {tags && tags.length > 0 && (
+                <span
+                  className="absolute top-0 right-0 w-0 h-0 border-t-[10px] border-l-[10px] border-t-transparent border-l-transparent"
+                  style={{ borderTopColor: tags[0].color, borderLeftColor: 'transparent' }}
+                />
+              )}
               <span className={cn(
                 "w-1.5 h-1.5 rounded-full shrink-0 transition-colors",
                 isSelected ? "bg-primary" : isOnline ? "bg-success" : isStopped ? "bg-warning/70" : "bg-muted-foreground/30",
@@ -494,11 +500,6 @@ export function LogViewer({ initialProcessId }: { initialProcessId?: number }) {
                   <span className="text-muted-foreground/50 ml-0.5">#{p.id}</span>
                 )}
               </span>
-              {tags && tags.length > 0 && (
-                <svg width="6" height="6" viewBox="0 0 6 6" className="shrink-0" style={{ color: tags[0].color }}>
-                  <polygon points="3,6 0,0 6,0" fill="currentColor" />
-                </svg>
-              )}
               {hasLogs && (
                 <span className={cn(
                   "text-[9px] font-mono tabular-nums px-1 leading-3",
