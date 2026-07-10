@@ -51,14 +51,16 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
         body: JSON.stringify({ action }),
       });
       if (res.ok) {
-        toast.success(`${action.charAt(0).toUpperCase() + action.slice(1)} sent`, {
-          description: p.name,
-        });
+        const labels: Record<string, string> = {
+          restart: 'Restarted', stop: 'Stopped', start: 'Started',
+          reload: 'Reloaded', delete: 'Deleted', scale: 'Scaled',
+        };
+        toast.success(`${labels[action] || action} "${p.name}"`);
       } else {
-        toast.error(`Failed to ${action}`);
+        toast.error(`Could not ${action} "${p.name}"`);
       }
     } catch {
-      toast.error(`Failed to ${action}`);
+      toast.error(`Could not ${action} "${p.name}"`);
     }
     setLd(null);
   };

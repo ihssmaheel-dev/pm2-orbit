@@ -43,17 +43,19 @@ export function ActionMenu({ processId, processName }: ActionMenuProps) {
         body: JSON.stringify(body),
       });
       if (res.ok) {
-        toast.success(`${action.charAt(0).toUpperCase() + action.slice(1)} sent`, {
-          description: processName,
-        });
+        const labels: Record<string, string> = {
+          restart: 'Restarted', stop: 'Stopped', start: 'Started',
+          reload: 'Reloaded', delete: 'Deleted', scale: 'Scaled', flush: 'Flushed',
+        };
+        toast.success(`${labels[action] || action} "${processName}"`);
       } else {
         const data = await res.json().catch(() => ({}));
-        toast.error(`Failed to ${action}`, {
+        toast.error(`Could not ${action} "${processName}"`, {
           description: data.error || 'Unknown error',
         });
       }
     } catch (err) {
-      toast.error(`Failed to ${action}`, {
+      toast.error(`Could not ${action} "${processName}"`, {
         description: err instanceof Error ? err.message : 'Network error',
       });
     }
