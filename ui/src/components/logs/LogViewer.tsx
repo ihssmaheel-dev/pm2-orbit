@@ -503,7 +503,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
           ref={parentRef}
           onScroll={throttledScroll}
           className="absolute inset-0 overflow-auto font-mono text-[13px] leading-[1.55] bg-background"
-          style={{ fontFamily: "'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace" }}
+          style={{ fontFamily: "'IBM Plex Mono', 'Cascadia Code', 'Fira Code', monospace" }}
         >
         {processEntries.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3 select-none">
