@@ -98,7 +98,7 @@ function highlightText(text: string, query: string): (string | { highlighted: st
   return parts;
 }
 
-export function LogViewer({ initialProcessName = "" }: { initialProcessName?: string }) {
+export function LogViewer({ initialProcessId }: { initialProcessId?: number }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -133,18 +133,20 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
   }, []);
 
   useEffect(() => {
-    if (!initialProcessName) {
+    if (initialProcessId == null) {
       setSelectedProcessId(null);
       return;
     }
-    for (const proc of processes.values()) {
-      if (proc.name === initialProcessName) {
-        setSelectedProcessId(proc.id);
-        return;
-      }
+    // Keep current selection if it's still valid (prevents clobbering on re-render)
+    if (selectedProcessId != null) {
+      const cur = processes.get(selectedProcessId);
+      if (cur && cur.id === initialProcessId) return;
     }
-    setSelectedProcessId(null);
-  }, [initialProcessName, processes]);
+    // Resolve from ID (deterministic, no first-match ambiguity)
+    if (processes.has(initialProcessId)) {
+      setSelectedProcessId(initialProcessId);
+    }
+  }, [initialProcessId, processes, selectedProcessId]);
 
   useEffect(() => {
     setSearchQuery(searchParams.get("q") || "");
@@ -470,7 +472,7 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
           return (
             <button
               key={p.id}
-              onClick={() => { navigate(`/logs/${encodeURIComponent(p.name)}`); selectProcess(p.id); }}
+              onClick={() => { navigate(`/logs/${p.id}`); selectProcess(p.id); }}
               className={cn(
                 "flex items-center gap-2 px-3 py-1.5 text-[12px] font-mono transition-all cursor-pointer shrink-0 rounded-sm border",
                 isSelected
@@ -482,7 +484,12 @@ export function LogViewer({ initialProcessName = "" }: { initialProcessName?: st
                 "w-2 h-2 rounded-full shrink-0 transition-colors",
                 isSelected ? "bg-primary" : isOnline ? "bg-success" : isStopped ? "bg-warning/70" : "bg-muted-foreground/30",
               )} />
-              <span className="truncate max-w-[100px]">{p.name}</span>
+              <span className="truncate max-w-[100px]">
+                {p.name}
+                {processEntries.filter((e) => e.name === p.name).length > 1 && (
+                  <span className="text-muted-foreground/50 ml-1">#{p.id}</span>
+                )}
+              </span>
               {hasLogs && (
                 <span className={cn(
                   "text-[9px] font-mono tabular-nums px-1 leading-3",

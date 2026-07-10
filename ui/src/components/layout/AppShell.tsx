@@ -27,7 +27,7 @@ export function AppShell() {
             <Route path="/" element={<Navigate to="/processes" replace />} />
             <Route path="/processes" element={<Dashboard />} />
             <Route path="/logs" element={<Logs />} />
-            <Route path="/logs/:processName" element={<Logs />} />
+            <Route path="/logs/:id" element={<Logs />} />
             <Route path="/alerts" element={<Alerts />} />
             <Route path="/alerts/rules" element={<Alerts />} />
             <Route path="/alerts/history" element={<Alerts />} />
