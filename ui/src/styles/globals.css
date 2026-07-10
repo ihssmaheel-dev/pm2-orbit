@@ -92,49 +92,49 @@
   --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.03);
 }
 
-/* Light Mode — Smoke White */
+/* Light Mode — Clean White */
 .light {
-  --background: #f1f5f9;
+  --background: #f8fafc;
   --foreground: #0f172a;
   --card: #ffffff;
   --card-foreground: #0f172a;
   --popover: #ffffff;
   --popover-foreground: #0f172a;
   --muted: #f1f5f9;
-  --muted-foreground: #475569;
+  --muted-foreground: #334155;
   --subtle: #e2e8f0;
   --input: #ffffff;
-  --border: #e2e8f0;
+  --border: #cbd5e1;
   --ring: #0d9488;
 
   --primary: #0d9488;
   --primary-foreground: #ffffff;
   --primary-hover: #0f766e;
   --primary-deep: #115e59;
-  --primary-subtle: rgba(13, 148, 136, 0.08);
+  --primary-subtle: rgba(13, 148, 136, 0.1);
 
   --accent: #7c3aed;
   --accent-foreground: #ffffff;
 
-  --success: #16a34a;
-  --success-subtle: rgba(22, 163, 74, 0.08);
-  --warning: #ca8a04;
-  --warning-subtle: rgba(202, 138, 4, 0.08);
-  --destructive: #dc2626;
-  --destructive-subtle: rgba(220, 38, 38, 0.08);
+  --success: #15803d;
+  --success-subtle: rgba(21, 128, 61, 0.1);
+  --warning: #a16207;
+  --warning-subtle: rgba(161, 98, 7, 0.1);
+  --destructive: #b91c1c;
+  --destructive-subtle: rgba(185, 28, 28, 0.1);
 
   --chart-cpu: #0d9488;
   --chart-memory: #7c3aed;
   --chart-network: #0284c7;
   --chart-disk: #9333ea;
-  --chart-grid: #e2e8f0;
-  --chart-axis: #94a3b8;
+  --chart-grid: #cbd5e1;
+  --chart-axis: #64748b;
   --chart-bg: transparent;
 
-  --shadow-glow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-glow-md: 0 4px 12px 0 rgba(0, 0, 0, 0.08);
-  --shadow-glow-lg: 0 10px 30px 0 rgba(0, 0, 0, 0.1);
-  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  --shadow-glow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.08);
+  --shadow-glow-md: 0 4px 12px 0 rgba(0, 0, 0, 0.12);
+  --shadow-glow-lg: 0 10px 30px 0 rgba(0, 0, 0, 0.15);
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.06);
 }
 
 /* Reduced motion */
