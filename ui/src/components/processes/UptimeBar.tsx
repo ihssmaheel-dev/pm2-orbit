@@ -1,4 +1,4 @@
-import { memo, useState, useMemo, useCallback, useRef } from 'react';
+import { memo, useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import type { ProcessStatus } from '@/types/pm2';
 
 const STATUS_COLORS: Record<ProcessStatus, string> = {
@@ -59,6 +59,10 @@ function formatMs(ms: number): string {
   return `${d}d ${h % 24}h`;
 }
 
+function formatDate(ts: number): string {
+  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
 function formatTime(ts: number): string {
   const d = new Date(ts);
   const h = String(d.getHours()).padStart(2, '0');
@@ -67,19 +71,21 @@ function formatTime(ts: number): string {
   return `${h}:${m}:${s}`;
 }
 
-function formatDate(ts: number): string {
-  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-}
-
 interface UptimeBarProps {
   history: { ts: number; status: ProcessStatus }[];
   height?: number;
 }
 
+interface CursorInfo {
+  segIdx: number;
+  seg: StatusSegment;
+  pct: number;
+}
+
 export const UptimeBar = memo(function UptimeBar({ history, height = 20 }: UptimeBarProps) {
   const barRef = useRef<HTMLDivElement>(null);
-  const [cursorX, setCursorX] = useState<number | null>(null);
-  const [hoveredSeg, setHoveredSeg] = useState<number | null>(null);
+  const cursorInfoRef = useRef<CursorInfo | null>(null);
+  const [cursorInfo, setCursorInfo] = useState<CursorInfo | null>(null);
 
   const { segments, uptimePct, start, totalSpan } = useMemo(() => {
     if (history.length === 0) {
@@ -96,13 +102,19 @@ export const UptimeBar = memo(function UptimeBar({ history, height = 20 }: Uptim
     };
   }, [history]);
 
-  // Find which segment the cursor is over and the timestamp at cursor position
-  const cursorInfo = useMemo(() => {
-    if (cursorX === null || !barRef.current || totalSpan <= 0) return null;
+  // Crosshair line position (updates on mouse move without re-render)
+  const [crosshairPct, setCrosshairPct] = useState<number | null>(null);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!barRef.current || totalSpan <= 0) return;
     const rect = barRef.current.getBoundingClientRect();
-    const pct = Math.max(0, Math.min(1, (cursorX - rect.left) / rect.width));
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+
+    // Update crosshair position directly (no re-render needed)
+    setCrosshairPct(pct * 100);
+
+    // Find segment at cursor
     const ts = start + pct * totalSpan;
-    // Find the segment at this timestamp
     let segIdx = 0;
     for (let i = 0; i < segments.length; i++) {
       if (ts >= segments[i].start && ts < segments[i].end) {
@@ -111,19 +123,25 @@ export const UptimeBar = memo(function UptimeBar({ history, height = 20 }: Uptim
       }
       if (i === segments.length - 1) segIdx = i;
     }
-    const seg = segments[segIdx];
-    const segPct = seg ? ((ts - seg.start) / (seg.end - seg.start)) * 100 : 0;
-    return { ts, segIdx, seg, pct, segPct };
-  }, [cursorX, segments, start, totalSpan]);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    setCursorX(e.clientX);
-    setHoveredSeg(cursorInfo?.segIdx ?? null);
-  }, [cursorInfo?.segIdx]);
+    const seg = segments[segIdx];
+    if (!seg) return;
+
+    const newInfo: CursorInfo = { segIdx, seg, pct: pct * 100 };
+    // Only update state if segment changed (prevents re-render on every pixel)
+    const prev = cursorInfoRef.current;
+    if (!prev || prev.segIdx !== newInfo.segIdx) {
+      cursorInfoRef.current = newInfo;
+      setCursorInfo(newInfo);
+    } else {
+      cursorInfoRef.current = newInfo;
+    }
+  }, [segments, start, totalSpan]);
 
   const handleMouseLeave = useCallback(() => {
-    setCursorX(null);
-    setHoveredSeg(null);
+    setCrosshairPct(null);
+    setCursorInfo(null);
+    cursorInfoRef.current = null;
   }, []);
 
   if (history.length === 0) {
@@ -135,7 +153,7 @@ export const UptimeBar = memo(function UptimeBar({ history, height = 20 }: Uptim
   }
 
   return (
-    <div className="select-none">
+    <div className="relative select-none">
       {/* Header */}
       <div className="flex items-center justify-between mb-1.5">
         <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/50">Uptime</span>
@@ -156,16 +174,16 @@ export const UptimeBar = memo(function UptimeBar({ history, height = 20 }: Uptim
         {segments.map((seg, i) => {
           const left = ((seg.start - start) / totalSpan) * 100;
           const width = Math.max(((seg.end - seg.start) / totalSpan) * 100, 0.3);
-          const isActive = hoveredSeg === i;
+          const isActive = cursorInfo?.segIdx === i;
           return (
             <div
               key={i}
-              className="absolute top-0 bottom-0 transition-all duration-75"
+              className="absolute top-0 bottom-0 transition-opacity duration-150"
               style={{
                 left: `${left}%`,
                 width: `${width}%`,
                 backgroundColor: STATUS_COLORS[seg.status],
-                opacity: hoveredSeg !== null ? (isActive ? 1 : 0.4) : 0.7,
+                opacity: cursorInfo !== null ? (isActive ? 1 : 0.4) : 0.7,
                 boxShadow: isActive ? `inset 0 0 0 1px rgba(255,255,255,0.3)` : 'none',
               }}
             />
@@ -173,13 +191,13 @@ export const UptimeBar = memo(function UptimeBar({ history, height = 20 }: Uptim
         })}
 
         {/* Crosshair line */}
-        {cursorInfo && (
+        {crosshairPct !== null && (
           <div
             className="absolute top-0 bottom-0 w-px pointer-events-none z-10"
             style={{
-              left: `${cursorInfo.pct * 100}%`,
+              left: `${crosshairPct}%`,
               backgroundColor: 'var(--foreground)',
-              opacity: 0.6,
+              opacity: 0.5,
             }}
           />
         )}
@@ -188,9 +206,9 @@ export const UptimeBar = memo(function UptimeBar({ history, height = 20 }: Uptim
       {/* Tooltip — positioned near cursor */}
       {cursorInfo && (
         <div
-          className="pointer-events-none absolute z-20 mt-1 border border-border/50 bg-card/95 px-2 py-1.5 text-[10px] shadow-lg backdrop-blur-sm"
+          className="pointer-events-none absolute z-20 mt-1 border border-border/50 bg-card/95 px-2.5 py-1.5 text-[10px] shadow-lg backdrop-blur-sm rounded-sm"
           style={{
-            left: `${Math.max(80, Math.min(cursorInfo.pct * 100, 92))}%`,
+            left: `${Math.max(10, Math.min(cursorInfo.pct, 90))}%`,
             transform: 'translateX(-50%)',
           }}
         >
@@ -202,13 +220,13 @@ export const UptimeBar = memo(function UptimeBar({ history, height = 20 }: Uptim
             <span className="font-medium text-foreground">{STATUS_LABELS[cursorInfo.seg.status]}</span>
           </div>
           <div className="font-mono text-muted-foreground/70 space-y-0.5">
-            <div>{formatDate(cursorInfo.ts)} {formatTime(cursorInfo.ts)}</div>
+            <div>{formatDate(cursorInfo.seg.start)} {formatTime(cursorInfo.seg.start)}</div>
             <div>Duration: {formatMs(cursorInfo.seg.end - cursorInfo.seg.start)}</div>
           </div>
         </div>
       )}
 
-      {/* Hover info row (shown when not using absolute tooltip) */}
+      {/* Legend (shown when not hovering) */}
       {cursorInfo === null && (
         <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground/50">
           <span>{formatDate(start)}</span>
