@@ -4,6 +4,18 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.11.3] - 2026-07-10
+
+### Fixed
+- **PM2 not available on process actions** — `routes/processes.ts` had its own `require('pm2')` without the `npm root -g` fix. Applied same PM2 loading strategy to all files (bridge.ts, processes.ts, health.ts). Process actions (restart, stop, start, delete) now work when PM2 is installed globally.
+- **PM2 version detection** — `/api/health` now correctly reports PM2 version via `npm root -g` fallback
+
+### Added
+- **Tag bookmarks in logs tabs** — Colored triangle bookmark in top-right corner of each process tab showing first tag's color
+- **Full process names in logs tabs** — Selected tab expands to show full name; hover tooltip shows full name; non-selected tabs truncate at 100px
+- **Cleaner log borders** — Thinner process tabs with clearer borders (`border-border/50` normal, `border-border/80` hover, `border-primary/40` selected)
+- **Thin scrollbar utility** — `.scrollbar-thin` CSS class for 4px thin scrollbars in log content
+
 ## [1.11.2] - 2026-07-10
 
 ### Changed
