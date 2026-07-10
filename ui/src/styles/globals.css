@@ -92,19 +92,19 @@
   --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.03);
 }
 
-/* Light Mode — Clean White */
+/* Light Mode — Soft White */
 .light {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --card: #ffffff;
-  --card-foreground: #0f172a;
-  --popover: #ffffff;
-  --popover-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #334155;
-  --subtle: #e2e8f0;
-  --input: #ffffff;
-  --border: #cbd5e1;
+  --background: #f5f6f8;
+  --foreground: #1a1f2e;
+  --card: #fafbfc;
+  --card-foreground: #1a1f2e;
+  --popover: #fafbfc;
+  --popover-foreground: #1a1f2e;
+  --muted: #f0f1f3;
+  --muted-foreground: #3d4654;
+  --subtle: #e8eaed;
+  --input: #fafbfc;
+  --border: #d1d5db;
   --ring: #0d9488;
 
   --primary: #0d9488;
@@ -127,14 +127,14 @@
   --chart-memory: #7c3aed;
   --chart-network: #0284c7;
   --chart-disk: #9333ea;
-  --chart-grid: #cbd5e1;
-  --chart-axis: #64748b;
+  --chart-grid: #d1d5db;
+  --chart-axis: #6b7280;
   --chart-bg: transparent;
 
-  --shadow-glow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.08);
-  --shadow-glow-md: 0 4px 12px 0 rgba(0, 0, 0, 0.12);
-  --shadow-glow-lg: 0 10px 30px 0 rgba(0, 0, 0, 0.15);
-  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  --shadow-glow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-glow-md: 0 4px 12px 0 rgba(0, 0, 0, 0.08);
+  --shadow-glow-lg: 0 10px 30px 0 rgba(0, 0, 0, 0.1);
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
 }
 
 /* Reduced motion */
