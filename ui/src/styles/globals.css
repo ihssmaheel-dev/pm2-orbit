@@ -196,10 +196,10 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 
-/* Scrollbar styling */
+/* Scrollbar styling — thin, no arrows, matching app colors */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -207,18 +207,24 @@ textarea:focus-visible {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 0;
+  background: var(--primary);
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--muted-foreground);
+  background: var(--primary-hover);
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+  height: 0;
+  width: 0;
 }
 
 /* Thin scrollbar utility */
 .scrollbar-thin::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 3px;
+  height: 3px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-track {
@@ -226,20 +232,18 @@ textarea:focus-visible {
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 0;
+  background: var(--primary);
+  border-radius: 10px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: var(--muted-foreground);
+  background: var(--primary-hover);
 }
 
-.scrollbar-thumb-border::-webkit-scrollbar-thumb {
-  background: var(--border);
-}
-
-.scrollbar-track-transparent::-webkit-scrollbar-track {
-  background: transparent;
+.scrollbar-thin::-webkit-scrollbar-button {
+  display: none;
+  height: 0;
+  width: 0;
 }
 
 /* Dialog backdrop */
