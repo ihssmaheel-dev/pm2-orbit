@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Clock, RotateCw, Hash, Server, Eye, EyeOff, MousePointerClick, Search, FileText } from 'lucide-react';
+import { X, Clock, RotateCw, Hash, Server, Eye, EyeOff, MousePointerClick, Search, FileText, Cpu, MemoryStick } from 'lucide-react';
 import { useProcessStore } from '@/store/processes';
 import { useNotesStore } from '@/store/notes';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/shared/Tabs';
@@ -46,9 +46,9 @@ export function ProcessDetail() {
 
   if (!process) {
     return (
-      <div className="w-full lg:w-[420px] shrink-0 h-full bg-card border border-border/60 flex flex-col items-center justify-center">
-        <MousePointerClick size={32} className="text-muted-foreground/20 mb-4" />
-        <p className="text-sm text-muted-foreground/40">Select a process to view details</p>
+      <div className="w-full lg:w-[400px] shrink-0 h-full bg-card border border-border/60 flex flex-col items-center justify-center">
+        <MousePointerClick size={28} className="text-muted-foreground/15 mb-3" />
+        <p className="text-[13px] text-muted-foreground/35">Select a process</p>
       </div>
     );
   }
@@ -70,31 +70,32 @@ export function ProcessDetail() {
   const appVars = envEntries.filter(([k]) => !PM2_PREFIX.test(k));
 
   return (
-    <div className="w-full lg:w-[420px] shrink-0 h-full bg-card border border-border/60 flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between px-5 h-[52px] border-b border-border/60 shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.1em] text-foreground truncate">
+    <div className="w-full lg:w-[400px] shrink-0 h-full bg-card border border-border/60 flex flex-col overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 h-[48px] border-b border-border/50 shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <h2 className="text-[13px] font-semibold text-foreground truncate">
             {process.name}
           </h2>
-          <Badge variant={statusVariant[process.status] || 'outline'}>
+          <Badge variant={statusVariant[process.status] || 'outline'} className="text-[9px]">
             {process.status}
           </Badge>
         </div>
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-0.5 shrink-0">
           <ActionMenu processId={process.id} processName={process.name} />
           <button
             onClick={() => select(null)}
             aria-label="Close detail panel"
-            className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            className="h-7 w-7 flex items-center justify-center text-muted-foreground/50 hover:text-foreground transition-colors cursor-pointer rounded hover:bg-subtle/30"
           >
-            <X size={16} />
+            <X size={14} />
           </button>
         </div>
       </div>
 
       <div className="flex-1 overflow-hidden flex flex-col min-h-0">
         <Tabs defaultValue="overview" className="flex-1 flex flex-col min-h-0">
-          <div className="px-5 border-b border-border/40 shrink-0">
+          <div className="px-4 border-b border-border/40 shrink-0">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="metrics">Metrics</TabsTrigger>
@@ -102,87 +103,100 @@ export function ProcessDetail() {
             </TabsList>
           </div>
 
-          <div className="flex-1 overflow-auto p-5 min-h-0">
+          <div className="flex-1 overflow-auto p-4 min-h-0">
+            {/* ─── Overview Tab ─── */}
             <TabsContent value="overview">
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <StatCard icon={<Hash size={13} />} label="PID" value={isOnline ? String(process.pid) : '—'} />
-                  <StatCard icon={<Server size={13} />} label="Mode" value={process.mode} />
-                  <StatCard icon={<Clock size={13} />} label="Uptime" value={isOnline ? formatDuration(liveUptime) : '—'} />
-                  <StatCard icon={<RotateCw size={13} />} label="Restarts" value={String(process.restarts)} />
+              <div className="space-y-3">
+                {/* Status + Actions */}
+                <div className="flex items-center gap-2 p-3 bg-subtle/20 border border-border/30 rounded-md">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div className={`w-2 h-2 rounded-full shrink-0 ${
+                      isOnline ? 'bg-success' : process.status === 'errored' ? 'bg-destructive' : 'bg-muted-foreground/30'
+                    }`} />
+                    <span className="text-[12px] font-medium text-foreground/80">
+                      {isOnline ? 'Running' : process.status === 'stopped' ? 'Stopped' : process.status === 'errored' ? 'Errored' : process.status}
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-mono text-muted-foreground/50">
+                    {isOnline ? formatDuration(liveUptime) : '—'}
+                  </span>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <StatCard label="CPU" value={isOnline ? `${process.cpu.toFixed(1)}%` : '—'} color={isOnline && process.cpu > 80 ? 'text-destructive' : isOnline && process.cpu > 50 ? 'text-warning' : ''} />
-                  <StatCard label="Memory" value={isOnline ? formatBytes(process.memory) : '—'} />
-                  <StatCard label="Instances" value={String(process.instances)} />
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-3 gap-2">
+                  <StatBox icon={<Hash size={11} />} label="PID" value={isOnline ? String(process.pid) : '—'} />
+                  <StatBox icon={<Server size={11} />} label="Mode" value={process.mode} />
+                  <StatBox icon={<RotateCw size={11} />} label="Restarts" value={String(process.restarts)} />
+                  <StatBox icon={<Cpu size={11} />} label="CPU" value={isOnline ? `${process.cpu.toFixed(1)}%` : '—'}
+                    color={isOnline && process.cpu > 80 ? 'text-destructive' : isOnline && process.cpu > 50 ? 'text-warning' : ''} />
+                  <StatBox icon={<MemoryStick size={11} />} label="Memory" value={isOnline ? formatBytes(process.memory) : '—'} />
+                  <StatBox label="Instances" value={String(process.instances)} />
                 </div>
+
+                {/* Uptime Bar */}
                 {process.statusHistory && process.statusHistory.length > 0 && (
                   <UptimeBar history={process.statusHistory} />
                 )}
+
+                {/* Note */}
                 <NoteSection processName={process.name} />
               </div>
             </TabsContent>
 
+            {/* ─── Metrics Tab ─── */}
             <TabsContent value="metrics">
-              <div className="space-y-5">
+              <div className="space-y-4">
                 <div>
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/60 mb-2">CPU Usage</div>
-                  <div className="bg-subtle/30 border border-border/30 p-3">
-                    {isOnline ? <CpuChart data={cpuData} /> : <div className="h-[120px] flex items-center justify-center text-xs text-muted-foreground/40">No data while stopped</div>}
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/50 mb-1.5">CPU Usage</div>
+                  <div className="bg-subtle/20 border border-border/30 p-2.5 rounded-md">
+                    {isOnline ? <CpuChart data={cpuData} /> : <div className="h-[120px] flex items-center justify-center text-[11px] text-muted-foreground/35">No data while stopped</div>}
                   </div>
                 </div>
                 <div>
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/60 mb-2">Memory Usage</div>
-                  <div className="bg-subtle/30 border border-border/30 p-3">
-                    {isOnline ? <MemoryChart data={memData} /> : <div className="h-[120px] flex items-center justify-center text-xs text-muted-foreground/40">No data while stopped</div>}
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/50 mb-1.5">Memory Usage</div>
+                  <div className="bg-subtle/20 border border-border/30 p-2.5 rounded-md">
+                    {isOnline ? <MemoryChart data={memData} /> : <div className="h-[120px] flex items-center justify-center text-[11px] text-muted-foreground/35">No data while stopped</div>}
                   </div>
                 </div>
               </div>
             </TabsContent>
 
+            {/* ─── Environment Tab ─── */}
             <TabsContent value="environment">
-              <div className="space-y-3">
+              <div className="space-y-2.5">
+                {/* Search + Mask toggle */}
                 <div className="flex items-center gap-2">
                   <div className="relative flex-1">
-                    <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/40" />
+                    <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/35" />
                     <input
                       type="text"
                       placeholder="Filter variables..."
                       value={envSearch}
                       onChange={(e) => setEnvSearch(e.target.value)}
-                      className="w-full h-7 pl-7 pr-2 text-[11px] font-mono bg-subtle/30 border border-border/40 text-foreground/80 outline-none focus:border-primary/50 transition-colors placeholder:text-muted-foreground/30"
+                      className="w-full h-8 pl-7 pr-2 text-[11px] font-mono bg-subtle/20 border border-border/40 text-foreground/80 outline-none focus:border-primary/50 transition-colors placeholder:text-muted-foreground/30 rounded-md"
                     />
                   </div>
                   <button
                     onClick={() => setShowMasked(!showMasked)}
-                    className="flex items-center gap-1 h-7 px-2 text-[10px] text-muted-foreground/60 hover:text-foreground border border-border/40 hover:border-border/80 transition-colors cursor-pointer"
+                    className="h-8 w-8 flex items-center justify-center text-muted-foreground/50 hover:text-foreground border border-border/40 hover:border-border/60 transition-colors cursor-pointer rounded-md"
                     title={showMasked ? 'Show sensitive values' : 'Hide sensitive values'}
                   >
-                    {showMasked ? <EyeOff size={11} /> : <Eye size={11} />}
+                    {showMasked ? <EyeOff size={13} /> : <Eye size={13} />}
                   </button>
                 </div>
 
+                {/* Env vars */}
                 {appVars.length === 0 && pm2Vars.length === 0 ? (
-                  <div className="text-xs text-muted-foreground/40 py-8 text-center">
-                    {envSearch ? 'No environment variables match your search' : 'No environment variables available'}
+                  <div className="text-[11px] text-muted-foreground/35 py-10 text-center">
+                    {envSearch ? 'No variables match' : 'No environment variables'}
                   </div>
                 ) : (
-                  <div className="space-y-0.5">
+                  <div className="space-y-2">
                     {pm2Vars.length > 0 && (
-                      <>
-                        <div className="text-[9px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/40 px-1 pt-1 pb-1.5">PM2</div>
-                        {pm2Vars.map(([key, value]) => (
-                          <EnvRow key={key} name={key} value={value} masked={shouldMask(key) && showMasked} />
-                        ))}
-                      </>
+                      <EnvSection title="PM2" vars={pm2Vars} showMasked={showMasked} />
                     )}
                     {appVars.length > 0 && (
-                      <>
-                        <div className="text-[9px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/40 px-1 pt-3 pb-1.5">Application</div>
-                        {appVars.map(([key, value]) => (
-                          <EnvRow key={key} name={key} value={value} masked={shouldMask(key) && showMasked} />
-                        ))}
-                      </>
+                      <EnvSection title="Application" vars={appVars} showMasked={showMasked} />
                     )}
                   </div>
                 )}
@@ -195,28 +209,43 @@ export function ProcessDetail() {
   );
 }
 
-function EnvRow({ name, value, masked }: { name: string; value: string; masked: boolean }) {
+/* ─── Sub-components ──────────────────────────────── */
+
+function StatBox({ icon, label, value, color }: { icon?: React.ReactNode; label: string; value: string; color?: string }) {
   return (
-    <div className="flex items-start gap-2 px-3 py-1.5 bg-subtle/20 border border-border/20">
-      <span className="text-[10px] font-mono text-primary/70 shrink-0 min-w-[140px] truncate" title={name}>
-        {name}
-      </span>
-      <span className="text-[10px] font-mono text-foreground/60 break-all" title={masked ? undefined : value}>
-        {masked ? '••••••••' : value}
+    <div className="bg-subtle/20 border border-border/30 p-2.5 rounded-md">
+      <div className="flex items-center gap-1 mb-1">
+        {icon && <span className="text-muted-foreground/40">{icon}</span>}
+        <span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/45">{label}</span>
+      </div>
+      <span className={`text-[12px] font-mono font-medium ${color || 'text-foreground/80'} ${value === '—' ? 'text-muted-foreground/25' : ''}`}>
+        {value}
       </span>
     </div>
   );
 }
 
-function StatCard({ icon, label, value, color }: { icon?: React.ReactNode; label: string; value: string; color?: string }) {
+function EnvSection({ title, vars, showMasked }: { title: string; vars: [string, string][]; showMasked: boolean }) {
   return (
-    <div className="bg-subtle/30 border border-border/30 p-3">
-      <div className="flex items-center gap-1.5 mb-1">
-        {icon && <span className="text-muted-foreground/50">{icon}</span>}
-        <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/50">{label}</span>
+    <div>
+      <div className="text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/40 mb-1.5 px-0.5">{title}</div>
+      <div className="border border-border/30 rounded-md overflow-hidden divide-y divide-border/20">
+        {vars.map(([key, value]) => (
+          <EnvRow key={key} name={key} value={value} masked={shouldMask(key) && showMasked} />
+        ))}
       </div>
-      <span className={`text-sm font-mono font-medium ${color || 'text-foreground'} ${value === '—' ? 'text-muted-foreground/30' : ''}`}>
-        {value}
+    </div>
+  );
+}
+
+function EnvRow({ name, value, masked }: { name: string; value: string; masked: boolean }) {
+  return (
+    <div className="flex items-start gap-2 px-3 py-2 bg-subtle/10 hover:bg-subtle/20 transition-colors">
+      <span className="text-[10px] font-mono text-primary/60 shrink-0 min-w-[130px] truncate" title={name}>
+        {name}
+      </span>
+      <span className="text-[10px] font-mono text-foreground/55 break-all" title={masked ? undefined : value}>
+        {masked ? '••••••••' : value}
       </span>
     </div>
   );
@@ -252,10 +281,10 @@ function NoteSection({ processName }: { processName: string }) {
   };
 
   return (
-    <div className="bg-subtle/30 border border-border/30">
+    <div className="bg-subtle/20 border border-border/30 rounded-md overflow-hidden">
       <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border/20">
-        <FileText size={12} className="text-muted-foreground/50" />
-        <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/50">Note</span>
+        <FileText size={11} className="text-muted-foreground/40" />
+        <span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/45">Note</span>
       </div>
       <div className="px-3 py-2">
         {editing ? (
@@ -264,20 +293,20 @@ function NoteSection({ processName }: { processName: string }) {
               ref={textareaRef}
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              placeholder="Add a note about this process..."
+              placeholder="Add a note..."
               rows={3}
-              className="w-full text-xs text-foreground/80 bg-background/50 border border-border/40 p-2 resize-none outline-none focus:border-primary/50 transition-colors placeholder:text-muted-foreground/30"
+              className="w-full text-[11px] text-foreground/80 bg-background/50 border border-border/40 p-2 resize-none outline-none focus:border-primary/50 transition-colors placeholder:text-muted-foreground/30 rounded-md"
             />
             <div className="flex justify-end gap-1.5">
               <button
                 onClick={() => { setDraft(currentNote); setEditing(false); }}
-                className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground border border-border/40 hover:border-border/80 transition-colors cursor-pointer"
+                className="h-6 px-2.5 text-[10px] text-muted-foreground hover:text-foreground border border-border/40 hover:border-border/60 transition-colors cursor-pointer rounded-md"
               >
                 Cancel
               </button>
               <button
                 onClick={save}
-                className="h-6 px-2 text-[10px] font-medium text-primary-foreground bg-primary hover:bg-primary/90 transition-colors cursor-pointer"
+                className="h-6 px-2.5 text-[10px] font-medium text-primary-foreground bg-primary hover:bg-primary-hover transition-colors cursor-pointer rounded-md"
               >
                 Save
               </button>
@@ -286,7 +315,7 @@ function NoteSection({ processName }: { processName: string }) {
         ) : (
           <div
             onClick={handleFocus}
-            className="min-h-[32px] text-xs text-foreground/60 cursor-text hover:text-foreground/80 transition-colors whitespace-pre-wrap"
+            className="min-h-[28px] text-[11px] text-foreground/55 cursor-text hover:text-foreground/75 transition-colors whitespace-pre-wrap"
           >
             {currentNote || (
               <span className="text-muted-foreground/30 italic">Click to add a note...</span>
