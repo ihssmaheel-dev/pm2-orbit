@@ -4,6 +4,25 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.11.2] - 2026-07-10
+
+### Changed
+- **Font: IBM Plex Sans + IBM Plex Mono** — Replaced Exo/Inter with IBM Plex Sans for technical dashboard feel; IBM Plex Mono for code/data
+- **Vite upgraded to v8** — Rolldown-based bundler: 3-5x faster builds (5.9s → 1.1s), 51% smaller main chunk (421KB → 205KB)
+- **Light mode redesigned** — Softer warm whites (#f5f6f8 background, #fafbfc cards), stronger contrast (#1e293b muted-foreground), improved shadows
+- **Settings page redesigned** — Cleaner layout with section icons, descriptions, badges; notification channels as card-based list; filled Save button
+- **Toast messages improved** — Past-tense with process name: `Restarted "process-name"` instead of `Restart sent`
+
+### Fixed
+- **Light mode contrast issues** — `--muted-foreground` darkened to #1e293b so text with opacity modifiers (/50, /40) is still readable; `--border` darkened to #d1d5db
+- **Chart hover crosshair + tooltip** — Vertical crosshair line, visible point markers, tooltip with timestamp + values; chart colors refresh on theme switch
+- **UptimeBar hover** — Crosshair line, cursor-following tooltip, segment highlighting, division-by-zero guard
+- **vite.config.ts** — `manualChunks` converted from object to function (Rolldown requirement)
+
+### Added
+- **Process tags delete confirmation** — Dialog before deleting tags in TagManager
+- **Chart theme sync** — Charts recreate on theme switch, refreshing CSS variable colors
+
 ## [1.11.1] - 2026-07-09
 
 ### Fixed
