@@ -41,6 +41,7 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
 
   const p = proc;
   const st = CFG[p.status];
+  const isOnline = p.status === 'online';
 
   const act = async (action: string) => {
     setLd(action);
