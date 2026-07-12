@@ -31,22 +31,22 @@ export function Header() {
 
   return (
     <header className="h-12 sm:h-14 border-b border-border/60 flex items-center px-2 sm:px-6 shrink-0">
-      {/* Logo — hidden on tiny screens */}
+      {/* Logo */}
       <div className="hidden sm:block w-[120px] shrink-0">
         <div className="font-light text-base tracking-[0.15em] text-primary select-none">
           PM2 ORBIT
         </div>
       </div>
 
-      {/* Nav — scrollable on mobile */}
-      <nav className="flex-1 overflow-x-auto flex items-center gap-0 min-w-0 px-1 scrollbar-none">
+      {/* Nav — desktop only */}
+      <nav className="hidden sm:flex flex-1 items-center justify-center gap-1 min-w-0">
         {tabs.map((tab) => {
           const isActive = location.pathname === tab.path || location.pathname.startsWith(tab.path + "/");
           return (
             <button
               key={tab.path}
               onClick={() => navigate(tab.path)}
-              className={`text-[10px] sm:text-[12px] font-medium uppercase tracking-[0.08em] transition-all cursor-pointer h-12 sm:h-14 flex items-center border-b-2 shrink-0 px-2 sm:px-3 ${
+              className={`text-[12px] font-medium uppercase tracking-[0.08em] transition-all cursor-pointer h-14 flex items-center border-b-2 shrink-0 px-3 ${
                 isActive
                   ? "text-primary border-primary"
                   : "text-muted-foreground/50 hover:text-foreground border-transparent"
@@ -57,6 +57,13 @@ export function Header() {
           );
         })}
       </nav>
+
+      {/* Mobile: just logo + icons */}
+      <div className="sm:hidden flex-1 flex items-center justify-center">
+        <div className="font-light text-sm tracking-[0.15em] text-primary select-none">
+          PM2 ORBIT
+        </div>
+      </div>
 
       {/* Right icons */}
       <div className="flex items-center gap-0.5 sm:gap-1 shrink-0 pl-2">

@@ -221,7 +221,10 @@ textarea:focus-visible {
   display: none;
 }
 
-/* Dialog backdrop */
+/* Safe area for mobile bottom nav */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
 dialog::backdrop {
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);

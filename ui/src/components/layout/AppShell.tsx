@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Header } from './Header';
 import { StatusBar } from './StatusBar';
+import { BottomNav } from './BottomNav';
 import { Dashboard } from '@/pages/Dashboard';
 import { Logs } from '@/pages/Logs';
 import { Alerts } from '@/pages/Alerts';
@@ -37,6 +38,7 @@ export function AppShell() {
           </Routes>
         </ErrorBoundary>
       </main>
+      <BottomNav />
       <StatusBar />
     </div>
   );
