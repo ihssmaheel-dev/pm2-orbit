@@ -38,7 +38,7 @@ export class ErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) return this.props.fallback;
 
       return (
-        <div className="flex items-center justify-center h-screen bg-background text-foreground">
+        <div className="flex items-center justify-center h-[100dvh] bg-background text-foreground">
           <div className="text-center max-w-md px-6">
             <div className="w-16 h-16 mx-auto mb-6 bg-destructive/10 border border-destructive/20 flex items-center justify-center">
               <svg className="w-8 h-8 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">

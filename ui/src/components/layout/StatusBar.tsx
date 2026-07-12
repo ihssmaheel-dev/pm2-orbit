@@ -49,8 +49,8 @@ export function StatusBar() {
         </span>
       </div>
 
-      {/* Center: versions */}
-      <div className="flex items-center gap-2">
+      {/* Center: versions — hidden on mobile */}
+      <div className="hidden sm:flex items-center gap-2">
         {health.pm2Version && health.pm2Version !== 'unknown' && (
           <span className="flex items-center gap-1">
             <span className="text-border">·</span>
@@ -71,8 +71,8 @@ export function StatusBar() {
         )}
       </div>
 
-      {/* Right: process count + self metrics */}
-      <div className="ml-auto flex items-center gap-3">
+      {/* Right: process count + self metrics — hidden on mobile */}
+      <div className="ml-auto hidden sm:flex items-center gap-3">
         {processCount > 0 && (
           <span className="flex items-center gap-1">
             <Box size={10} className="text-muted-foreground/40" />

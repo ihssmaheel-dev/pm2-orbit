@@ -1,4 +1,4 @@
-import { Sun, Moon, Monitor } from "lucide-react";
+import { Sun, Moon, Monitor, Search } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { useUIStore } from "@/store/ui";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -57,11 +57,22 @@ export function Header() {
       </nav>
 
       <div className="w-auto sm:w-[140px] flex items-center justify-end gap-0.5 sm:gap-1 shrink-0">
+        {/* Command palette trigger */}
+        <button
+          onClick={() => {
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }));
+          }}
+          className="h-8 w-8 flex items-center justify-center text-muted-foreground/50 hover:text-foreground transition-colors cursor-pointer rounded-md hover:bg-subtle/30"
+          title="Command palette (Ctrl+K)"
+        >
+          <Search size={15} />
+        </button>
+
         <a
           href="https://github.com/ihssmaheel-dev/pm2-orbit"
           target="_blank"
           rel="noopener noreferrer"
-          className="h-8 w-8 flex items-center justify-center text-muted-foreground/50 hover:text-foreground transition-colors cursor-pointer rounded-md hover:bg-subtle/30"
+          className="h-8 w-8 hidden sm:flex items-center justify-center text-muted-foreground/50 hover:text-foreground transition-colors cursor-pointer rounded-md hover:bg-subtle/30"
           title="View on GitHub"
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">

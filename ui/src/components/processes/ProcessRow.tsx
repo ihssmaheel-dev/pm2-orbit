@@ -109,7 +109,7 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
               e.stopPropagation();
               setTagMenuPid(tagMenuPid === pid ? null : pid);
             }}
-            className="opacity-0 group-hover:opacity-60 hover:!opacity-100 cursor-pointer shrink-0 transition-opacity"
+            className="opacity-40 sm:opacity-0 group-hover:opacity-60 hover:!opacity-100 cursor-pointer shrink-0 transition-opacity"
             aria-label="Assign tags"
           >
             <Tag size={10} />
@@ -139,7 +139,7 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
       </div>
 
       {/* CPU */}
-      <div role="cell" className="w-24 shrink-0 px-3 overflow-hidden">
+      <div role="cell" className="w-20 shrink-0 px-3 overflow-hidden">
         <span
           className={`text-[12px] font-mono tabular-nums ${
             p.cpu > 80
@@ -154,7 +154,7 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
       </div>
 
       {/* Memory */}
-      <div role="cell" className="w-24 shrink-0 px-3 overflow-hidden">
+      <div role="cell" className="w-20 shrink-0 px-3 overflow-hidden">
         <span className="text-[12px] font-mono tabular-nums text-foreground/80">
           {formatBytes(p.memory)}
         </span>

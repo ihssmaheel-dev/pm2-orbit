@@ -375,20 +375,20 @@ export function LogViewer({ initialProcessId }: { initialProcessId?: number }) {
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Toolbar */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-border/50 bg-card/80 shrink-0">
-        <Terminal size={14} className="text-primary" />
-        <span className="text-sm text-foreground font-semibold tracking-wider uppercase">Logs</span>
+      <div className="flex items-center gap-2 px-3 sm:px-4 py-2 border-b border-border/50 bg-card/80 shrink-0 flex-wrap">
+        <Terminal size={14} className="text-primary hidden sm:block" />
+        <span className="text-sm text-foreground font-semibold tracking-wider uppercase hidden sm:inline">Logs</span>
 
-        <div className="ml-auto flex items-center gap-1.5">
+        <div className="ml-auto flex items-center gap-1.5 flex-wrap">
           {/* Search */}
           <div className="relative">
             <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none" />
             <input
               ref={searchInputRef}
-              placeholder="Search logs…"
+              placeholder="Search…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-7 w-44 bg-background border border-border/60 text-xs text-foreground placeholder:text-muted-foreground/40 pl-7 pr-7 focus:outline-none focus:border-primary/40 rounded-none font-mono"
+              className="h-7 w-28 sm:w-44 bg-background border border-border/60 text-xs text-foreground placeholder:text-muted-foreground/40 pl-7 pr-7 focus:outline-none focus:border-primary/40 rounded-none font-mono"
             />
             {searchQuery && (
               <button

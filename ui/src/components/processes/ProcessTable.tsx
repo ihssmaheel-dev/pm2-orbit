@@ -30,8 +30,8 @@ const COLS: Col[] = [
   { id: "name", label: "Name", w: "flex-1 min-w-1" },
   { id: "mode", label: "Mode", w: "hidden md:block md:w-19" },
   { id: "pid", label: "PID", w: "hidden lg:block lg:w-19" },
-  { id: "cpu", label: "CPU", w: "w-20 sm:w-24" },
-  { id: "memory", label: "Memory", w: "w-20 sm:w-24" },
+  { id: "cpu", label: "CPU", w: "w-20" },
+  { id: "memory", label: "Memory", w: "w-20" },
   { id: "restarts", label: "Rst", w: "hidden sm:block sm:w-15" },
 ];
 

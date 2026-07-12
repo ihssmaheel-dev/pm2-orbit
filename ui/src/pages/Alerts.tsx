@@ -129,14 +129,14 @@ export function Alerts() {
             <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Scope</div>
             <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Metric</div>
             <div className="flex-1 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Process</div>
-            <div className="w-24 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Condition</div>
-            <div className="w-24 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Threshold</div>
-            <div className="w-24 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Severity</div>
+            <div className="hidden sm:block w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Condition</div>
+            <div className="hidden sm:block w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Threshold</div>
+            <div className="hidden md:block w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Severity</div>
             {CHANNELS.map((ch) => (
-              <div key={ch} className="w-20 shrink-0 px-2 text-[10px] font-semibold uppercase tracking-widest text-center">{ch}</div>
+              <div key={ch} className="hidden lg:block w-16 shrink-0 px-2 text-[10px] font-semibold uppercase tracking-widest text-center">{ch}</div>
             ))}
-            <div className="w-18 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest text-center">Active</div>
-            <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest text-right">Actions</div>
+            <div className="hidden sm:block w-14 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest text-center">Active</div>
+            <div className="w-16 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest text-right">Actions</div>
           </div>
 
           {/* Data rows */}
@@ -201,17 +201,17 @@ export function Alerts() {
                     </div>
 
                     {/* Condition */}
-                    <div className="w-20 shrink-0 px-3">
+                    <div className="hidden sm:block w-20 shrink-0 px-3">
                       <span className="text-[12px] font-mono text-muted-foreground/55">{rule.operator}</span>
                     </div>
 
                     {/* Threshold */}
-                    <div className="w-24 shrink-0 px-3">
+                    <div className="hidden sm:block w-20 shrink-0 px-3">
                       <span className="text-[12px] font-mono font-medium text-foreground/80 tabular-nums">{rule.threshold}</span>
                     </div>
 
                     {/* Severity */}
-                    <div className="w-24 shrink-0 px-3">
+                    <div className="hidden md:block w-20 shrink-0 px-3">
                       <span className="inline-flex items-center gap-1.5">
                         <span className={`w-1.5 h-1.5 rounded-full ${sev.dot}`} />
                         <span className={`text-[11px] font-medium ${sev.txt}`}>{sev.label}</span>
@@ -220,13 +220,13 @@ export function Alerts() {
 
                     {/* Channel status */}
                     {CHANNELS.map((ch) => (
-                      <div key={ch} className="w-16 shrink-0 px-2 flex justify-center">
+                      <div key={ch} className="hidden lg:block w-16 shrink-0 px-2 flex justify-center">
                         <ChannelDot enabled={rule.channels.includes(ch)} />
                       </div>
                     ))}
 
                     {/* Active toggle */}
-                    <div className="w-14 shrink-0 px-3 flex justify-center">
+                    <div className="hidden sm:block w-14 shrink-0 px-3 flex justify-center">
                       <button
                         onClick={() => updateRule(rule.id, { enabled: !rule.enabled })}
                         className={`relative w-8 h-[18px] rounded-full transition-colors cursor-pointer ${
@@ -269,10 +269,10 @@ export function Alerts() {
       {tabFromUrl === 'history' && (
         <div className="flex flex-col flex-1 min-h-0">
           <div className="flex items-center h-8 px-5 border-b border-border/40 bg-background/40 text-muted-foreground/50 select-none shrink-0">
-            <div className="w-28 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Time</div>
-            <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Severity</div>
-            <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Metric</div>
-            <div className="w-32 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Threshold</div>
+            <div className="w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Time</div>
+            <div className="hidden sm:block w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Severity</div>
+            <div className="hidden sm:block w-20 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Metric</div>
+            <div className="hidden md:block w-32 shrink-0 px-3 text-[10px] font-semibold uppercase tracking-widest">Threshold</div>
             <div className="flex-1 px-3 text-[10px] font-semibold uppercase tracking-widest">Message</div>
           </div>
 
@@ -298,12 +298,12 @@ export function Alerts() {
                     }`}
                   >
                     {/* Time */}
-                    <div className="w-28 shrink-0 px-3">
+                    <div className="w-20 shrink-0 px-3">
                       <span className="text-[11px] font-mono text-muted-foreground/45 tabular-nums">{formatTime(event.ts)}</span>
                     </div>
 
                     {/* Severity */}
-                    <div className="w-20 shrink-0 px-3">
+                    <div className="hidden sm:block w-20 shrink-0 px-3">
                       <span className="inline-flex items-center gap-1.5">
                         <span className={`w-1.5 h-1.5 rounded-full ${sev.dot}`} />
                         <span className={`text-[11px] font-medium ${sev.txt}`}>{sev.label}</span>
@@ -311,12 +311,12 @@ export function Alerts() {
                     </div>
 
                     {/* Metric */}
-                    <div className="w-20 shrink-0 px-3">
+                    <div className="hidden sm:block w-20 shrink-0 px-3">
                       <span className="text-[11px] text-muted-foreground/55">{metricLabels[event.metric] || event.metric}</span>
                     </div>
 
                     {/* Threshold */}
-                    <div className="w-32 shrink-0 px-3">
+                    <div className="hidden md:block w-32 shrink-0 px-3">
                       <span className="text-[12px] font-mono text-foreground/80 tabular-nums">
                         {typeof event.value === 'number' ? event.value.toFixed(1) : event.value}
                       </span>
