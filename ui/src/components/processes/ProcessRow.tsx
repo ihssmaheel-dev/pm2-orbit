@@ -6,7 +6,7 @@ import { formatBytes, formatDuration, formatPercent } from "@/lib/format";
 import { useProcessStore } from "@/store/processes";
 import { useTagsStore } from "@/store/tags";
 import { useLiveUptime } from "@/hooks/useLiveUptime";
-import { COL } from "./columns";
+import { COL, ROW_PAD } from "./columns";
 import type { ProcessSnapshot, ProcessStatus } from "@/types/pm2";
 
 interface Props {
@@ -81,7 +81,7 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
           select(isSel ? null : pid);
         }
       }}
-      className={`flex items-center px-5 cursor-pointer transition-all duration-100 group border-b border-border/20 outline-none focus-visible:ring-1 focus-visible:ring-primary ${
+      className={`flex items-center ${ROW_PAD} cursor-pointer transition-all duration-100 group border-b border-border/20 outline-none focus-visible:ring-1 focus-visible:ring-primary ${
         isSel ? "bg-primary/5 border-l-2 border-l-primary" : "hover:bg-subtle/15"
       }`}
     >
@@ -218,7 +218,7 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
       {/* Actions — hover only */}
       <div
         role="cell"
-        className={`${COL.actions} shrink-0 flex items-center justify-center gap-px transition-opacity duration-75`}
+        className={`${COL.actions} shrink-0 items-center justify-center gap-px transition-opacity duration-75`}
       >
         {(p.status === "online" || p.status === "errored") && (
           <ActBtn

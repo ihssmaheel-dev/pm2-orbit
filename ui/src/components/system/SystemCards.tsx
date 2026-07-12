@@ -71,7 +71,7 @@ function Card({
   circular,
 }: CardProps) {
   return (
-    <div className="relative flex flex-col px-4 py-2.5 bg-card border border-border/50 overflow-hidden group hover:border-border/80 transition-colors duration-200">
+    <div className="relative flex flex-col px-3 sm:px-4 py-2.5 bg-card border border-border/50 overflow-hidden group hover:border-border/80 transition-colors duration-200">
       <div
         className="absolute inset-0 opacity-0 group-hover:opacity-[0.04] transition-opacity duration-500"
         style={{
@@ -101,13 +101,13 @@ function Card({
       </div>
 
       {/* Row 2: Value + circular progress */}
-      <div className="relative z-0 flex items-center justify-between">
-        <div className="flex items-baseline gap-1 sm:gap-2">
-          <span className="text-[13px] sm:text-[15px] font-medium font-mono tracking-tight tabular-nums leading-none text-foreground/90">
+      <div className="relative z-0 flex items-center justify-between gap-2">
+        <div className="flex items-baseline gap-1.5 min-w-0">
+          <span className="text-[14px] sm:text-[15px] font-medium font-mono tracking-tight tabular-nums leading-none text-foreground/90 shrink-0">
             {value}
           </span>
           {subtext && (
-            <span className="text-[9px] sm:text-[10px] font-mono tabular-nums leading-none text-muted-foreground/40">
+            <span className="text-[10px] font-mono tabular-nums leading-none text-muted-foreground/40 truncate">
               {subtext}
             </span>
           )}
@@ -149,7 +149,7 @@ export function SystemCards() {
     : 0;
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 shrink-0">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-2.5 shrink-0">
       <Card
         icon={<Cpu size={13} />}
         label="CPU"

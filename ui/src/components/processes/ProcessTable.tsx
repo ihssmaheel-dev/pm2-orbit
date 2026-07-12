@@ -17,7 +17,7 @@ import { ProcessRow } from "./ProcessRow";
 import { TagBadge } from "./TagBadge";
 import { TagManager } from "./TagManager";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
-import { COL } from "./columns";
+import { COL, ROW_PAD } from "./columns";
 import type { ProcessSnapshot } from "@/types/pm2";
 
 interface Col {
@@ -166,7 +166,7 @@ export function ProcessTable() {
   return (
     <div className="flex flex-col h-full bg-card/30 border border-border/50">
       {/* Toolbar */}
-      <div className="flex items-center justify-between h-12 px-5 shrink-0 border-b border-border/50">
+      <div className="flex items-center justify-between h-12 px-3 sm:px-5 shrink-0 border-b border-border/50">
         <div className="flex items-center gap-2.5">
           <span className="text-[12px] font-semibold text-foreground/85">
             Processes
@@ -217,7 +217,7 @@ export function ProcessTable() {
               value={sq}
               onChange={(e) => setSq(e.target.value)}
               aria-label="Search processes"
-              className="h-7 w-49 pl-7 pr-7 text-[12px] bg-background border border-border/80 text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/40 rounded-none"
+              className="h-7 w-36 sm:w-49 pl-7 pr-7 text-[12px] bg-background border border-border/80 text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/40 rounded-none"
             />
             {sq && (
               <button
@@ -241,7 +241,7 @@ export function ProcessTable() {
 
       {/* Tag filter bar */}
       {tags.length > 0 && (
-        <div className="flex items-center gap-1.5 px-5 py-1.5 shrink-0 border-b border-border/30 overflow-x-auto">
+        <div className="flex items-center gap-1.5 px-3 sm:px-5 py-1.5 shrink-0 border-b border-border/30 overflow-x-auto">
           <Tag size={10} className="text-muted-foreground/50 shrink-0" />
           {tags.map((tag) => (
             <TagBadge
@@ -260,7 +260,7 @@ export function ProcessTable() {
         </div>
       )}
       {tags.length === 0 && (
-        <div className="flex items-center px-5 py-1 shrink-0 border-b border-border/30">
+        <div className="flex items-center px-3 sm:px-5 py-1 shrink-0 border-b border-border/30">
           <button
             onClick={() => setTagManagerOpen(true)}
             className="cursor-pointer flex items-center gap-1 text-[10px] text-muted-foreground/40 hover:text-foreground transition-colors"
@@ -283,7 +283,7 @@ export function ProcessTable() {
         <div role="rowgroup" className="shrink-0">
           <div
             role="row"
-            className="flex items-center h-8 px-5 border-b border-border/40 bg-background/40 text-muted-foreground/50 select-none"
+            className={`flex items-center h-8 ${ROW_PAD} border-b border-border/40 bg-background/40 text-muted-foreground/50 select-none`}
           >
             {COLS.map((col) => {
               const dir = sd(col.id);
@@ -344,7 +344,7 @@ export function ProcessTable() {
 
             <div
               role="columnheader"
-              className={`${W_ACTIONS} shrink-0 flex items-center justify-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/40`}
+              className={`${W_ACTIONS} shrink-0 items-center justify-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/40`}
             >
               Actions
             </div>
