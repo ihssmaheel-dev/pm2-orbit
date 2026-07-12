@@ -84,23 +84,20 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
       }`}
     >
       {/* Name */}
-      <div role="cell" className="flex-1 min-w-0 px-3 relative">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <span className="text-[13px] font-medium text-foreground truncate group-hover:text-primary transition-colors duration-75">
+      <div role="cell" className="flex-[2] min-w-0 px-2 sm:px-3 relative">
+        <div className="flex items-center gap-1 min-w-0">
+          <span className="text-[12px] sm:text-[13px] font-medium text-foreground truncate group-hover:text-primary transition-colors duration-75">
             {p.name}
           </span>
           {p.tags && p.tags.length > 0 && (
-            <div className="flex gap-0.5 shrink-0">
-              {p.tags.slice(0, 3).map((t) => (
-                <span key={t.id} className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: t.color }} />
+            <div className="hidden sm:flex gap-0.5 shrink-0">
+              {p.tags.slice(0, 2).map((t) => (
+                <span key={t.id} className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: t.color }} />
               ))}
-              {p.tags.length > 3 && (
-                <span className="text-[9px] text-muted-foreground/50">+{p.tags.length - 3}</span>
-              )}
             </div>
           )}
           {p.note && (
-            <span title={p.note} className="shrink-0 text-muted-foreground/40">
+            <span title={p.note} className="shrink-0 text-muted-foreground/40 hidden sm:block">
               <FileText size={10} />
             </span>
           )}
@@ -109,7 +106,7 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
               e.stopPropagation();
               setTagMenuPid(tagMenuPid === pid ? null : pid);
             }}
-            className="opacity-40 sm:opacity-0 group-hover:opacity-60 hover:!opacity-100 cursor-pointer shrink-0 transition-opacity"
+            className="hidden sm:block opacity-0 group-hover:opacity-60 hover:!opacity-100 cursor-pointer shrink-0 transition-opacity"
             aria-label="Assign tags"
           >
             <Tag size={10} />

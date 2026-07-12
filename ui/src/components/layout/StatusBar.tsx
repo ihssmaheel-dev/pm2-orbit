@@ -34,7 +34,7 @@ export function StatusBar() {
       role="status"
       aria-live="polite"
       aria-label="Connection status"
-      className="h-7 border-t border-border/60 flex items-center px-4 text-[11px] text-muted-foreground/60 gap-3 shrink-0 select-none"
+      className="hidden sm:flex h-7 border-t border-border/60 items-center px-4 text-[11px] text-muted-foreground/60 gap-3 shrink-0 select-none"
     >
       {/* Left: connection */}
       <div className="flex items-center gap-1.5">

@@ -58,12 +58,8 @@ export function Header() {
         })}
       </nav>
 
-      {/* Mobile: just logo + icons */}
-      <div className="sm:hidden flex-1 flex items-center justify-center">
-        <div className="font-light text-sm tracking-[0.15em] text-primary select-none">
-          PM2 ORBIT
-        </div>
-      </div>
+      {/* Mobile: logo + icons */}
+      <div className="sm:hidden flex-1" />
 
       {/* Right icons */}
       <div className="flex items-center gap-0.5 sm:gap-1 shrink-0 pl-2">
