@@ -27,14 +27,14 @@ interface Col {
 }
 
 const COLS: Col[] = [
-  { id: "name", label: "Name", w: "flex-[5] min-w-0" },
+  { id: "name", label: "Name", w: "flex-1 min-w-[80px]" },
   { id: "cpu", label: "CPU", w: "w-16" },
-  { id: "status", label: "Status", w: "flex-[3] min-w-0" },
+  { id: "status", label: "Status", w: "flex-[2] min-w-0" },
   { id: "actions", label: "", w: "w-16" },
 ];
 
 const W_SPARKLINE = "hidden lg:block lg:w-[104px]";
-const W_STATUS = "flex-[3] min-w-0";
+const W_STATUS = "flex-[2] min-w-0";
 const W_UPTIME = "hidden xl:block xl:w-[108px]";
 const W_ACTIONS = "w-16";
 

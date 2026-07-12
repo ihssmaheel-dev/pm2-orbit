@@ -85,7 +85,7 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
       }`}
     >
       {/* Name */}
-      <div role="cell" className="flex-[5] min-w-0 px-2 sm:px-3 relative">
+      <div role="cell" className="flex-1 min-w-[80px] px-2 sm:px-3 relative">
         <div className="flex items-center gap-1 min-w-0">
           <span className="text-[12px] sm:text-[13px] font-medium text-foreground truncate group-hover:text-primary transition-colors duration-75">
             {p.name}
@@ -152,7 +152,7 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
       </div>
 
       {/* Status + Uptime combined */}
-      <div role="cell" className="flex-[3] min-w-0 px-2 sm:px-3 overflow-hidden">
+      <div role="cell" className="flex-[2] min-w-0 px-2 sm:px-3 overflow-hidden">
         <div className="flex items-center gap-1.5">
           <span className="relative inline-flex h-2 w-2 shrink-0">
             {p.status === "online" && (

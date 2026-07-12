@@ -80,15 +80,15 @@ function Card({
       />
 
       {/* Row 1: Label + indicator */}
-      <div className="flex items-center justify-between relative z-0 mb-2.5">
-        <div className="flex items-center gap-2 min-w-0">
+      <div className="flex items-center justify-between relative z-0 mb-2">
+        <div className="flex items-center gap-1.5 min-w-0">
           <span className={`${color} shrink-0`}>{icon}</span>
-          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50 truncate">
+          <span className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/50 truncate">
             {label}
           </span>
         </div>
         {!circular && progress !== undefined && (
-          <span className="text-[10px] font-mono tabular-nums text-muted-foreground/50 shrink-0">
+          <span className="text-[9px] sm:text-[10px] font-mono tabular-nums text-muted-foreground/50 shrink-0">
             {progress.toFixed(0)}%
           </span>
         )}
@@ -102,12 +102,12 @@ function Card({
 
       {/* Row 2: Value + circular progress */}
       <div className="relative z-0 flex items-center justify-between">
-        <div className="flex items-baseline gap-2">
-          <span className="text-[15px] font-medium font-mono tracking-tight tabular-nums leading-none text-foreground/90">
+        <div className="flex items-baseline gap-1 sm:gap-2">
+          <span className="text-[13px] sm:text-[15px] font-medium font-mono tracking-tight tabular-nums leading-none text-foreground/90">
             {value}
           </span>
           {subtext && (
-            <span className="text-[10px] font-mono tabular-nums leading-none text-muted-foreground/40">
+            <span className="text-[9px] sm:text-[10px] font-mono tabular-nums leading-none text-muted-foreground/40">
               {subtext}
             </span>
           )}
