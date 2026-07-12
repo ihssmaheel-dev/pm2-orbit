@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Clock, RotateCw, Hash, Server, Eye, EyeOff, MousePointerClick, Search, FileText, Cpu, MemoryStick } from 'lucide-react';
+import { X, RotateCw, Hash, Server, Eye, EyeOff, MousePointerClick, Search, FileText, Cpu, MemoryStick } from 'lucide-react';
 import { useProcessStore } from '@/store/processes';
 import { useNotesStore } from '@/store/notes';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/shared/Tabs';

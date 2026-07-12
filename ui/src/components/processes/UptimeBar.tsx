@@ -1,4 +1,4 @@
-import { memo, useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { memo, useState, useMemo, useCallback, useRef } from 'react';
 import type { ProcessStatus } from '@/types/pm2';
 
 const STATUS_COLORS: Record<ProcessStatus, string> = {

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Command } from 'cmdk';
 import {
   Search, RotateCw, Square, Play, Terminal, Bell, Settings, LayoutGrid,
-  RefreshCw, Moon, Sun, ArrowRight, Cpu,
+  RefreshCw, Moon, Sun, ArrowRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useProcessStore } from '@/store/processes';

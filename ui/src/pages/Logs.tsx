@@ -6,7 +6,7 @@ export function Logs() {
   const processId = id ? parseInt(id, 10) : undefined;
   return (
     <div className="h-full">
-      <LogViewer initialProcessId={processId} />
+      <LogViewer {...(processId != null ? { initialProcessId: processId } : {})} />
     </div>
   );
 }
