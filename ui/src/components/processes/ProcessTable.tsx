@@ -27,18 +27,16 @@ interface Col {
 }
 
 const COLS: Col[] = [
-  { id: "name", label: "Name", w: "flex-1 min-w-1" },
-  { id: "mode", label: "Mode", w: "hidden lg:block lg:w-19" },
-  { id: "pid", label: "PID", w: "hidden xl:block xl:w-19" },
-  { id: "cpu", label: "CPU", w: "w-16 sm:w-20" },
-  { id: "memory", label: "Memory", w: "hidden sm:block sm:w-20" },
-  { id: "restarts", label: "Rst", w: "hidden md:block md:w-15" },
+  { id: "name", label: "Name", w: "flex-[5] min-w-0" },
+  { id: "cpu", label: "CPU", w: "w-16" },
+  { id: "status", label: "Status", w: "flex-[3] min-w-0" },
+  { id: "actions", label: "", w: "w-16" },
 ];
 
 const W_SPARKLINE = "hidden lg:block lg:w-[104px]";
-const W_STATUS = "w-[70px] sm:w-[90px]";
+const W_STATUS = "flex-[3] min-w-0";
 const W_UPTIME = "hidden xl:block xl:w-[108px]";
-const W_ACTIONS = "w-[60px] sm:w-[72px]";
+const W_ACTIONS = "w-16";
 
 export function ProcessTable() {
   const processes = useProcessStore((s) => s.processes);

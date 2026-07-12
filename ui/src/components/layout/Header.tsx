@@ -31,15 +31,15 @@ export function Header() {
 
   return (
     <header className="h-12 sm:h-14 border-b border-border/60 flex items-center px-2 sm:px-6 shrink-0">
-      {/* Logo */}
-      <div className="hidden sm:block w-[120px] shrink-0">
-        <div className="font-light text-base tracking-[0.15em] text-primary select-none">
+      {/* Logo — always visible */}
+      <div className="shrink-0 mr-3 sm:mr-6">
+        <div className="font-light text-sm sm:text-base tracking-[0.15em] text-primary select-none whitespace-nowrap">
           PM2 ORBIT
         </div>
       </div>
 
       {/* Nav — desktop only */}
-      <nav className="hidden sm:flex flex-1 items-center justify-center gap-1 min-w-0">
+      <nav className="hidden sm:flex flex-1 items-center gap-1 min-w-0">
         {tabs.map((tab) => {
           const isActive = location.pathname === tab.path || location.pathname.startsWith(tab.path + "/");
           return (
@@ -58,11 +58,11 @@ export function Header() {
         })}
       </nav>
 
-      {/* Mobile: logo + icons */}
-      <div className="sm:hidden flex-1" />
+      {/* Spacer for mobile */}
+      <div className="flex-1 sm:hidden" />
 
       {/* Right icons */}
-      <div className="flex items-center gap-0.5 sm:gap-1 shrink-0 pl-2">
+      <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
         <button
           onClick={() => {
             document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }));

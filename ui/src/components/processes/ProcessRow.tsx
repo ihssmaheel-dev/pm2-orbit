@@ -84,7 +84,7 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
       }`}
     >
       {/* Name */}
-      <div role="cell" className="flex-[2] min-w-0 px-2 sm:px-3 relative">
+      <div role="cell" className="flex-[5] min-w-0 px-2 sm:px-3 relative">
         <div className="flex items-center gap-1 min-w-0">
           <span className="text-[12px] sm:text-[13px] font-medium text-foreground truncate group-hover:text-primary transition-colors duration-75">
             {p.name}
@@ -136,7 +136,7 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
       </div>
 
       {/* CPU */}
-      <div role="cell" className="w-16 sm:w-20 shrink-0 px-2 sm:px-3 overflow-hidden">
+      <div role="cell" className="w-16 shrink-0 px-2 sm:px-3 overflow-hidden">
         <span
           className={`text-[11px] sm:text-[12px] font-mono tabular-nums ${
             p.cpu > 80
@@ -150,25 +150,29 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
         </span>
       </div>
 
-      {/* Memory */}
-      <div role="cell" className="hidden sm:block w-20 shrink-0 px-3 overflow-hidden">
-        <span className="text-[12px] font-mono tabular-nums text-foreground/80">
-          {formatBytes(p.memory)}
-        </span>
+      {/* Status + Uptime combined */}
+      <div role="cell" className="flex-[3] min-w-0 px-2 sm:px-3 overflow-hidden">
+        <div className="flex items-center gap-1.5">
+          <span className="relative inline-flex h-2 w-2 shrink-0">
+            {p.status === "online" && (
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-70 motion-safe:animate-[ping_1.5s_ease-in-out_infinite]" />
+            )}
+            <span
+              className={`relative inline-flex h-2 w-2 rounded-full transition-colors duration-300 ${st.dot}`}
+            />
+          </span>
+          <span
+            className={`text-[11px] sm:text-[12px] font-medium leading-none truncate transition-colors duration-300 ${st.txt}`}
+          >
+            {st.label}
+          </span>
+          <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground/50 truncate hidden sm:inline">
+            {isOnline ? formatDuration(p.uptime) : ''}
+          </span>
+        </div>
       </div>
 
-      {/* Restarts */}
-      <div role="cell" className="hidden md:block w-15 shrink-0 px-3 overflow-hidden">
-        <span
-          className={`text-[12px] font-mono tabular-nums ${
-            p.restarts > 0 ? "text-warning" : "text-muted-foreground/30"
-          }`}
-        >
-          {p.restarts}
-        </span>
-      </div>
-
-      {/* CPU History sparkline */}
+      {/* CPU History sparkline — hidden on mobile */}
       <div
         role="cell"
         className="hidden lg:block w-[104px] shrink-0 px-3 flex items-center overflow-hidden"
@@ -213,7 +217,7 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
       {/* Actions — hover only */}
       <div
         role="cell"
-        className="w-[60px] sm:w-[72px] shrink-0 flex items-center justify-center gap-px transition-opacity duration-75"
+        className="w-16 shrink-0 flex items-center justify-center gap-px transition-opacity duration-75"
       >
         {(p.status === "online" || p.status === "errored") && (
           <ActBtn
