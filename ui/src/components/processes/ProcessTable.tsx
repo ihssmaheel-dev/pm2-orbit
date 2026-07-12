@@ -28,17 +28,17 @@ interface Col {
 
 const COLS: Col[] = [
   { id: "name", label: "Name", w: "flex-1 min-w-1" },
-  { id: "mode", label: "Mode", w: "hidden md:block md:w-19" },
-  { id: "pid", label: "PID", w: "hidden lg:block lg:w-19" },
-  { id: "cpu", label: "CPU", w: "w-20" },
-  { id: "memory", label: "Memory", w: "w-20" },
-  { id: "restarts", label: "Rst", w: "hidden sm:block sm:w-15" },
+  { id: "mode", label: "Mode", w: "hidden lg:block lg:w-19" },
+  { id: "pid", label: "PID", w: "hidden xl:block xl:w-19" },
+  { id: "cpu", label: "CPU", w: "w-16 sm:w-20" },
+  { id: "memory", label: "Memory", w: "hidden sm:block sm:w-20" },
+  { id: "restarts", label: "Rst", w: "hidden md:block md:w-15" },
 ];
 
-const W_SPARKLINE = "hidden md:block md:w-[104px]";
-const W_STATUS = "w-[90px]";
-const W_UPTIME = "hidden lg:block lg:w-[108px]";
-const W_ACTIONS = "w-[72px]";
+const W_SPARKLINE = "hidden lg:block lg:w-[104px]";
+const W_STATUS = "w-[70px] sm:w-[90px]";
+const W_UPTIME = "hidden xl:block xl:w-[108px]";
+const W_ACTIONS = "w-[60px] sm:w-[72px]";
 
 export function ProcessTable() {
   const processes = useProcessStore((s) => s.processes);

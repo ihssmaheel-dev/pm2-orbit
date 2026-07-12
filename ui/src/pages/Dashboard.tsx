@@ -24,7 +24,7 @@ export function Dashboard() {
           <div className="flex-1 min-h-0 lg:min-w-0">
             <ProcessTable />
           </div>
-          <div className="max-lg:h-80 max-lg:shrink-0 lg:w-[420px] lg:shrink-0">
+          <div className="h-80 lg:h-full lg:w-[400px] lg:shrink-0">
             <ProcessDetail />
           </div>
         </div>

@@ -125,23 +125,23 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
       </div>
 
       {/* Mode */}
-      <div role="cell" className="w-19 shrink-0 px-3 overflow-hidden">
+      <div role="cell" className="hidden lg:block w-19 shrink-0 px-3 overflow-hidden">
         <span className="text-[11px] font-mono text-muted-foreground/55 uppercase tracking-wider">
           {p.mode}
         </span>
       </div>
 
       {/* PID */}
-      <div role="cell" className="w-19 shrink-0 px-3 overflow-hidden">
+      <div role="cell" className="hidden xl:block w-19 shrink-0 px-3 overflow-hidden">
         <span className="text-[11px] font-mono text-muted-foreground/45 tabular-nums">
           {p.pid}
         </span>
       </div>
 
       {/* CPU */}
-      <div role="cell" className="w-20 shrink-0 px-3 overflow-hidden">
+      <div role="cell" className="w-16 sm:w-20 shrink-0 px-2 sm:px-3 overflow-hidden">
         <span
-          className={`text-[12px] font-mono tabular-nums ${
+          className={`text-[11px] sm:text-[12px] font-mono tabular-nums ${
             p.cpu > 80
               ? "text-destructive"
               : p.cpu > 50
@@ -154,14 +154,14 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
       </div>
 
       {/* Memory */}
-      <div role="cell" className="w-20 shrink-0 px-3 overflow-hidden">
+      <div role="cell" className="hidden sm:block w-20 shrink-0 px-3 overflow-hidden">
         <span className="text-[12px] font-mono tabular-nums text-foreground/80">
           {formatBytes(p.memory)}
         </span>
       </div>
 
       {/* Restarts */}
-      <div role="cell" className="w-15 shrink-0 px-3 overflow-hidden">
+      <div role="cell" className="hidden md:block w-15 shrink-0 px-3 overflow-hidden">
         <span
           className={`text-[12px] font-mono tabular-nums ${
             p.restarts > 0 ? "text-warning" : "text-muted-foreground/30"
@@ -174,7 +174,7 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
       {/* CPU History sparkline */}
       <div
         role="cell"
-        className="w-26 shrink-0 px-3 flex items-center overflow-hidden"
+        className="hidden lg:block w-[104px] shrink-0 px-3 flex items-center overflow-hidden"
       >
         {p.status === 'online' && p.history.cpu.length >= 2 ? (
           <Sparkline
@@ -194,7 +194,7 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
       {/* Status */}
       <div
         role="cell"
-        className="w-22.5 shrink-0 flex items-center gap-2 pl-3 overflow-hidden"
+        className="w-[70px] sm:w-[90px] shrink-0 flex items-center gap-1.5 sm:gap-2 pl-2 sm:pl-3 overflow-hidden"
       >
         <span className="relative inline-flex h-2 w-2 shrink-0">
           {p.status === "online" && (
@@ -216,7 +216,7 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
       {/* Actions — hover only */}
       <div
         role="cell"
-        className="w-18 shrink-0 flex items-center justify-center gap-px transition-opacity duration-75"
+        className="w-[60px] sm:w-[72px] shrink-0 flex items-center justify-center gap-px transition-opacity duration-75"
       >
         {(p.status === "online" || p.status === "errored") && (
           <ActBtn
