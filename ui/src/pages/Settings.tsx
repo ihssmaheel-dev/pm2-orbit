@@ -178,13 +178,13 @@ export function Settings() {
   return (
     <div className="flex flex-col h-full bg-card/30 border border-border/50">
       {/* Header */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-border/50 bg-card/80 shrink-0">
-        <SettingsIcon size={14} className="text-primary" />
-        <span className="text-sm text-foreground font-semibold tracking-wider uppercase">Settings</span>
+      <div className="flex flex-wrap items-center gap-2 px-3 sm:px-4 py-2 border-b border-border/50 bg-card/80 shrink-0">
+        <SettingsIcon size={14} className="text-primary shrink-0" />
+        <span className="text-sm text-foreground font-semibold tracking-wider uppercase shrink-0">Settings</span>
 
-        <Badge variant="outline" className="text-[9px] ml-1">{activeChannels} channels</Badge>
+        <Badge variant="outline" className="text-[9px] ml-1 shrink-0 hidden sm:inline-flex">{activeChannels} channels</Badge>
 
-        <div className="ml-auto flex items-center gap-1.5">
+        <div className="ml-auto flex items-center gap-1.5 flex-wrap justify-end">
           {importError && <Badge variant="destructive" className="text-[9px]">{importError}</Badge>}
           {saved && (
             <Badge variant="success" className="text-[9px] gap-1">
@@ -200,29 +200,35 @@ export function Settings() {
           />
           <button
             onClick={() => importRef.current?.click()}
-            className="cursor-pointer flex items-center gap-1 h-7 px-2.5 text-[11px] font-medium text-muted-foreground hover:text-foreground border border-border/60 hover:border-border/80 transition-colors"
+            title="Import"
+            aria-label="Import"
+            className="cursor-pointer flex items-center gap-1 h-7 w-7 sm:w-auto justify-center sm:px-2.5 text-[11px] font-medium text-muted-foreground hover:text-foreground border border-border/60 hover:border-border/80 transition-colors"
           >
-            <Upload size={11} /> Import
+            <Upload size={11} /> <span className="hidden sm:inline">Import</span>
           </button>
           <button
             onClick={handleExport}
-            className="cursor-pointer flex items-center gap-1 h-7 px-2.5 text-[11px] font-medium text-muted-foreground hover:text-foreground border border-border/60 hover:border-border/80 transition-colors"
+            title="Export"
+            aria-label="Export"
+            className="cursor-pointer flex items-center gap-1 h-7 w-7 sm:w-auto justify-center sm:px-2.5 text-[11px] font-medium text-muted-foreground hover:text-foreground border border-border/60 hover:border-border/80 transition-colors"
           >
-            <Download size={11} /> Export
+            <Download size={11} /> <span className="hidden sm:inline">Export</span>
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="cursor-pointer flex items-center gap-1.5 h-7 px-3 text-[11px] font-semibold text-primary-foreground bg-primary hover:bg-primary-hover transition-colors disabled:opacity-50"
+            title="Save"
+            aria-label="Save"
+            className="cursor-pointer flex items-center gap-1.5 h-7 w-7 sm:w-auto justify-center sm:px-3 text-[11px] font-semibold text-primary-foreground bg-primary hover:bg-primary-hover transition-colors disabled:opacity-50"
           >
             {saving ? <Loader2 size={11} className="animate-spin" /> : <Check size={11} />}
-            {saving ? 'Saving...' : 'Save'}
+            <span className="hidden sm:inline">{saving ? 'Saving...' : 'Save'}</span>
           </button>
         </div>
       </div>
 
       <div className="flex-1 overflow-auto">
-        <div className="p-6 space-y-5">
+        <div className="p-4 sm:p-6 space-y-5">
           {/* Appearance + Security — side by side */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Appearance */}
@@ -281,11 +287,11 @@ export function Settings() {
                     }`}
                   >
                     {/* Channel header row */}
-                    <div className="flex items-center gap-3 px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 sm:px-4 py-3">
                       <div className={`shrink-0 ${enabled ? config.color : 'text-muted-foreground/40'}`}>
                         {config.icon}
                       </div>
-                      <span className={`text-[12px] font-medium min-w-[60px] ${enabled ? 'text-foreground' : 'text-muted-foreground/50'}`}>
+                      <span className={`text-[12px] font-medium shrink-0 min-w-[56px] ${enabled ? 'text-foreground' : 'text-muted-foreground/50'}`}>
                         {config.label}
                       </span>
 
@@ -296,7 +302,7 @@ export function Settings() {
                           onChange={(e) => update(urlKey as keyof Settings, e.target.value)}
                           placeholder={config.placeholder}
                           disabled={!enabled}
-                          className="h-7 text-[11px] font-mono flex-1 min-w-0"
+                          className="h-7 text-[11px] font-mono flex-1 min-w-[140px] order-last w-full sm:order-none sm:w-auto"
                         />
                       )}
 
@@ -322,8 +328,8 @@ export function Settings() {
 
                     {/* Email SMTP sub-section */}
                     {isEmail && enabled && (
-                      <div className="px-4 pb-3 pt-1 border-t border-border/20">
-                        <div className="grid grid-cols-2 gap-3">
+                      <div className="px-3 sm:px-4 pb-3 pt-1 border-t border-border/20">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <Field label="SMTP Host" value={settings.smtpHost} onChange={(v) => update('smtpHost', v)} placeholder="smtp.gmail.com" />
                           <Field label="SMTP Port" value={String(settings.smtpPort)} onChange={(v) => update('smtpPort', parseInt(v) || 587)} placeholder="587" />
                           <Field label="Username" value={settings.smtpUser} onChange={(v) => update('smtpUser', v)} placeholder="your@email.com" />
@@ -381,8 +387,8 @@ function Section({
 }) {
   return (
     <div className="bg-card/40 border border-border/60">
-      <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border/30">
-        <div className="text-primary">{icon}</div>
+      <div className="flex items-center gap-3 px-4 sm:px-5 py-3 sm:py-3.5 border-b border-border/30">
+        <div className="text-primary shrink-0">{icon}</div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h3 className="text-[12px] font-semibold text-foreground tracking-wide">{title}</h3>
@@ -393,7 +399,7 @@ function Section({
           )}
         </div>
       </div>
-      <div className="p-5">{children}</div>
+      <div className="p-4 sm:p-5">{children}</div>
     </div>
   );
 }

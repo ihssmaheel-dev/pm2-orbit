@@ -376,12 +376,12 @@ export function LogViewer({ initialProcessId }: { initialProcessId?: number }) {
     <div className="flex flex-col h-full bg-background">
       {/* Toolbar */}
       <div className="flex items-center gap-2 px-3 sm:px-4 py-2 border-b border-border/50 bg-card/80 shrink-0 flex-wrap">
-        <Terminal size={14} className="text-primary hidden sm:block" />
-        <span className="text-sm text-foreground font-semibold tracking-wider uppercase hidden sm:inline">Logs</span>
+        <Terminal size={14} className="text-primary shrink-0" />
+        <span className="text-sm text-foreground font-semibold tracking-wider uppercase shrink-0">Logs</span>
 
-        <div className="ml-auto flex items-center gap-1.5 flex-wrap">
+        <div className="ml-auto flex items-center gap-1.5 flex-wrap justify-end">
           {/* Search */}
-          <div className="relative">
+          <div className="relative hidden sm:block">
             <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none" />
             <input
               ref={searchInputRef}
@@ -423,15 +423,17 @@ export function LogViewer({ initialProcessId }: { initialProcessId?: number }) {
           {/* Pause/Resume */}
           <button
             onClick={() => setPaused(!paused)}
+            title={paused ? "Resume" : "Pause"}
+            aria-label={paused ? "Resume" : "Pause"}
             className={cn(
-              "h-7 px-2 text-[10px] uppercase tracking-wider border transition-colors font-mono flex items-center gap-1 cursor-pointer",
+              "h-7 w-7 sm:w-auto justify-center sm:px-2 text-[10px] uppercase tracking-wider border transition-colors font-mono flex items-center gap-1 cursor-pointer",
               paused
                 ? "border-warning/40 text-warning bg-warning/5 hover:bg-warning/10"
                 : "border-border/60 text-muted-foreground/60 hover:text-foreground hover:bg-subtle/30",
             )}
           >
             {paused ? <Play size={11} /> : <Pause size={11} />}
-            {paused ? "Resume" : "Pause"}
+            <span className="hidden sm:inline">{paused ? "Resume" : "Pause"}</span>
           </button>
 
           {/* Actions */}
@@ -588,16 +590,16 @@ export function LogViewer({ initialProcessId }: { initialProcessId?: number }) {
                 <div
                   key={log.id}
                   className={cn(
-                    "flex items-center gap-0 px-4 hover:bg-white/[0.02] dark:hover:bg-white/[0.02] transition-colors group absolute left-0 w-full overflow-hidden cursor-pointer",
+                    "flex items-center gap-0 px-3 sm:px-4 hover:bg-white/[0.02] dark:hover:bg-white/[0.02] transition-colors group absolute left-0 w-full overflow-hidden cursor-pointer",
                     isErr && "bg-destructive/[0.03] dark:bg-destructive/[0.04]",
                   )}
                   style={{ top: vr.start, height: vr.size }}
                   onClick={() => setSelectedLog({ ...log, message: cleanMsg })}
                 >
-                  {/* PM2-style app name prefix */}
+                  {/* PM2-style app name prefix — hidden on mobile (single process selected) */}
                   <span
                     className={cn(
-                      "shrink-0 w-[120px] text-right pr-2.5 text-[12px] font-medium select-none truncate border-r border-border/20 mr-2.5 leading-[22px]",
+                      "hidden sm:block shrink-0 w-[120px] text-right pr-2.5 text-[12px] font-medium select-none truncate border-r border-border/20 mr-2.5 leading-[22px]",
                       appColor,
                     )}
                     title={log.processName}
@@ -606,14 +608,14 @@ export function LogViewer({ initialProcessId }: { initialProcessId?: number }) {
                   </span>
 
                   {/* Timestamp */}
-                  <span className="shrink-0 text-[11px] text-muted-foreground/50 dark:text-muted-foreground/40 select-none tabular-nums mr-2.5 min-w-[90px] leading-[22px]">
+                  <span className="shrink-0 text-[11px] text-muted-foreground/50 dark:text-muted-foreground/40 select-none tabular-nums mr-2 sm:mr-2.5 min-w-[74px] sm:min-w-[90px] leading-[22px]">
                     {formatLogTime(log.ts)}
                   </span>
 
                   {/* Stream indicator */}
                   <span
                     className={cn(
-                      "shrink-0 w-[32px] text-[10px] font-bold uppercase tracking-wider mr-2 select-none leading-[22px]",
+                      "shrink-0 w-[30px] sm:w-[32px] text-[10px] font-bold uppercase tracking-wider mr-2 select-none leading-[22px]",
                       isErr ? "text-destructive/70" : "text-primary/60",
                     )}
                   >

@@ -92,6 +92,11 @@ function Card({
             {progress.toFixed(0)}%
           </span>
         )}
+        {circular && progress !== undefined && (
+          <span className="sm:hidden text-[9px] font-mono tabular-nums text-muted-foreground/50 shrink-0">
+            {progress.toFixed(0)}%
+          </span>
+        )}
         {progress === undefined && (
           <span
             className="h-1.5 w-1.5 rounded-full opacity-30 group-hover:opacity-60 transition-opacity shrink-0"
@@ -113,13 +118,17 @@ function Card({
           )}
         </div>
         {circular && progress !== undefined && (
-          <CircularProgress percent={progress} color={bgColor} />
+          <span className="hidden sm:block shrink-0">
+            <CircularProgress percent={progress} color={bgColor} />
+          </span>
         )}
       </div>
 
-      {/* Row 3: Linear progress bar (always present for consistent height) */}
-      <div className="relative z-0">
-        {progress !== undefined && !circular ? (
+      {/* Row 3: Linear progress bar. Always shown for non-circular cards; for
+          circular cards it replaces the ring on mobile only. Wrapper keeps a
+          consistent card height across breakpoints. */}
+      <div className="relative z-0 h-0.5">
+        {progress !== undefined && !circular && (
           <div className="h-0.5 bg-subtle/60 overflow-hidden rounded-full">
             <div
               className="h-full rounded-full transition-all duration-700 ease-out"
@@ -129,8 +138,6 @@ function Card({
               }}
             />
           </div>
-        ) : (
-          <div className="h-0.5" />
         )}
       </div>
     </div>

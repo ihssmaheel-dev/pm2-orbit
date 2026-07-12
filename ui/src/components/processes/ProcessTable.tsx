@@ -179,33 +179,41 @@ export function ProcessTable() {
           <button
             disabled={busy || onlineCount === 0}
             onClick={() => setRestartConfirm(true)}
-            className="hidden sm:flex cursor-pointer items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-foreground hover:text-primary border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors disabled:opacity-25 disabled:pointer-events-none"
+            title="Restart All"
+            aria-label="Restart All"
+            className="hidden sm:flex cursor-pointer items-center justify-center gap-1.5 h-7 w-7 xl:w-auto xl:px-2.5 text-[11px] font-semibold text-foreground hover:text-primary border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
             <RotateCw size={10} className={busy ? "animate-spin" : ""} />
-            {progress ? `${progress.done}/${progress.total}` : 'Restart All'}
+            <span className="hidden xl:inline">{progress ? `${progress.done}/${progress.total}` : 'Restart All'}</span>
           </button>
           <button
             disabled={busy || onlineCount === 0}
             onClick={() => setStopConfirm(true)}
-            className="hidden sm:flex cursor-pointer items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-foreground hover:text-destructive border border-border hover:border-destructive/40 hover:bg-destructive/5 transition-colors disabled:opacity-25 disabled:pointer-events-none"
+            title="Stop All"
+            aria-label="Stop All"
+            className="hidden sm:flex cursor-pointer items-center justify-center gap-1.5 h-7 w-7 xl:w-auto xl:px-2.5 text-[11px] font-semibold text-foreground hover:text-destructive border border-border hover:border-destructive/40 hover:bg-destructive/5 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
             <Square size={10} />
-            {progress ? `${progress.done}/${progress.total}` : 'Stop All'}
+            <span className="hidden xl:inline">{progress ? `${progress.done}/${progress.total}` : 'Stop All'}</span>
           </button>
           <button
             disabled={busy || stoppedCount === 0}
             onClick={() => setStartConfirm(true)}
-            className="hidden sm:flex cursor-pointer items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-foreground hover:text-success border border-border hover:border-success/40 hover:bg-success/5 transition-colors disabled:opacity-25 disabled:pointer-events-none"
+            title="Start All"
+            aria-label="Start All"
+            className="hidden sm:flex cursor-pointer items-center justify-center gap-1.5 h-7 w-7 xl:w-auto xl:px-2.5 text-[11px] font-semibold text-foreground hover:text-success border border-border hover:border-success/40 hover:bg-success/5 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
             <Play size={10} />
-            {progress ? `${progress.done}/${progress.total}` : 'Start All'}
+            <span className="hidden xl:inline">{progress ? `${progress.done}/${progress.total}` : 'Start All'}</span>
           </button>
           <button
             disabled={busy || filteredData.length === 0}
             onClick={() => setDeleteConfirm(true)}
-            className="hidden md:flex cursor-pointer items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold text-destructive border border-destructive/40 hover:border-destructive/60 hover:bg-destructive/10 transition-colors disabled:opacity-25 disabled:pointer-events-none"
+            title="Delete All"
+            aria-label="Delete All"
+            className="hidden md:flex cursor-pointer items-center justify-center gap-1.5 h-7 w-7 xl:w-auto xl:px-2.5 text-[11px] font-semibold text-destructive border border-destructive/40 hover:border-destructive/60 hover:bg-destructive/10 transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
-            <Trash2 size={10} /> {progress ? `${progress.done}/${progress.total}` : 'Delete All'}
+            <Trash2 size={10} /> <span className="hidden xl:inline">{progress ? `${progress.done}/${progress.total}` : 'Delete All'}</span>
           </button>
           <div className="relative">
             <Search
