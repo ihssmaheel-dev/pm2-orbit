@@ -39,7 +39,7 @@ export function Header() {
       </div>
 
       {/* Nav — desktop only */}
-      <nav className="hidden sm:flex flex-1 items-center gap-1 min-w-0">
+      <nav className="hidden sm:flex flex-1 items-center justify-center gap-1 min-w-0">
         {tabs.map((tab) => {
           const isActive = location.pathname === tab.path || location.pathname.startsWith(tab.path + "/");
           return (
