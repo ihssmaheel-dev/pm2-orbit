@@ -4,6 +4,32 @@ All notable changes to PM2 Orbit will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.0.0] - 2026-07-12
+
+### Added
+- **Mobile bottom navigation** — Bottom nav bar with Logs, Alerts, Processes (center), History, Settings for mobile devices
+- **Closable process detail overlay** — On mobile, clicking a process opens detail as full-screen overlay; close to return to table
+- **Shared column constants** (`columns.ts`) — Responsive breakpoints: base (Name/CPU/Status), sm (+Memory/Actions), xl (+Mode/Rst/Sparkline), 2xl (+PID/Uptime)
+- **Tag bookmarks in logs** — Stacked colored triangles in top-right corner for processes with 1-2 tags
+- **Command palette touch trigger** — Search icon button in header opens command palette on mobile
+- **Safe area support** — iOS safe-area-inset-bottom for mobile bottom nav
+
+### Changed
+- **Process table fully responsive** — Columns progressively appear at sm/xl/2xl breakpoints; process names always visible with min-width guarantee
+- **Header mobile layout** — Logo always visible (smaller on mobile), nav hidden on mobile (replaced by bottom nav), compact icon sizes
+- **System cards responsive** — Smaller text on mobile (text-[9px]/text-[13px] → sm:text-[10px]/sm:text-[15px])
+- **StatusBar hidden on mobile** — Only shown on sm+ screens
+- **Process detail panel** — Full-screen overlay on mobile (closable), side-by-side on desktop
+- **Logs toolbar responsive** — Search input shrinks on mobile, title hidden
+- **Process name always visible** — flex-1 min-w-[80px] guarantees name column never shrinks below 80px
+
+### Fixed
+- **Duplicate table columns** — Removed old Status and UptimeCell columns that were rendering alongside new combined column
+- **isOnline not defined** — Added missing variable in ProcessRow
+- **Process name truncation** — Name column now properly sized with flex-1 min-w-[80px]
+- **Header logo hidden** — Logo always visible, removed hidden sm:block
+- **Table header/data mismatch** — Header columns now match data column widths exactly
+
 ## [1.11.4] - 2026-07-11
 
 ### Changed
