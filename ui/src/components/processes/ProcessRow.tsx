@@ -193,28 +193,6 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
         )}
       </div>
 
-      {/* Status */}
-      <div
-        role="cell"
-        className="w-[70px] sm:w-[90px] shrink-0 flex items-center gap-1.5 sm:gap-2 pl-2 sm:pl-3 overflow-hidden"
-      >
-        <span className="relative inline-flex h-2 w-2 shrink-0">
-          {p.status === "online" && (
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-70 motion-safe:animate-[ping_1.5s_ease-in-out_infinite]" />
-          )}
-          <span
-            className={`relative inline-flex h-2 w-2 rounded-full transition-colors duration-300 ${st.dot}`}
-          />
-        </span>
-        <span
-          className={`text-[12px] font-medium leading-none truncate transition-colors duration-300 ${st.txt}`}
-        >
-          {st.label}
-        </span>
-      </div>
-
-      <UptimeCell process={p} />
-
       {/* Actions — hover only */}
       <div
         role="cell"
