@@ -17,6 +17,7 @@ import { ProcessRow } from "./ProcessRow";
 import { TagBadge } from "./TagBadge";
 import { TagManager } from "./TagManager";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { COL } from "./columns";
 import type { ProcessSnapshot } from "@/types/pm2";
 
 interface Col {
@@ -27,16 +28,18 @@ interface Col {
 }
 
 const COLS: Col[] = [
-  { id: "name", label: "Name", w: "flex-1 min-w-[80px]" },
-  { id: "cpu", label: "CPU", w: "w-16" },
-  { id: "status", label: "Status", w: "flex-[2] min-w-0" },
-  { id: "actions", label: "", w: "w-16" },
+  { id: "name", label: "Name", w: COL.name },
+  { id: "mode", label: "Mode", w: COL.mode },
+  { id: "pid", label: "PID", w: COL.pid },
+  { id: "cpu", label: "CPU", w: COL.cpu, right: true },
+  { id: "memory", label: "Memory", w: COL.memory, right: true },
+  { id: "restarts", label: "Rst", w: COL.restarts, right: true },
 ];
 
-const W_SPARKLINE = "hidden lg:block lg:w-[104px]";
-const W_STATUS = "flex-[2] min-w-0";
-const W_UPTIME = "hidden xl:block xl:w-[108px]";
-const W_ACTIONS = "w-16";
+const W_SPARKLINE = COL.sparkline;
+const W_STATUS = COL.status;
+const W_UPTIME = COL.uptime;
+const W_ACTIONS = COL.actions;
 
 export function ProcessTable() {
   const processes = useProcessStore((s) => s.processes);

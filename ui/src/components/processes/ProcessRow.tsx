@@ -6,6 +6,7 @@ import { formatBytes, formatDuration, formatPercent } from "@/lib/format";
 import { useProcessStore } from "@/store/processes";
 import { useTagsStore } from "@/store/tags";
 import { useLiveUptime } from "@/hooks/useLiveUptime";
+import { COL } from "./columns";
 import type { ProcessSnapshot, ProcessStatus } from "@/types/pm2";
 
 interface Props {
@@ -85,20 +86,23 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
       }`}
     >
       {/* Name */}
-      <div role="cell" className="flex-1 min-w-[80px] px-2 sm:px-3 relative">
-        <div className="flex items-center gap-1 min-w-0">
-          <span className="text-[12px] sm:text-[13px] font-medium text-foreground truncate group-hover:text-primary transition-colors duration-75">
+      <div role="cell" className={`${COL.name} px-3 relative`}>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="text-[13px] font-medium text-foreground truncate group-hover:text-primary transition-colors duration-75">
             {p.name}
           </span>
           {p.tags && p.tags.length > 0 && (
-            <div className="hidden sm:flex gap-0.5 shrink-0">
-              {p.tags.slice(0, 2).map((t) => (
-                <span key={t.id} className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: t.color }} />
+            <div className="flex gap-0.5 shrink-0">
+              {p.tags.slice(0, 3).map((t) => (
+                <span key={t.id} className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: t.color }} />
               ))}
+              {p.tags.length > 3 && (
+                <span className="text-[9px] text-muted-foreground/50">+{p.tags.length - 3}</span>
+              )}
             </div>
           )}
           {p.note && (
-            <span title={p.note} className="shrink-0 text-muted-foreground/40 hidden sm:block">
+            <span title={p.note} className="shrink-0 text-muted-foreground/40">
               <FileText size={10} />
             </span>
           )}
@@ -107,7 +111,7 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
               e.stopPropagation();
               setTagMenuPid(tagMenuPid === pid ? null : pid);
             }}
-            className="hidden sm:block opacity-0 group-hover:opacity-60 hover:!opacity-100 cursor-pointer shrink-0 transition-opacity"
+            className="opacity-0 group-hover:opacity-60 hover:!opacity-100 cursor-pointer shrink-0 transition-opacity"
             aria-label="Assign tags"
           >
             <Tag size={10} />
@@ -123,23 +127,23 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
       </div>
 
       {/* Mode */}
-      <div role="cell" className="hidden lg:block w-19 shrink-0 px-3 overflow-hidden">
+      <div role="cell" className={`${COL.mode} shrink-0 px-3 overflow-hidden`}>
         <span className="text-[11px] font-mono text-muted-foreground/55 uppercase tracking-wider">
           {p.mode}
         </span>
       </div>
 
       {/* PID */}
-      <div role="cell" className="hidden xl:block w-19 shrink-0 px-3 overflow-hidden">
+      <div role="cell" className={`${COL.pid} shrink-0 px-3 overflow-hidden`}>
         <span className="text-[11px] font-mono text-muted-foreground/45 tabular-nums">
           {p.pid}
         </span>
       </div>
 
       {/* CPU */}
-      <div role="cell" className="w-16 shrink-0 px-2 sm:px-3 overflow-hidden">
+      <div role="cell" className={`${COL.cpu} shrink-0 px-3 overflow-hidden text-right`}>
         <span
-          className={`text-[11px] sm:text-[12px] font-mono tabular-nums ${
+          className={`text-[12px] font-mono tabular-nums ${
             p.cpu > 80
               ? "text-destructive"
               : p.cpu > 50
@@ -151,34 +155,30 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
         </span>
       </div>
 
-      {/* Status + Uptime combined */}
-      <div role="cell" className="flex-[2] min-w-0 px-2 sm:px-3 overflow-hidden">
-        <div className="flex items-center gap-1.5">
-          <span className="relative inline-flex h-2 w-2 shrink-0">
-            {p.status === "online" && (
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-70 motion-safe:animate-[ping_1.5s_ease-in-out_infinite]" />
-            )}
-            <span
-              className={`relative inline-flex h-2 w-2 rounded-full transition-colors duration-300 ${st.dot}`}
-            />
-          </span>
-          <span
-            className={`text-[11px] sm:text-[12px] font-medium leading-none truncate transition-colors duration-300 ${st.txt}`}
-          >
-            {st.label}
-          </span>
-          <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground/50 truncate hidden sm:inline">
-            {isOnline ? formatDuration(p.uptime) : ''}
-          </span>
-        </div>
+      {/* Memory */}
+      <div role="cell" className={`${COL.memory} shrink-0 px-3 overflow-hidden text-right`}>
+        <span className="text-[12px] font-mono tabular-nums text-foreground/80">
+          {formatBytes(p.memory)}
+        </span>
       </div>
 
-      {/* CPU History sparkline — hidden on mobile */}
+      {/* Restarts */}
+      <div role="cell" className={`${COL.restarts} shrink-0 px-3 overflow-hidden text-right`}>
+        <span
+          className={`text-[12px] font-mono tabular-nums ${
+            p.restarts > 0 ? "text-warning" : "text-muted-foreground/30"
+          }`}
+        >
+          {p.restarts}
+        </span>
+      </div>
+
+      {/* CPU History sparkline */}
       <div
         role="cell"
-        className="hidden lg:block w-[104px] shrink-0 px-3 flex items-center overflow-hidden"
+        className={`${COL.sparkline} shrink-0 px-3 items-center overflow-hidden`}
       >
-        {p.status === 'online' && p.history.cpu.length >= 2 ? (
+        {isOnline && p.history.cpu.length >= 2 ? (
           <Sparkline
             data={p.history.cpu}
             color="var(--chart-cpu)"
@@ -193,10 +193,32 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
         )}
       </div>
 
+      {/* Status */}
+      <div
+        role="cell"
+        className={`${COL.status} shrink-0 flex items-center gap-2 pl-3 overflow-hidden`}
+      >
+        <span className="relative inline-flex h-2 w-2 shrink-0">
+          {p.status === "online" && (
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-70 motion-safe:animate-[ping_1.5s_ease-in-out_infinite]" />
+          )}
+          <span
+            className={`relative inline-flex h-2 w-2 rounded-full transition-colors duration-300 ${st.dot}`}
+          />
+        </span>
+        <span
+          className={`text-[12px] font-medium leading-none truncate transition-colors duration-300 ${st.txt}`}
+        >
+          {st.label}
+        </span>
+      </div>
+
+      <UptimeCell process={p} />
+
       {/* Actions — hover only */}
       <div
         role="cell"
-        className="w-16 shrink-0 flex items-center justify-center gap-px transition-opacity duration-75"
+        className={`${COL.actions} shrink-0 flex items-center justify-center gap-px transition-opacity duration-75`}
       >
         {(p.status === "online" || p.status === "errored") && (
           <ActBtn
@@ -242,9 +264,9 @@ export const ProcessRow = memo(function ProcessRow({ pid, style }: Props) {
 function UptimeCell({ process }: { process: ProcessSnapshot }) {
   const uptime = useLiveUptime(process);
   return (
-    <div role="cell" className="w-27 shrink-0 px-3 overflow-hidden">
+    <div role="cell" className={`${COL.uptime} shrink-0 px-3 overflow-hidden`}>
       {process.status === "online" ? (
-        <span className="inline-flex items-center justify-end gap-1.5 text-[12px] font-mono tabular-nums text-success">
+        <span className="inline-flex items-center gap-1.5 text-[12px] font-mono tabular-nums text-success">
           <Clock size={10} className="text-success/60 shrink-0" />
           {formatDuration(uptime)}
         </span>
